@@ -28,6 +28,22 @@ export const monthlyRevenue = [
   { month: 'Dec', revenue: 98200 },
 ];
 
+/** CL payroll payout — hand-tuned to a realistic ~49-53% of that month's revenue, mirroring a labor-heavy care-services cost ratio. */
+export const monthlyPayroll = [
+  { month: 'Jan', payroll: 74000 },
+  { month: 'Feb', payroll: 86500 },
+  { month: 'Mar', payroll: 79500 },
+  { month: 'Apr', payroll: 85200 },
+  { month: 'May', payroll: 71800 },
+  { month: 'Jun', payroll: 97200 },
+  { month: 'Jul', payroll: 78400 },
+  { month: 'Aug', payroll: 92800 },
+  { month: 'Sep', payroll: 68500 },
+  { month: 'Oct', payroll: 88900 },
+  { month: 'Nov', payroll: 79800 },
+  { month: 'Dec', payroll: 52400 },
+];
+
 export const attendanceToday = {
   scheduled: 247,
   onTime: 218,
