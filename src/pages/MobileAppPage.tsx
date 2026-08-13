@@ -29,7 +29,7 @@ import {
   IdCard,
   ArrowLeft,
 } from 'lucide-react';
-import { IconRail } from '../components/IconRail';
+import { Sidebar } from '../components/Sidebar';
 import { Logo } from '../components/Logo';
 import { Avatar } from '../components/ui';
 import { assignments } from '../data/assignments';
@@ -100,7 +100,7 @@ export default function MobileAppPage() {
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-brand-cream">
       <div className="h-[3px] w-full shrink-0 bg-gradient-to-r from-brand-pink to-brand-green" />
       <div className="flex min-h-0 flex-1">
-        <IconRail />
+        <Sidebar />
         <div className="scrollbar-thin flex-1 overflow-y-auto">
           <div className="flex items-start justify-between px-8 pt-8">
             <div>
