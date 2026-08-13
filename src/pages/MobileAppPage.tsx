@@ -29,14 +29,17 @@ import {
   IdCard,
   ArrowLeft,
   Clock,
+  Landmark,
+  Smartphone,
 } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
 import { PackageArt } from '../components/PackageArt';
-import { Avatar, ProfileAvatar } from '../components/ui';
+import { Avatar, ProfileAvatar, formatRM } from '../components/ui';
 import { assignments } from '../data/assignments';
-import { clientById } from '../data/clients';
 import { useSettings } from '../store/SettingsContext';
 import { useCLStore } from '../store/CLStore';
+import { useClientStore } from '../store/ClientStore';
+import { useActivityLog } from '../store/ActivityLogContext';
 import { formatTime12, formatDateLabel, TODAY_STR } from '../lib/date';
 import { HOURLY_RATE } from '../lib/clMetrics';
 import type { Assignment, ConfinementLady, Package } from '../types';
@@ -73,7 +76,9 @@ function clShortId(clId: string) {
 export default function MobileAppPage() {
   const [appMode, setAppMode] = useState<AppMode>('cl');
   const [motherTab, setMotherTab] = useState<MotherTab>('home');
+  const [purchasingPackageId, setPurchasingPackageId] = useState<string | null>(null);
   const { clById } = useCLStore();
+  const { clientById } = useClientStore();
   const { packageById } = useSettings();
   const mother = clientById(FEATURED_MOTHER_ID);
 
@@ -224,27 +229,39 @@ export default function MobileAppPage() {
 
                 {appMode === 'mother-app' && (
                   <PhoneFrame>
-                    <div className="mb-2 flex justify-center">
-                      <span className="rounded-full bg-brand-amber-light px-2.5 py-0.5 text-[10px] font-semibold text-brand-amber">
-                        PHASE 2 PREVIEW
-                      </span>
-                    </div>
-                    {motherTab === 'home' && <MotherHomeScreen mother={mother} pkg={motherPkg} cl={reviewCl} />}
-                    {motherTab === 'bookings' && <MotherBookingsScreen mother={mother} />}
-                    {motherTab === 'reviews' && <MotherReviewsScreen cl={reviewCl} />}
-                    {motherTab === 'profile' && <MotherProfileScreen mother={mother} />}
-                    <div className="mt-auto flex items-center justify-around border-t border-black/5 bg-white px-2 py-3">
-                      {motherTabs.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => setMotherTab(t.id)}
-                          className={`flex flex-col items-center gap-1 text-[10px] ${motherTab === t.id ? 'text-brand-amber' : 'text-brand-muted'}`}
-                        >
-                          <t.icon size={18} />
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
+                    {purchasingPackageId ? (
+                      <PackagePurchaseFlow
+                        mother={mother}
+                        packageId={purchasingPackageId}
+                        onClose={() => setPurchasingPackageId(null)}
+                      />
+                    ) : (
+                      <>
+                        <div className="mb-2 flex justify-center">
+                          <span className="rounded-full bg-brand-amber-light px-2.5 py-0.5 text-[10px] font-semibold text-brand-amber">
+                            PHASE 2 PREVIEW
+                          </span>
+                        </div>
+                        {motherTab === 'home' && <MotherHomeScreen mother={mother} pkg={motherPkg} cl={reviewCl} />}
+                        {motherTab === 'bookings' && (
+                          <MotherBookingsScreen mother={mother} onBuyPackage={setPurchasingPackageId} />
+                        )}
+                        {motherTab === 'reviews' && <MotherReviewsScreen cl={reviewCl} />}
+                        {motherTab === 'profile' && <MotherProfileScreen mother={mother} />}
+                        <div className="mt-auto flex items-center justify-around border-t border-black/5 bg-white px-2 py-3">
+                          {motherTabs.map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => setMotherTab(t.id)}
+                              className={`flex flex-col items-center gap-1 text-[10px] ${motherTab === t.id ? 'text-brand-amber' : 'text-brand-muted'}`}
+                            >
+                              <t.icon size={18} />
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </PhoneFrame>
                 )}
               </div>
@@ -354,6 +371,7 @@ function CLHomeScreen({
   onGoTo: (tab: CLTab) => void;
 }) {
   const { packageById } = useSettings();
+  const { clientById } = useClientStore();
   const todaysJob = myAssignments.find((a) => a.date === '2026-08-13' && (a.status === 'confirmed' || a.status === 'pending'));
   const client = todaysJob ? clientById(todaysJob.clientId) : undefined;
   const pkg = todaysJob ? packageById(todaysJob.packageId) : undefined;
@@ -461,6 +479,7 @@ function CLJobsScreen({
   onOpenJob: (id: string) => void;
 }) {
   const { packageById } = useSettings();
+  const { clientById } = useClientStore();
   const [jobTab, setJobTab] = useState<'active' | 'upcoming' | 'past'>('active');
 
   const active = myAssignments.filter((a) => a.date === '2026-08-13' && a.status !== 'cancelled');
@@ -785,6 +804,7 @@ function SessionFlow({
   onClose: () => void;
 }) {
   const { packageById } = useSettings();
+  const { clientById } = useClientStore();
   const client = clientById(assignment.clientId);
   const pkg = packageById(assignment.packageId);
   const checklistLabels = pkg ? [...pkg.dailyMotherCare, ...pkg.babyCare] : [];
@@ -1311,7 +1331,13 @@ function MotherHomeScreen({ mother, pkg, cl }: { mother: import('../types').Clie
   );
 }
 
-function MotherBookingsScreen({ mother }: { mother: import('../types').Client }) {
+function MotherBookingsScreen({
+  mother,
+  onBuyPackage,
+}: {
+  mother: import('../types').Client;
+  onBuyPackage: (packageId: string) => void;
+}) {
   const { packages } = useSettings();
   const owned = new Set(mother.packageIds);
   const addOns = packages.filter((p) => !owned.has(p.id)).slice(0, 4);
@@ -1320,6 +1346,7 @@ function MotherBookingsScreen({ mother }: { mother: import('../types').Client })
     <div className="flex-1">
       <h3 className="text-lg font-semibold text-brand-ink">My bookings</h3>
       <div className="mt-3 space-y-2">
+        {mother.packageIds.length === 0 && <p className="text-sm text-brand-muted">No packages yet — add one below.</p>}
         {mother.packageIds.map((pid) => {
           const pkg = packages.find((p) => p.id === pid);
           if (!pkg) return null;
@@ -1342,12 +1369,206 @@ function MotherBookingsScreen({ mother }: { mother: import('../types').Client })
             <PackageArt pkg={p} size={44} rounded="rounded-xl" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-brand-ink">{p.name}</p>
-              <p className="truncate text-xs text-brand-muted">{p.summary}</p>
+              <p className="truncate text-xs text-brand-muted">
+                {p.tiers[0] ? `from ${formatRM(p.tiers[0].price)}` : p.sessionPrice ? `${formatRM(p.sessionPrice.perSession)}/session` : p.summary}
+              </p>
             </div>
-            <button className="shrink-0 rounded-full bg-brand-amber px-3 py-1 text-xs font-medium text-white">Add</button>
+            <button
+              onClick={() => onBuyPackage(p.id)}
+              className="shrink-0 rounded-full bg-brand-amber px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+            >
+              Add
+            </button>
           </div>
         ))}
+        {addOns.length === 0 && <p className="text-sm text-brand-muted">All available packages are already booked.</p>}
       </div>
+    </div>
+  );
+}
+
+type PurchaseStep = 'detail' | 'payment' | 'success';
+
+const paymentMethods = [
+  { id: 'card', label: 'Credit / Debit Card', hint: '•••• 4821', icon: CreditCard },
+  { id: 'fpx', label: 'FPX Online Banking', hint: 'Maybank2u', icon: Landmark },
+  { id: 'ewallet', label: "Touch 'n Go eWallet", hint: 'Linked', icon: Smartphone },
+] as const;
+
+/**
+ * Real add-on package purchase flow for the Mother's App — unlike the rest of this tab (labeled
+ * "Phase 2 preview"), this writes through to the live ClientStore via addPackageToClient, the
+ * same action the admin-side "Add-on package" picker on ClientProfilePage already uses, so a
+ * purchase here shows up immediately on both the mother's "My bookings" list and the admin side.
+ */
+function PackagePurchaseFlow({
+  mother,
+  packageId,
+  onClose,
+}: {
+  mother: import('../types').Client;
+  packageId: string;
+  onClose: () => void;
+}) {
+  const { packageById } = useSettings();
+  const { addPackageToClient } = useClientStore();
+  const { logAction } = useActivityLog();
+  const pkg = packageById(packageId);
+
+  const [step, setStep] = useState<PurchaseStep>('detail');
+  const [tierDays, setTierDays] = useState<number | null>(pkg?.tiers[0]?.days ?? null);
+  const [methodId, setMethodId] = useState<(typeof paymentMethods)[number]['id']>('card');
+  const [processing, setProcessing] = useState(false);
+
+  if (!pkg) return null;
+
+  const selectedTier = pkg.tiers.find((t) => t.days === tierDays) ?? null;
+  const price = selectedTier?.price ?? pkg.sessionPrice?.perSession ?? 0;
+  const deposit = Math.round((price * pkg.bookingDepositPct) / 100);
+
+  function confirmPayment() {
+    setProcessing(true);
+    window.setTimeout(() => {
+      addPackageToClient(mother.id, pkg!.id, tierDays ?? undefined);
+      logAction(mother.name, 'Purchased add-on package', `${pkg!.name}${selectedTier ? ` — ${selectedTier.days} Hari` : ''} via mobile app`);
+      setProcessing(false);
+      setStep('success');
+    }, 700);
+  }
+
+  if (step === 'success') {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-2 py-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-green text-white shadow-lg shadow-brand-green/30">
+          <CheckCircle2 size={30} />
+        </div>
+        <h3 className="mt-4 text-xl font-semibold text-brand-ink">Package added!</h3>
+        <p className="mt-2 max-w-[240px] text-sm text-brand-ink">
+          <span className="font-semibold">{pkg.name}</span>
+          {selectedTier ? ` (${selectedTier.days} Hari)` : ''} is now part of {mother.name.split(' ')[0]}'s bookings.
+        </p>
+        <p className="mt-3 max-w-[240px] text-xs text-brand-muted">
+          A confirmation will be sent via WhatsApp/SMS. Our team will be in touch to schedule your sessions.
+        </p>
+        <button onClick={onClose} className="mt-6 w-full max-w-[240px] rounded-full bg-brand-pink py-3 text-sm font-semibold text-white">
+          Back to My Bookings
+        </button>
+      </div>
+    );
+  }
+
+  if (step === 'payment') {
+    return (
+      <div className="flex flex-1 flex-col">
+        <StepHeader step={2} totalSteps={2} label="Payment" onBack={() => setStep('detail')} />
+
+        <div className="mt-3 rounded-xl bg-brand-cream p-3">
+          <div className="flex items-center gap-2.5">
+            <PackageArt pkg={pkg} size={36} rounded="rounded-lg" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-brand-ink">{pkg.name}</p>
+              <p className="text-xs text-brand-muted">{selectedTier ? `${selectedTier.days} Hari` : 'Per session'}</p>
+            </div>
+            <p className="shrink-0 text-sm font-semibold text-brand-ink">{formatRM(price)}</p>
+          </div>
+          <div className="mt-2 flex items-center justify-between border-t border-black/10 pt-2 text-xs">
+            <span className="text-brand-muted">Deposit due today ({pkg.bookingDepositPct}%)</span>
+            <span className="font-semibold text-brand-pink">{formatRM(deposit)}</span>
+          </div>
+        </div>
+
+        <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-brand-muted">Pay with</p>
+        <div className="space-y-2">
+          {paymentMethods.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setMethodId(m.id)}
+              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
+                methodId === m.id ? 'border-brand-pink bg-brand-pink-light' : 'border-black/10 hover:bg-brand-cream'
+              }`}
+            >
+              <m.icon size={18} className={methodId === m.id ? 'text-brand-pink' : 'text-brand-muted'} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-brand-ink">{m.label}</p>
+                <p className="text-xs text-brand-muted">{m.hint}</p>
+              </div>
+              {methodId === m.id && <CheckCircle2 size={16} className="shrink-0 text-brand-pink" />}
+            </button>
+          ))}
+        </div>
+
+        <button
+          disabled={processing}
+          onClick={confirmPayment}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-brand-pink py-3 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {processing ? 'Processing…' : `Pay ${formatRM(deposit)} now`}
+        </button>
+        <p className="mt-2 text-center text-[10px] text-brand-muted">Remaining balance is due per your package's payment schedule.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <StepHeader step={1} totalSteps={2} label="Package details" onBack={onClose} />
+
+      <div className="mt-3 flex items-center gap-3">
+        <PackageArt pkg={pkg} size={52} rounded="rounded-xl" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-brand-ink">{pkg.name}</p>
+          <p className="text-xs text-brand-muted">{pkg.durationEstimate}</p>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-brand-ink">{pkg.summary}</p>
+
+      {pkg.dailyMotherCare.length > 0 && (
+        <ul className="mt-3 space-y-1">
+          {pkg.dailyMotherCare.slice(0, 3).map((item) => (
+            <li key={item} className="flex items-start gap-1.5 text-xs text-brand-ink">
+              <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-brand-green" /> {item}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {pkg.tiers.length > 0 ? (
+        <div className="mt-4">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">Choose duration</p>
+          <div className="flex flex-wrap gap-1.5">
+            {pkg.tiers.map((t) => (
+              <button
+                key={t.days}
+                onClick={() => setTierDays(t.days)}
+                className={`rounded-full border px-3 py-1.5 text-xs ${
+                  tierDays === t.days ? 'border-brand-pink bg-brand-pink text-white' : 'border-black/10 text-brand-ink hover:bg-brand-cream'
+                }`}
+              >
+                {t.days} Hari · {formatRM(t.price)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        pkg.sessionPrice && (
+          <div className="mt-4 rounded-xl bg-brand-cream p-3 text-sm text-brand-ink">
+            {formatRM(pkg.sessionPrice.perSession)} per session
+          </div>
+        )
+      )}
+
+      <div className="mt-4 flex items-center justify-between rounded-xl border border-black/5 p-3 text-sm">
+        <span className="text-brand-muted">Total price</span>
+        <span className="font-semibold text-brand-ink">{formatRM(price)}</span>
+      </div>
+
+      <button
+        disabled={pkg.tiers.length > 0 && !tierDays}
+        onClick={() => setStep('payment')}
+        className="mt-4 w-full rounded-full bg-brand-pink py-3 text-sm font-semibold text-white disabled:opacity-30"
+      >
+        Continue to payment
+      </button>
     </div>
   );
 }
