@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronRight,
@@ -38,6 +38,7 @@ import { clientById } from '../data/clients';
 import { useSettings } from '../store/SettingsContext';
 import { useCLStore } from '../store/CLStore';
 import { formatTime12, formatDateLabel, TODAY_STR } from '../lib/date';
+import { HOURLY_RATE } from '../lib/clMetrics';
 import type { Assignment, ConfinementLady, Package } from '../types';
 
 const FEATURED_MOTHER_ID = 'cli-01'; // Siti Rahman — matches seeded assignments
@@ -425,7 +426,7 @@ function CLHomeScreen({
           <p className="text-[10px] text-brand-muted">Hours this month</p>
         </div>
         <div className="rounded-xl bg-white p-3 shadow-sm">
-          <p className="text-lg font-semibold text-brand-ink">RM {Math.round(hoursThisMonth * 22).toLocaleString()}</p>
+          <p className="text-lg font-semibold text-brand-ink">RM {Math.round(hoursThisMonth * HOURLY_RATE).toLocaleString()}</p>
           <p className="text-[10px] text-brand-muted">Est. pay this month</p>
         </div>
         <div className="rounded-xl bg-white p-3 shadow-sm">
@@ -615,7 +616,7 @@ function CLEarningsScreen({ cl, assignments: myAssignments }: { cl: ConfinementL
               <p className="text-[10px] text-brand-muted">Hours</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-brand-ink">RM {Math.round(hours * 22).toLocaleString()}</p>
+              <p className="text-lg font-semibold text-brand-ink">RM {Math.round(hours * HOURLY_RATE).toLocaleString()}</p>
               <p className="text-[10px] text-brand-muted">Approved pay</p>
             </div>
             <div>
@@ -789,10 +790,11 @@ function SessionFlow({
   const checklistLabels = pkg ? [...pkg.dailyMotherCare, ...pkg.babyCare] : [];
 
   const [step, setStep] = useState<SessionStep>('checkin');
-  const [items, setItems] = useState<{ label: string; photoTaken: boolean; done: boolean }[]>(
-    checklistLabels.map((label) => ({ label, photoTaken: false, done: false })),
+  const [checkinSelfieUrl, setCheckinSelfieUrl] = useState<string>();
+  const [items, setItems] = useState<{ label: string; photoUrl?: string; done: boolean }[]>(
+    checklistLabels.map((label) => ({ label, done: false })),
   );
-  const [formPhotoTaken, setFormPhotoTaken] = useState(false);
+  const [formPhotoUrl, setFormPhotoUrl] = useState<string>();
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [finalElapsed, setFinalElapsed] = useState(0);
@@ -810,11 +812,21 @@ function SessionFlow({
     (a) => a.id !== assignment.id && a.date === TODAY_STR && (a.status === 'confirmed' || a.status === 'pending'),
   );
 
-  function takePhoto(index: number) {
-    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, photoTaken: true } : it)));
+  function takePhoto(index: number, file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const photoUrl = reader.result as string;
+      setItems((prev) => prev.map((it, i) => (i === index ? { ...it, photoUrl } : it)));
+    };
+    reader.readAsDataURL(file);
   }
   function markDone(index: number) {
     setItems((prev) => prev.map((it, i) => (i === index ? { ...it, done: true } : it)));
+  }
+  function handleFormPhoto(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => setFormPhotoUrl(reader.result as string);
+    reader.readAsDataURL(file);
   }
 
   if (step === 'checkin') {
@@ -833,18 +845,35 @@ function SessionFlow({
             <MapPin size={16} className="text-brand-pink" /> Ready to clock in
           </div>
           <p className="text-xs text-brand-muted">GPS location verified</p>
-          <div className="mt-3 flex items-center justify-between rounded-xl bg-brand-cream px-3 py-2 text-xs text-brand-ink">
+          <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-brand-cream px-3 py-2 text-xs text-brand-ink">
             <span className="flex items-center gap-1.5">
-              <Camera size={14} /> Selfie required
+              <Camera size={14} /> {checkinSelfieUrl ? 'Selfie captured' : 'Selfie required'}
             </span>
-            <ShieldCheck size={14} className="text-brand-green" />
-          </div>
+            {checkinSelfieUrl ? (
+              <img src={checkinSelfieUrl} alt="Check-in selfie" className="h-8 w-8 rounded-full object-cover ring-2 ring-brand-green" />
+            ) : (
+              <ShieldCheck size={14} className="text-brand-muted" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              capture="user"
+              className="hidden"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => setCheckinSelfieUrl(reader.result as string);
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
           <button
             onClick={() => {
               setStartedAt(Date.now());
               setStep('checklist');
             }}
-            disabled={checklistLabels.length === 0}
+            disabled={checklistLabels.length === 0 || !checkinSelfieUrl}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-brand-green py-3 text-sm font-semibold text-white disabled:opacity-40"
           >
             <Camera size={15} /> Check in & start session
@@ -876,13 +905,24 @@ function SessionFlow({
                 <p className="text-sm text-brand-ink">{item.label}</p>
               </div>
               {!item.done && (
-                <div className="mt-2 flex gap-2 pl-6">
-                  {!item.photoTaken ? (
-                    <button onClick={() => takePhoto(i)} className="flex items-center gap-1.5 rounded-full bg-brand-cream px-3 py-1.5 text-xs font-medium text-brand-ink">
+                <div className="mt-2 flex items-center gap-2 pl-6">
+                  {!item.photoUrl ? (
+                    <label className="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-cream px-3 py-1.5 text-xs font-medium text-brand-ink">
                       <Camera size={13} /> Take photo
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0];
+                          if (file) takePhoto(i, file);
+                        }}
+                      />
+                    </label>
                   ) : (
                     <>
+                      <img src={item.photoUrl} alt="" className="h-6 w-6 rounded object-cover" />
                       <span className="flex items-center gap-1 rounded-full bg-brand-green-light px-2 py-1 text-[10px] font-medium text-brand-green">
                         <CheckCircle2 size={11} /> Photo attached
                       </span>
@@ -917,9 +957,9 @@ function SessionFlow({
         </div>
         <p className="mt-3 text-sm text-brand-ink">Take a photo of the signed checklist form to close out this session.</p>
         <div className="mt-4 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-black/10 p-6">
-          {formPhotoTaken ? (
+          {formPhotoUrl ? (
             <>
-              <CheckCircle2 size={40} className="text-brand-green" />
+              <img src={formPhotoUrl} alt="Signed checklist form" className="h-24 w-24 rounded-xl object-cover shadow-sm" />
               <p className="text-sm font-medium text-brand-ink">Form photo attached</p>
             </>
           ) : (
@@ -928,12 +968,22 @@ function SessionFlow({
               <p className="text-center text-xs text-brand-muted">Snap the customer-signed checklist page</p>
             </>
           )}
-          <button onClick={() => setFormPhotoTaken(true)} className="flex items-center gap-2 rounded-full bg-brand-cream px-4 py-2 text-sm font-medium text-brand-ink">
-            <Camera size={15} /> {formPhotoTaken ? 'Retake photo' : 'Take photo'}
-          </button>
+          <label className="flex cursor-pointer items-center gap-2 rounded-full bg-brand-cream px-4 py-2 text-sm font-medium text-brand-ink">
+            <Camera size={15} /> {formPhotoUrl ? 'Retake photo' : 'Take photo'}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                const file = e.target.files?.[0];
+                if (file) handleFormPhoto(file);
+              }}
+            />
+          </label>
         </div>
         <button
-          disabled={!formPhotoTaken}
+          disabled={!formPhotoUrl}
           onClick={() => {
             setFinalElapsed(elapsed);
             setStep('completed');
@@ -1044,6 +1094,7 @@ function MotherReviewWebScreen({
   assignment?: Assignment;
   pkg?: Package;
 }) {
+  const { addReview } = useCLStore();
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState('');
   const [signed, setSigned] = useState(false);
@@ -1053,6 +1104,17 @@ function MotherReviewWebScreen({
   const allRated = reviewCategories.every((c) => ratings[c.key] > 0);
   const avgRating = allRated ? (Object.values(ratings).reduce((s, v) => s + v, 0) / reviewCategories.length).toFixed(1) : null;
   const canSubmit = allRated && signed;
+
+  function submitReview() {
+    if (!canSubmit || !avgRating) return;
+    addReview(cl.id, {
+      rating: Number(avgRating),
+      text: feedback.trim() || undefined,
+      date: TODAY_STR,
+      clientName: mother.name,
+    });
+    setSubmitted(true);
+  }
 
   if (submitted) {
     return (
@@ -1163,7 +1225,7 @@ function MotherReviewWebScreen({
 
         <button
           disabled={!canSubmit}
-          onClick={() => setSubmitted(true)}
+          onClick={submitReview}
           className="w-full rounded-full bg-brand-pink py-4 text-sm font-bold text-white shadow-lg shadow-brand-pink/30 transition-opacity hover:opacity-90 disabled:opacity-30 disabled:shadow-none disabled:hover:opacity-30"
         >
           Submit Review

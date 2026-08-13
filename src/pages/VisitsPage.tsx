@@ -1,23 +1,17 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { X, MapPin, Camera, ClipboardCheck, ShieldCheck, ShieldX, ShieldQuestion, FileSignature, Clock } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
-import { Card, Avatar, formatRM } from '../components/ui';
+import { Card, Avatar, Badge, formatRM } from '../components/ui';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useClientStore } from '../store/ClientStore';
 import { useCLStore } from '../store/CLStore';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
+import { useAvatarStore } from '../store/AvatarStore';
 import { formatDateLabel, formatTime12 } from '../lib/date';
 import type { Assignment } from '../types';
 
 type VerificationStatus = 'Verified' | 'In Progress' | 'Missing Check-Out Selfie' | 'GPS Mismatch';
-
-const statusStyles: Record<VerificationStatus, string> = {
-  Verified: 'bg-brand-green-light text-brand-green',
-  'In Progress': 'bg-brand-amber-light text-brand-amber',
-  'Missing Check-Out Selfie': 'bg-red-100 text-red-600',
-  'GPS Mismatch': 'bg-red-100 text-red-600',
-};
 
 function verificationFor(a: Assignment): VerificationStatus {
   if (a.status === 'confirmed' || a.status === 'pending') return 'In Progress';
@@ -34,8 +28,7 @@ function hoursFor(a: Assignment) {
   return Math.round(((eh * 60 + em - (sh * 60 + sm)) / 60) * 10) / 10;
 }
 
-const approvalStyles: Record<'Pending Approval' | 'Approved' | 'Rejected', string> = {
-  'Pending Approval': 'bg-brand-amber-light text-brand-amber',
+const approvalNoticeStyles: Record<'Approved' | 'Rejected', string> = {
   Approved: 'bg-brand-green-light text-brand-green',
   Rejected: 'bg-red-100 text-red-600',
 };
@@ -159,13 +152,11 @@ export default function VisitsPage() {
                     <td className="px-5 py-3 text-brand-muted">{formatRM(amount)}</td>
                     <td className="px-5 py-3 text-brand-muted">{hoursFor(a)}h</td>
                     <td className="px-5 py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[status]}`}>{status}</span>
+                      <Badge status={status}>{status}</Badge>
                     </td>
                     <td className="px-5 py-3">
                       {a.status === 'completed' ? (
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${approvalStyles[approvalLabel(a)]}`}>
-                          {approvalLabel(a)}
-                        </span>
+                        <Badge status={approvalLabel(a)}>{approvalLabel(a)}</Badge>
                       ) : (
                         <span className="text-xs text-brand-muted">—</span>
                       )}
@@ -219,16 +210,20 @@ export default function VisitsPage() {
               <div>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">Proof of location selfies</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-brand-green-light to-brand-green/20 text-brand-green">
-                    <Camera size={20} />
-                    <span className="text-[10px] font-medium">Before — check-in selfie</span>
-                    <span className="text-[9px] text-brand-green/70">{formatTime12(inspecting.startTime)}</span>
-                  </div>
-                  <div className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-brand-pink-light to-brand-pink/20 text-brand-pink">
-                    <Camera size={20} />
-                    <span className="text-[10px] font-medium">After — check-out selfie</span>
-                    <span className="text-[9px] text-brand-pink/70">{formatTime12(inspecting.endTime)}</span>
-                  </div>
+                  <VisitSelfieTile
+                    assignmentId={inspecting.id}
+                    kind="checkin"
+                    label="Before — check-in selfie"
+                    time={formatTime12(inspecting.startTime)}
+                    colorClass="from-brand-green-light to-brand-green/20 text-brand-green"
+                  />
+                  <VisitSelfieTile
+                    assignmentId={inspecting.id}
+                    kind="checkout"
+                    label="After — check-out selfie"
+                    time={formatTime12(inspecting.endTime)}
+                    colorClass="from-brand-pink-light to-brand-pink/20 text-brand-pink"
+                  />
                 </div>
                 <div className="mt-2 flex items-center gap-2 rounded-lg bg-brand-cream p-2.5 text-xs text-brand-ink">
                   <MapPin size={13} className="shrink-0 text-brand-green" /> GPS pin at {inspecting.location} — within 80m of registered address, matched both check-in and check-out
@@ -261,10 +256,14 @@ export default function VisitsPage() {
                 <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">
                   <FileSignature size={13} /> Signed checklist form
                 </p>
-                <div className="flex aspect-[4/3] flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-brand-amber-light to-brand-amber/20 text-brand-amber">
-                  <FileSignature size={22} />
-                  <span className="text-[10px] font-medium">Customer-signed checklist photo, taken at end of session</span>
-                </div>
+                <VisitSelfieTile
+                  assignmentId={inspecting.id}
+                  kind="form"
+                  label="Customer-signed checklist photo"
+                  colorClass="from-brand-amber-light to-brand-amber/20 text-brand-amber"
+                  aspect="aspect-[4/3]"
+                  icon={FileSignature}
+                />
               </div>
 
               {inspecting.status === 'completed' && !inspecting.approvalStatus ? (
@@ -279,7 +278,7 @@ export default function VisitsPage() {
                   />
                 </div>
               ) : inspecting.approvalStatus ? (
-                <div className={`flex items-center gap-2 rounded-lg p-3 text-xs font-medium ${approvalStyles[approvalLabel(inspecting)]}`}>
+                <div className={`flex items-center gap-2 rounded-lg p-3 text-xs font-medium ${approvalNoticeStyles[inspecting.approvalStatus === 'approved' ? 'Approved' : 'Rejected']}`}>
                   {inspecting.approvalStatus === 'approved' ? <ShieldCheck size={14} /> : <ShieldX size={14} />}
                   This session was already {approvalLabel(inspecting).toLowerCase()}
                   {inspecting.approvalNote ? ` — ${inspecting.approvalNote}` : ''}.
@@ -307,5 +306,55 @@ export default function VisitsPage() {
       )}
       <div className="h-6" />
     </PageShell>
+  );
+}
+
+/**
+ * Real photo capture for visit proof, persisted via the generic AvatarStore (string-keyed, not
+ * CL-specific) so it survives closing/reopening the inspection modal — matching how every other
+ * photo feature in the app (avatar, treatment photo) already works, instead of a decorative box.
+ */
+function VisitSelfieTile({
+  assignmentId,
+  kind,
+  label,
+  time,
+  colorClass,
+  aspect = 'aspect-square',
+  icon: Icon = Camera,
+}: {
+  assignmentId: string;
+  kind: 'checkin' | 'checkout' | 'form';
+  label: string;
+  time?: string;
+  colorClass: string;
+  aspect?: string;
+  icon?: typeof Camera;
+}) {
+  const { dataUrl, setAvatar } = useAvatarStore(`visit-${kind}-${assignmentId}`);
+
+  function handleUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <label
+      className={`relative flex ${aspect} cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-gradient-to-br text-center ${colorClass}`}
+    >
+      {dataUrl ? (
+        <img src={dataUrl} alt={label} className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <>
+          <Icon size={20} />
+          <span className="px-2 text-[10px] font-medium">{label}</span>
+          {time && <span className="text-[9px] opacity-70">{time}</span>}
+        </>
+      )}
+      <input type="file" accept="image/*" capture={kind === 'form' ? 'environment' : 'user'} onChange={handleUpload} className="hidden" />
+    </label>
   );
 }

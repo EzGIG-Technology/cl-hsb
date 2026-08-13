@@ -28,6 +28,7 @@ import { useActivityLog } from '../store/ActivityLogContext';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { formatDateLabel, formatTime12 } from '../lib/date';
 import { monthlySpendForClient } from '../lib/clientMetrics';
+import type { Client } from '../types';
 
 const paymentStatusBadge: Record<string, 'completed' | 'pending' | 'confirmed'> = {
   released: 'completed',
@@ -49,6 +50,7 @@ export default function ClientProfilePage() {
   const [addressDraft, setAddressDraft] = useState(client?.address ?? '');
   const [locationDraft, setLocationDraft] = useState(client?.location ?? '');
   const [showPicker, setShowPicker] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   if (!client) {
     return (
@@ -111,7 +113,15 @@ export default function ClientProfilePage() {
                 <Badge status={returning ? 'completed' : 'upcoming'}>{returning ? 'Returning Customer' : 'New Customer'}</Badge>
               </div>
             </div>
-            <Badge status={client.status}>{client.status}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge status={client.status}>{client.status}</Badge>
+              <button
+                onClick={() => setEditingProfile(true)}
+                className="flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-brand-ink hover:bg-brand-cream"
+              >
+                <Pencil size={13} /> Edit Profile
+              </button>
+            </div>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 border-t border-black/5 pt-4 sm:grid-cols-4">
@@ -333,7 +343,71 @@ export default function ClientProfilePage() {
           )}
         </Card>
       </div>
+      {editingProfile && <EditClientModal client={client} onClose={() => setEditingProfile(false)} />}
       <div className="h-6" />
     </PageShell>
+  );
+}
+
+function EditClientModal({ client, onClose }: { client: Client; onClose: () => void }) {
+  const { updateDetails } = useClientStore();
+  const { logAction } = useActivityLog();
+  const [phone, setPhone] = useState(client.phone);
+  const [email, setEmail] = useState(client.email);
+  const [dueOrBirthDate, setDueOrBirthDate] = useState(client.dueOrBirthDate);
+  const [notes, setNotes] = useState(client.notes ?? '');
+  const [status, setStatus] = useState<Client['status']>(client.status);
+
+  function save() {
+    updateDetails(client.id, { phone: phone.trim(), email: email.trim(), dueOrBirthDate, notes: notes.trim() || undefined, status });
+    logAction('Admin Amy', 'Edited client profile', client.name);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-black/5 p-4">
+          <p className="text-sm font-semibold text-brand-ink">Edit profile — {client.name}</p>
+          <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="space-y-3 p-5">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Phone</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Email</label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Due / birth date</label>
+            <input type="date" value={dueOrBirthDate} onChange={(e) => setDueOrBirthDate(e.target.value)} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value as Client['status'])} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink">
+              <option value="upcoming">Upcoming</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-black/5 p-4">
+          <button onClick={onClose} className="rounded-full px-4 py-2 text-sm text-brand-muted hover:bg-brand-cream">
+            Cancel
+          </button>
+          <button onClick={save} className="rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark">
+            Save changes
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
