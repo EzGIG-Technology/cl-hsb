@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PlusCircle, X, ChevronRight, ChevronLeft, Star, Sparkles, Check } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
+import { PackageArt } from '../components/PackageArt';
 import { Card, Badge, Avatar, formatRM } from '../components/ui';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useClientStore } from '../store/ClientStore';
@@ -93,9 +95,11 @@ export default function BookingsPage() {
               <tbody>
                 {filteredUnassigned.map((c) => (
                   <tr key={c.id} className="border-t border-black/5">
-                    <td className="flex items-center gap-2 px-5 py-3">
-                      <Avatar name={c.name} size={26} />
-                      {c.name}
+                    <td className="px-5 py-3">
+                      <Link to={`/clients/${c.id}`} className="flex items-center gap-2 hover:underline">
+                        <Avatar name={c.name} size={26} />
+                        <span className="text-brand-ink">{c.name}</span>
+                      </Link>
                     </td>
                     <td className="px-5 py-3 text-brand-muted">{packageById(c.packageIds[0])?.shortName}</td>
                     <td className="px-5 py-3 text-brand-muted">{c.location}</td>
@@ -143,10 +147,20 @@ export default function BookingsPage() {
                   return (
                     <tr key={a.id} className="border-t border-black/5">
                       <td className="px-5 py-3 font-mono text-xs text-brand-muted">#{a.id.toUpperCase()}</td>
-                      <td className="px-5 py-3 text-brand-ink">{client?.name}</td>
-                      <td className="flex items-center gap-2 px-5 py-3">
-                        {cl && <Avatar name={cl.name} color={cl.avatarColor} size={24} />}
-                        <span className="text-brand-muted">{cl?.name}</span>
+                      <td className="px-5 py-3">
+                        {client && (
+                          <Link to={`/clients/${client.id}`} className="text-brand-ink hover:underline">
+                            {client.name}
+                          </Link>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        {cl && (
+                          <Link to={`/cls/${cl.id}`} className="flex items-center gap-2 hover:underline">
+                            <Avatar name={cl.name} color={cl.avatarColor} size={24} />
+                            <span className="text-brand-muted">{cl.name}</span>
+                          </Link>
+                        )}
                       </td>
                       <td className="px-5 py-3 text-brand-muted">{pkg?.shortName}</td>
                       <td className="px-5 py-3 text-brand-muted">
@@ -299,10 +313,11 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                           setPackageId(p.id);
                           setTierDays(p.tiers[0]?.days ?? null);
                         }}
-                        className={`rounded-lg border p-2.5 text-left text-sm ${
+                        className={`flex items-center gap-2 rounded-lg border p-2.5 text-left text-sm ${
                           packageId === p.id ? 'border-brand-pink bg-brand-pink-light text-brand-pink-dark' : 'border-black/10 hover:bg-brand-cream'
                         }`}
                       >
+                        <PackageArt pkg={p} size={30} rounded="rounded-lg" />
                         {p.shortName}
                       </button>
                     ))}

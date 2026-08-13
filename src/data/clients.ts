@@ -3,9 +3,9 @@ import type { Client } from '../types';
 export const clients: Client[] = [
   {
     id: 'cli-01',
-    name: 'Sofea Rahman',
+    name: 'Siti Rahman',
     phone: '+60 12-556 7890',
-    email: 'sofea.rahman@gmail.com',
+    email: 'siti.rahman@gmail.com',
     address: 'Jalan Setia Alam U13/AB, Setia Alam',
     location: 'Setia Alam, Selangor',
     packageIds: ['melur'],

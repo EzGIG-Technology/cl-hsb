@@ -22,6 +22,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Hash,
+  ClipboardCheck,
 } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar, SectionTitle } from '../components/ui';
@@ -30,7 +31,7 @@ import { assignments } from '../data/assignments';
 import { useSettings } from '../store/SettingsContext';
 import { useClientStore } from '../store/ClientStore';
 import { useActivityLog } from '../store/ActivityLogContext';
-import { computeCLMetrics } from '../lib/clMetrics';
+import { computeCLMetrics, monthlyFinancialsForCL } from '../lib/clMetrics';
 import { formatTime12, formatDateLabel, TODAY_STR } from '../lib/date';
 import { tierForCL, type CLFlag, type CLStatus } from '../types';
 
@@ -84,19 +85,11 @@ export default function CLProfilePage() {
   const history = assignments.filter((a) => a.clId === cl.id).sort((a, b) => b.date.localeCompare(a.date));
   const tier = tierForCL(cl.completedAssignments);
   const metrics = computeCLMetrics(cl, assignments.filter((a) => a.clId === cl.id));
+  const monthlyFinancials = monthlyFinancialsForCL(cl, assignments.filter((a) => a.clId === cl.id));
 
   const scheduleRows = history.filter((a) => a.date >= TODAY_STR && a.status !== 'cancelled');
   const activeRows = history.filter((a) => a.date === TODAY_STR && (a.status === 'confirmed' || a.status === 'pending'));
   const completedRows = history.filter((a) => a.status === 'completed');
-  const monthlyOutput = Object.entries(
-    history
-      .filter((a) => a.status === 'completed')
-      .reduce<Record<string, number>>((acc, a) => {
-        const month = a.date.slice(0, 7);
-        acc[month] = (acc[month] ?? 0) + 1;
-        return acc;
-      }, {}),
-  );
 
   const tabRows = tab === 'schedule' ? scheduleRows : tab === 'active' ? activeRows : tab === 'completed' ? completedRows : [];
 
@@ -181,8 +174,9 @@ export default function CLProfilePage() {
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-black/5 pt-4 sm:grid-cols-4 lg:grid-cols-7">
+        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-black/5 pt-4 sm:grid-cols-4 lg:grid-cols-8">
           <Stat icon={<Hash size={12} />} label="Total Sessions" value={cl.completedAssignments} />
+          <Stat icon={<ClipboardCheck size={12} />} label="Sessions Planned" value={scheduleRows.length} />
           <Stat icon={<Clock size={12} />} label="Verified Hours" value={metrics.verifiedHours} />
           <Stat icon={<Wallet size={12} />} label="Lifetime Earnings" value={`RM ${metrics.lifetimeEarnings.toLocaleString()}`} />
           <Stat icon={<Hash size={12} />} label="Current Job ID" value={metrics.currentJobId} />
@@ -233,14 +227,45 @@ export default function CLProfilePage() {
               </div>
               <div className="p-4">
                 {tab === 'monthly' ? (
-                  <div className="space-y-2">
-                    {monthlyOutput.length === 0 && <p className="text-sm text-brand-muted">No completed jobs yet.</p>}
-                    {monthlyOutput.map(([month, count]) => (
-                      <div key={month} className="flex items-center justify-between rounded-xl border border-black/5 px-3 py-2 text-sm">
-                        <span className="text-brand-ink">{new Date(`${month}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
-                        <span className="text-brand-muted">{count} completed</span>
-                      </div>
-                    ))}
+                  <div>
+                    <p className="mb-3 text-xs text-brand-muted">
+                      Approved sessions are paid at RM {22 * 4}/session (4h @ RM22/hr). Disapproved sessions were completed but rejected at
+                      approval review — no pay released.
+                    </p>
+                    <div className="overflow-x-auto rounded-xl border border-black/5">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-black/5 bg-brand-cream text-left text-xs text-brand-muted">
+                            <th className="px-3 py-2 font-medium">Month</th>
+                            <th className="px-3 py-2 font-medium">Approved</th>
+                            <th className="px-3 py-2 font-medium">Disapproved</th>
+                            <th className="px-3 py-2 font-medium">Earned</th>
+                            <th className="px-3 py-2 font-medium">Lost</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthlyFinancials.map((m) => (
+                            <tr key={m.month} className={`border-b border-black/5 last:border-b-0 ${m.isCurrent ? 'bg-brand-pink-light/40' : ''}`}>
+                              <td className="px-3 py-2 font-medium text-brand-ink">
+                                {m.month}
+                                {m.isCurrent && <span className="ml-1.5 rounded-full bg-brand-pink px-1.5 py-0.5 text-[9px] font-semibold text-white">Current</span>}
+                              </td>
+                              <td className="px-3 py-2 text-brand-green">{m.approvedSessions}</td>
+                              <td className="px-3 py-2 text-red-600">{m.disapprovedSessions}</td>
+                              <td className="px-3 py-2 font-medium text-brand-ink">RM {m.earned.toLocaleString()}</td>
+                              <td className="px-3 py-2 text-red-500">RM {m.lost.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                          <tr className="bg-brand-cream font-semibold text-brand-ink">
+                            <td className="px-3 py-2">6-month total</td>
+                            <td className="px-3 py-2 text-brand-green">{monthlyFinancials.reduce((s, m) => s + m.approvedSessions, 0)}</td>
+                            <td className="px-3 py-2 text-red-600">{monthlyFinancials.reduce((s, m) => s + m.disapprovedSessions, 0)}</td>
+                            <td className="px-3 py-2">RM {monthlyFinancials.reduce((s, m) => s + m.earned, 0).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-red-500">RM {monthlyFinancials.reduce((s, m) => s + m.lost, 0).toLocaleString()}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">

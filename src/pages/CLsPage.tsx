@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, ShieldAlert, ShieldX, Trophy } from 'lucide-react';
+import { Star, ShieldAlert, ShieldX, Trophy, UserPlus, X, Phone, MapPin, IdCard, Mail } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
+import { useActivityLog } from '../store/ActivityLogContext';
 import { leaderboardRank } from '../lib/clMetrics';
 import { tierForCL, type CLStatus } from '../types';
 
@@ -27,9 +28,18 @@ const podiumStyles = ['border-brand-amber bg-brand-amber-light', 'border-gray-30
 
 export default function CLsPage() {
   const navigate = useNavigate();
-  const { cls } = useCLStore();
+  const { cls, addCL } = useCLStore();
+  const { logAction } = useActivityLog();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<CLStatus | 'all' | 'flagged'>('all');
+  const [showAdd, setShowAdd] = useState(false);
+
+  function handleAdd(input: { name: string; phone: string; location: string; icNumber: string; email?: string }) {
+    const cl = addCL(input);
+    logAction('Admin Amy', 'Added new caregiver', cl.name);
+    setShowAdd(false);
+    navigate(`/cls/${cl.id}`);
+  }
 
   const counts = useMemo(() => {
     const base: Record<string, number> = { 'on-duty': 0, available: 0, 'on-leave': 0, 'off-duty': 0, flagged: 0 };
@@ -55,6 +65,14 @@ export default function CLsPage() {
       subtitle={`${cls.length} CLs on the roster — ${counts.flagged} flagged for review`}
       searchPlaceholder="Search CL by name or area"
       onSearch={setQuery}
+      headerAction={
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark"
+        >
+          <UserPlus size={15} /> Add Caregiver
+        </button>
+      }
     >
       <Card className="mb-5">
         <div className="mb-3 flex items-center gap-2">
@@ -165,7 +183,80 @@ export default function CLsPage() {
         </div>
         <div className="h-2" />
       </Card>
+      {showAdd && <AddCaregiverModal onClose={() => setShowAdd(false)} onSubmit={handleAdd} />}
       <div className="h-6" />
     </PageShell>
+  );
+}
+
+function AddCaregiverModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (input: { name: string; phone: string; location: string; icNumber: string; email?: string }) => void;
+}) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
+  const [icNumber, setIcNumber] = useState('');
+  const [email, setEmail] = useState('');
+
+  const canSubmit = name.trim() && phone.trim() && location.trim() && icNumber.trim();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-black/5 p-4">
+          <p className="text-sm font-semibold text-brand-ink">Add new caregiver</p>
+          <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="space-y-3 p-5">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Full name *</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nurul Huda binti Ismail" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
+              <Phone size={11} /> Phone number *
+            </label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+60 12-345 6789" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
+              <IdCard size={11} /> IC number *
+            </label>
+            <input value={icNumber} onChange={(e) => setIcNumber(e.target.value)} placeholder="900101-10-1234" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
+              <MapPin size={11} /> Base location *
+            </label>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Shah Alam, Selangor" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <div>
+            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
+              <Mail size={11} /> Email
+            </label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@nrmothercare.my" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+          </div>
+          <p className="text-xs text-brand-muted">Address, languages, experience, bio, and specialties can be filled in on the caregiver's profile next.</p>
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-black/5 p-4">
+          <button onClick={onClose} className="rounded-full px-4 py-2 text-sm text-brand-muted hover:bg-brand-cream">
+            Cancel
+          </button>
+          <button
+            disabled={!canSubmit}
+            onClick={() => onSubmit({ name: name.trim(), phone: phone.trim(), location: location.trim(), icNumber: icNumber.trim(), email: email.trim() || undefined })}
+            className="rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white disabled:opacity-30"
+          >
+            Add &amp; complete profile
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

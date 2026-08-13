@@ -19,13 +19,29 @@ function loadInitial(): ConfinementLady[] {
   return seedCLs;
 }
 
+const avatarPalette = ['#d94f8c', '#3c6f57', '#c98a3b', '#4f8a6d', '#b13570', '#3b6d8a', '#8b5fbf', '#2f9b87'];
+
+export interface NewCLInput {
+  name: string;
+  phone: string;
+  location: string;
+  icNumber?: string;
+  email?: string;
+  address?: string;
+  yearsExperience?: number;
+  languages?: string[];
+  shiftAvailability?: ConfinementLady['shiftAvailability'];
+}
+
 interface CLStoreValue {
   cls: ConfinementLady[];
   clById: (id: string) => ConfinementLady | undefined;
+  addCL: (input: NewCLInput) => ConfinementLady;
   updateFlag: (id: string, flag: CLFlag, note?: string) => void;
   updateStatus: (id: string, status: CLStatus) => void;
   updateTreatmentPhoto: (id: string, dataUrl: string | undefined) => void;
   updatePassport: (id: string, passportNumber: string) => void;
+  updateDetails: (id: string, patch: Partial<Pick<ConfinementLady, 'phone' | 'email' | 'address' | 'icNumber' | 'yearsExperience' | 'languages' | 'bio' | 'specialties'>>) => void;
   resetToDefaults: () => void;
 }
 
@@ -46,6 +62,32 @@ export function CLStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       cls,
       clById: (id) => cls.find((c) => c.id === id),
+      addCL: (input) => {
+        const newCL: ConfinementLady = {
+          id: `cl-${Date.now()}`,
+          name: input.name,
+          avatarColor: avatarPalette[cls.length % avatarPalette.length],
+          phone: input.phone,
+          email: input.email ?? '',
+          icNumber: input.icNumber ?? '',
+          address: input.address ?? '',
+          location: input.location,
+          joinedDate: new Date().toISOString().slice(0, 10),
+          status: 'available',
+          rating: 5,
+          reviewCount: 0,
+          completedAssignments: 0,
+          specialties: [],
+          languages: input.languages ?? ['Bahasa Malaysia'],
+          yearsExperience: input.yearsExperience ?? 0,
+          flag: 'none',
+          bio: '',
+          shiftAvailability: input.shiftAvailability ?? 'flexible',
+        };
+        setCLs((prev) => [...prev, newCL]);
+        return newCL;
+      },
+      updateDetails: (id, patch) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c))),
       updateFlag: (id, flag, note) =>
         setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, flag, flagNote: flag === 'none' ? undefined : note } : c))),
       updateStatus: (id, status) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c))),

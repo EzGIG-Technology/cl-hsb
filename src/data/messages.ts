@@ -3,16 +3,16 @@ import type { MessageThread } from '../types';
 export const messageThreads: MessageThread[] = [
   {
     id: 'th-01',
-    participantName: 'Sarah Yusof',
+    participantName: 'Mariam Yusof',
     participantType: 'cl',
     avatarColor: '#d94f8c',
-    lastMessage: 'Baru sampai rumah Puan Sofea, dah clock in.',
+    lastMessage: 'Baru sampai rumah Puan Siti, dah clock in.',
     lastMessageAt: '09:04',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Morning Sarah, sesi hari ini pukul 9 pagi ye di Setia Alam.', time: '08:15' },
+      { id: 'm1', from: 'admin', text: 'Morning Mariam, sesi hari ini pukul 9 pagi ye di Setia Alam.', time: '08:15' },
       { id: 'm2', from: 'them', text: 'Ok admin, on the way sekarang.', time: '08:42' },
-      { id: 'm3', from: 'them', text: 'Baru sampai rumah Puan Sofea, dah clock in.', time: '09:04' },
+      { id: 'm3', from: 'them', text: 'Baru sampai rumah Puan Siti, dah clock in.', time: '09:04' },
     ],
   },
   {

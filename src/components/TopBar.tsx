@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import { ProfileAvatar } from './ui';
 
 interface TopBarProps {
   searchPlaceholder?: string;
@@ -23,9 +24,9 @@ export function TopBar({ searchPlaceholder = 'Search caregiver, booking ID, cust
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-green" /> Live Sync
         </span>
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-pink text-xs font-semibold text-white">SL</div>
+          <ProfileAvatar avatarKey="admin" name="Superadmin" size={34} />
           <div className="hidden sm:block">
-            <p className="text-xs font-medium leading-tight text-brand-ink">Sarah Lim</p>
+            <p className="text-xs font-medium leading-tight text-brand-ink">Superadmin</p>
             <p className="text-[10px] leading-tight text-brand-muted">Admin</p>
           </div>
         </div>

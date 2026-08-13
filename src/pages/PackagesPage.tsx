@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
+import { PackageArt } from '../components/PackageArt';
 import { Card, formatRM } from '../components/ui';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
@@ -30,9 +31,12 @@ export default function PackagesPage() {
         {packages.map((pkg) => (
           <Card key={pkg.id} className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate(`/packages/${pkg.id}`)}>
             <div className="flex items-start justify-between">
-              <div>
-                <p className="font-semibold text-brand-ink">{pkg.name}</p>
-                <p className="text-xs text-brand-muted">{pkg.durationEstimate}</p>
+              <div className="flex items-center gap-3">
+                <PackageArt pkg={pkg} size={48} />
+                <div>
+                  <p className="font-semibold text-brand-ink">{pkg.name}</p>
+                  <p className="text-xs text-brand-muted">{pkg.durationEstimate}</p>
+                </div>
               </div>
               <span className="rounded-full bg-brand-pink-light px-2 py-0.5 text-[10px] font-medium text-brand-pink capitalize">{pkg.category}</span>
             </div>

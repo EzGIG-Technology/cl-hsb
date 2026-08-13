@@ -9,10 +9,10 @@ function color(i: number) {
 export const confinementLadies: ConfinementLady[] = [
   {
     id: 'cl-01',
-    name: 'Sarah Yusof',
+    name: 'Mariam Yusof',
     avatarColor: color(0),
     phone: '+60 12-345 6781',
-    email: 'sarah.yusof@nrmothercare.my',
+    email: 'mariam.yusof@nrmothercare.my',
     icNumber: '890214-10-5521',
     address: 'No 12, Jalan Setia Alam U13, Setia Alam',
     location: 'Setia Alam, Selangor',

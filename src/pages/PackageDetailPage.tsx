@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, MapPin } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
+import { PackageArt } from '../components/PackageArt';
 import { Card, SectionTitle } from '../components/ui';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
@@ -38,6 +39,14 @@ export default function PackageDetailPage() {
       <button onClick={() => navigate('/packages')} className="mb-4 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-ink">
         <ArrowLeft size={15} /> Back to Packages
       </button>
+
+      <div className="mb-5 flex items-center gap-3">
+        <PackageArt pkg={pkg} size={64} />
+        <div>
+          <p className="text-lg font-semibold text-brand-ink">{pkg.name}</p>
+          <p className="text-sm text-brand-muted">{pkg.durationEstimate} · {pkg.category}</p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">

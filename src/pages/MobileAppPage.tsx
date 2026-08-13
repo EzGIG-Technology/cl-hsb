@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronRight,
@@ -28,18 +28,19 @@ import {
   LogOut,
   IdCard,
   ArrowLeft,
+  Clock,
 } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
-import { Logo } from '../components/Logo';
-import { Avatar } from '../components/ui';
+import { PackageArt } from '../components/PackageArt';
+import { Avatar, ProfileAvatar } from '../components/ui';
 import { assignments } from '../data/assignments';
 import { clientById } from '../data/clients';
 import { useSettings } from '../store/SettingsContext';
 import { useCLStore } from '../store/CLStore';
-import { formatTime12, formatDateLabel } from '../lib/date';
+import { formatTime12, formatDateLabel, TODAY_STR } from '../lib/date';
 import type { Assignment, ConfinementLady, Package } from '../types';
 
-const FEATURED_MOTHER_ID = 'cli-01'; // Sofea Rahman — matches seeded assignments
+const FEATURED_MOTHER_ID = 'cli-01'; // Siti Rahman — matches seeded assignments
 const PERSONA_IDS = ['cl-01', 'cl-04', 'cl-05', 'cl-06'];
 
 type AppMode = 'cl' | 'mother-review' | 'mother-app';
@@ -75,7 +76,7 @@ export default function MobileAppPage() {
   const { packageById } = useSettings();
   const mother = clientById(FEATURED_MOTHER_ID);
 
-  const reviewedAssignment = assignments.find((a) => a.id === 'asg-06'); // Sofea Rahman's most recent completed Melur session
+  const reviewedAssignment = assignments.find((a) => a.id === 'asg-06'); // Siti Rahman's most recent completed Melur session
   const [reviewCl] = useState(() => clById('cl-01'));
 
   if (!mother || !reviewCl) return null;
@@ -137,115 +138,117 @@ export default function MobileAppPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-10 px-8 py-8 lg:grid-cols-2">
-            <div>
-              {appMode === 'cl' && (
-                <>
-                  <span className="inline-block rounded-full bg-brand-pink-light px-3 py-1 text-xs font-semibold text-brand-pink">
-                    iOS & Android
-                  </span>
-                  <h2 className="mt-4 text-4xl font-semibold text-brand-ink">Built for caregivers on the move</h2>
-                  <p className="mt-3 max-w-sm text-brand-muted">
-                    Tap "Open Job" on the Home or Jobs tab to see the full checklist + photo-proof flow. Switch personas
-                    under Profile → Demo Controls.
-                  </p>
-                  <div className="mt-8 grid grid-cols-2 gap-3 max-w-md">
-                    {features.map((f) => (
-                      <div key={f} className="flex items-center gap-2 rounded-xl border border-black/5 bg-white px-3 py-3 text-sm text-brand-ink shadow-sm">
-                        <CheckCircle2 size={16} className="shrink-0 text-brand-green" />
-                        {f}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+          {appMode === 'mother-review' ? (
+            <div className="px-8 py-8">
+              <div className="mx-auto max-w-2xl text-center">
+                <span className="inline-block rounded-full bg-brand-green-light px-3 py-1 text-xs font-semibold text-brand-green">
+                  Phase 1 — built now
+                </span>
+                <h2 className="mt-4 text-3xl font-semibold text-brand-ink">Session review, not an app</h2>
+                <p className="mx-auto mt-3 max-w-lg text-brand-muted">
+                  Sent as a link (SMS/WhatsApp) after each completed session — opens in the browser, no login or app
+                  install required. Ratings and notes go to admin only; they're never shown to the CL, matching what we
+                  agreed on the call.
+                </p>
+                <div className="mx-auto mt-6 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
+                  {['4 quick star ratings', 'Optional free-text feedback', 'Tap-to-sign confirmation', 'One tap to call HQ if urgent'].map((f) => (
+                    <div key={f} className="flex items-center justify-center rounded-xl border border-black/5 bg-white px-3 py-2.5 text-center text-xs font-medium text-brand-ink shadow-sm">
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-              {appMode === 'mother-review' && (
-                <>
-                  <span className="inline-block rounded-full bg-brand-green-light px-3 py-1 text-xs font-semibold text-brand-green">
-                    Phase 1 — built now
-                  </span>
-                  <h2 className="mt-4 text-3xl font-semibold text-brand-ink">Session review, not an app</h2>
-                  <p className="mt-3 max-w-sm text-brand-muted">
-                    Sent as a link (SMS/WhatsApp) after each completed session — no login required. Ratings and notes go to
-                    admin only; they're never shown to the CL, matching what we agreed on the call.
-                  </p>
-                  <div className="mt-6 space-y-2 max-w-sm">
-                    {['4 quick star ratings', 'Optional free-text feedback', 'Tap-to-sign confirmation', 'One tap to call HQ if urgent'].map((f) => (
-                      <div key={f} className="flex items-center gap-2 rounded-xl border border-black/5 bg-white px-3 py-2.5 text-sm text-brand-ink shadow-sm">
-                        <CheckCircle2 size={16} className="shrink-0 text-brand-green" />
-                        {f}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {appMode === 'mother-app' && (
-                <>
-                  <span className="inline-block rounded-full bg-brand-amber-light px-3 py-1 text-xs font-semibold text-brand-amber">
-                    Phase 2 — planning preview
-                  </span>
-                  <h2 className="mt-4 text-3xl font-semibold text-brand-ink">Full mother companion app</h2>
-                  <p className="mt-3 max-w-sm text-brand-muted">
-                    Only the review form (left) is scoped for launch. This tab is a preview of where the mother experience
-                    could go next — profile, bookings, add-ons, payments, and reschedule requests.
-                  </p>
-                  <p className="mb-2 mt-8 text-xs font-semibold tracking-wide text-brand-muted">PREVIEW TABS</p>
-                  <div className="flex flex-wrap gap-2">
-                    {motherTabs.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setMotherTab(t.id)}
-                        className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                          motherTab === t.id ? 'bg-brand-amber text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
-                        }`}
-                      >
-                        <t.icon size={15} />
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+              <div className="mx-auto mt-10 max-w-4xl rounded-3xl bg-gradient-to-br from-brand-pink-light via-white to-brand-green-light p-8">
+                <BrowserFrame url="review.nrmothercare.com/r/8f2a91">
+                  <MotherReviewWebScreen cl={reviewCl} mother={mother} assignment={reviewedAssignment} pkg={motherPkg} />
+                </BrowserFrame>
+              </div>
             </div>
-
-            <div className="flex justify-center">
-              {appMode === 'cl' && <CLAppSection />}
-
-              {appMode === 'mother-review' && (
-                <PhoneFrame noPadding>
-                  <MotherReviewScreen cl={reviewCl} mother={mother} assignment={reviewedAssignment} pkg={motherPkg} />
-                </PhoneFrame>
-              )}
-
-              {appMode === 'mother-app' && (
-                <PhoneFrame>
-                  <div className="mb-2 flex justify-center">
-                    <span className="rounded-full bg-brand-amber-light px-2.5 py-0.5 text-[10px] font-semibold text-brand-amber">
-                      PHASE 2 PREVIEW
+          ) : (
+            <div className="grid grid-cols-1 gap-10 px-8 py-8 lg:grid-cols-2">
+              <div>
+                {appMode === 'cl' && (
+                  <>
+                    <span className="inline-block rounded-full bg-brand-pink-light px-3 py-1 text-xs font-semibold text-brand-pink">
+                      iOS & Android
                     </span>
-                  </div>
-                  {motherTab === 'home' && <MotherHomeScreen mother={mother} pkg={motherPkg} cl={reviewCl} />}
-                  {motherTab === 'bookings' && <MotherBookingsScreen mother={mother} />}
-                  {motherTab === 'reviews' && <MotherReviewsScreen cl={reviewCl} />}
-                  {motherTab === 'profile' && <MotherProfileScreen mother={mother} />}
-                  <div className="mt-auto flex items-center justify-around border-t border-black/5 bg-white px-2 py-3">
-                    {motherTabs.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setMotherTab(t.id)}
-                        className={`flex flex-col items-center gap-1 text-[10px] ${motherTab === t.id ? 'text-brand-amber' : 'text-brand-muted'}`}
-                      >
-                        <t.icon size={18} />
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                </PhoneFrame>
-              )}
+                    <h2 className="mt-4 text-4xl font-semibold text-brand-ink">Built for caregivers on the move</h2>
+                    <p className="mt-3 max-w-sm text-brand-muted">
+                      Tap "Open Job" on the Home or Jobs tab to see the full checklist + photo-proof flow. Switch personas
+                      under Profile → Demo Controls.
+                    </p>
+                    <div className="mt-8 grid grid-cols-2 gap-3 max-w-md">
+                      {features.map((f) => (
+                        <div key={f} className="flex items-center gap-2 rounded-xl border border-black/5 bg-white px-3 py-3 text-sm text-brand-ink shadow-sm">
+                          <CheckCircle2 size={16} className="shrink-0 text-brand-green" />
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {appMode === 'mother-app' && (
+                  <>
+                    <span className="inline-block rounded-full bg-brand-amber-light px-3 py-1 text-xs font-semibold text-brand-amber">
+                      Phase 2 — planning preview
+                    </span>
+                    <h2 className="mt-4 text-3xl font-semibold text-brand-ink">Full mother companion app</h2>
+                    <p className="mt-3 max-w-sm text-brand-muted">
+                      Only the review form is scoped for launch. This tab is a preview of where the mother experience
+                      could go next — profile, bookings, add-ons, payments, and reschedule requests.
+                    </p>
+                    <p className="mb-2 mt-8 text-xs font-semibold tracking-wide text-brand-muted">PREVIEW TABS</p>
+                    <div className="flex flex-wrap gap-2">
+                      {motherTabs.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setMotherTab(t.id)}
+                          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                            motherTab === t.id ? 'bg-brand-amber text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+                          }`}
+                        >
+                          <t.icon size={15} />
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="flex justify-center rounded-3xl bg-gradient-to-br from-brand-pink-light via-white to-brand-green-light p-8">
+                {appMode === 'cl' && <CLAppSection />}
+
+                {appMode === 'mother-app' && (
+                  <PhoneFrame>
+                    <div className="mb-2 flex justify-center">
+                      <span className="rounded-full bg-brand-amber-light px-2.5 py-0.5 text-[10px] font-semibold text-brand-amber">
+                        PHASE 2 PREVIEW
+                      </span>
+                    </div>
+                    {motherTab === 'home' && <MotherHomeScreen mother={mother} pkg={motherPkg} cl={reviewCl} />}
+                    {motherTab === 'bookings' && <MotherBookingsScreen mother={mother} />}
+                    {motherTab === 'reviews' && <MotherReviewsScreen cl={reviewCl} />}
+                    {motherTab === 'profile' && <MotherProfileScreen mother={mother} />}
+                    <div className="mt-auto flex items-center justify-around border-t border-black/5 bg-white px-2 py-3">
+                      {motherTabs.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setMotherTab(t.id)}
+                          className={`flex flex-col items-center gap-1 text-[10px] ${motherTab === t.id ? 'text-brand-amber' : 'text-brand-muted'}`}
+                        >
+                          <t.icon size={18} />
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </PhoneFrame>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -270,6 +273,25 @@ function PhoneFrame({ children, noPadding = false }: { children: ReactNode; noPa
   );
 }
 
+function BrowserFrame({ children, url }: { children: ReactNode; url: string }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
+      <div className="flex items-center gap-3 border-b border-black/5 bg-brand-cream/60 px-4 py-2.5">
+        <div className="flex gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+          <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+          <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+        </div>
+        <div className="flex flex-1 items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs text-brand-muted ring-1 ring-black/5">
+          <ShieldCheck size={12} className="shrink-0 text-brand-green" />
+          <span className="truncate">{url}</span>
+        </div>
+      </div>
+      <div className="scrollbar-thin max-h-[80vh] overflow-y-auto">{children}</div>
+    </div>
+  );
+}
+
 // ---------- Confinement Lady app ----------
 
 function CLAppSection() {
@@ -287,7 +309,7 @@ function CLAppSection() {
   return (
     <PhoneFrame>
       {openAssignment ? (
-        <SessionFlow assignment={openAssignment} onClose={() => setOpenAssignmentId(null)} />
+        <SessionFlow assignment={openAssignment} cl={cl} myAssignments={myAssignments} onClose={() => setOpenAssignmentId(null)} />
       ) : (
         <>
           {tab === 'home' && <CLHomeScreen cl={cl} assignments={myAssignments} onOpenJob={setOpenAssignmentId} onGoTo={setTab} />}
@@ -347,60 +369,70 @@ function CLHomeScreen({
   return (
     <div className="flex-1">
       <div className="flex items-center justify-between">
-        <Logo variant="icon" size={30} />
-        <span className="flex items-center gap-1 rounded-full bg-brand-green-light px-2 py-1 text-[10px] font-medium text-brand-green">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand-green" /> Data synced
-        </span>
-        <Bell size={16} className="text-brand-ink" />
-      </div>
-
-      <p className="mt-4 text-xs text-brand-muted">Thursday, 13 Aug</p>
-      <h3 className="text-xl font-semibold text-brand-ink">Hi, {cl.name.split(' ')[0]} 👋</h3>
-      <p className="text-xs text-brand-muted">
-        {clShortId(cl.id)} · {cl.location.split(',')[0]}
-      </p>
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-brand-cream p-3">
-          <p className="text-lg font-semibold text-brand-ink">{monthAssignments.length}</p>
-          <p className="text-[10px] text-brand-muted">Sessions this month</p>
+        <div className="flex items-center gap-2">
+          <ProfileAvatar avatarKey={cl.id} name={cl.name} color={cl.avatarColor} size={34} editable={false} />
+          <div>
+            <p className="text-[10px] text-brand-muted">{clShortId(cl.id)} · {cl.location.split(',')[0]}</p>
+            <p className="text-sm font-semibold text-brand-ink">Hi, {cl.name.split(' ')[0]} 👋</p>
+          </div>
         </div>
-        <div className="rounded-xl bg-brand-cream p-3">
-          <p className="text-lg font-semibold text-brand-ink">{Math.round(hoursThisMonth)}</p>
-          <p className="text-[10px] text-brand-muted">Hours this month</p>
-        </div>
-        <div className="rounded-xl bg-brand-cream p-3">
-          <p className="text-lg font-semibold text-brand-ink">RM {Math.round(hoursThisMonth * 22).toLocaleString()}</p>
-          <p className="text-[10px] text-brand-muted">Est. pay this month</p>
-        </div>
-        <div className="rounded-xl bg-brand-cream p-3">
-          <p className="text-lg font-semibold text-brand-ink">{cl.completedAssignments}</p>
-          <p className="text-[10px] text-brand-muted">Total sessions</p>
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-cream">
+          <Bell size={16} className="text-brand-ink" />
         </div>
       </div>
+      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand-green-light px-2 py-1 text-[10px] font-medium text-brand-green">
+        <span className="h-1.5 w-1.5 rounded-full bg-brand-green" /> Data synced · Thursday, 13 Aug
+      </span>
 
       {todaysJob && client && pkg ? (
-        <div className="mt-4 rounded-2xl bg-brand-pink p-4 text-white">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold tracking-wide text-white/70">TODAY'S JOB</p>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium">Assigned</span>
+        <div className="relative mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-pink via-brand-pink to-brand-pink-dark p-4 text-white shadow-lg shadow-brand-pink/20">
+          <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10" />
+          <div className="relative flex items-start justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold tracking-wide text-white/70">TODAY'S JOB</p>
+              <p className="mt-1 truncate text-lg font-semibold">{client.name}</p>
+              <p className="text-xs text-white/80">
+                {client.location} · {pkg.shortName}
+                {dayInfo ? ` · Day ${dayInfo.day} of ${dayInfo.total}` : ''}
+              </p>
+            </div>
+            <Avatar name={client.name} size={40} />
           </div>
-          <p className="mt-1 text-lg font-semibold">{client.name}</p>
-          <p className="text-xs text-white/80">
-            {client.location} · {pkg.shortName}
-            {dayInfo ? ` - Day ${dayInfo.day} of ${dayInfo.total}` : ''}
-          </p>
-          <p className="mt-1 text-xs text-white/80">{formatTime12(todaysJob.startTime)}</p>
+          <div className="relative mt-3 flex items-center gap-1.5 text-xs text-white/85">
+            <Clock size={12} /> Since {formatTime12(todaysJob.startTime)}
+          </div>
+          <div className="relative mt-1 flex items-center gap-1.5 text-xs text-white/85">
+            <ChevronRight size={12} /> Ends {formatTime12(todaysJob.endTime)}
+          </div>
           <button
             onClick={() => onOpenJob(todaysJob.id)}
-            className="mt-3 flex w-full items-center justify-center gap-1 rounded-full bg-white py-2 text-sm font-semibold text-brand-pink"
+            className="relative mt-3 flex w-full items-center justify-center gap-1 rounded-full bg-white py-2 text-sm font-semibold text-brand-pink"
           >
             Open Job <ChevronRight size={14} />
           </button>
         </div>
       ) : (
-        <div className="mt-4 rounded-2xl border border-black/5 p-4 text-center text-sm text-brand-muted">No job scheduled right now.</div>
+        <div className="mt-4 rounded-2xl border border-black/5 bg-white p-4 text-center text-sm text-brand-muted shadow-sm">No job scheduled right now.</div>
       )}
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-xl bg-white p-3 shadow-sm">
+          <p className="text-lg font-semibold text-brand-ink">{monthAssignments.length}</p>
+          <p className="text-[10px] text-brand-muted">Sessions this month</p>
+        </div>
+        <div className="rounded-xl bg-white p-3 shadow-sm">
+          <p className="text-lg font-semibold text-brand-ink">{Math.round(hoursThisMonth)}</p>
+          <p className="text-[10px] text-brand-muted">Hours this month</p>
+        </div>
+        <div className="rounded-xl bg-white p-3 shadow-sm">
+          <p className="text-lg font-semibold text-brand-ink">RM {Math.round(hoursThisMonth * 22).toLocaleString()}</p>
+          <p className="text-[10px] text-brand-muted">Est. pay this month</p>
+        </div>
+        <div className="rounded-xl bg-white p-3 shadow-sm">
+          <p className="text-lg font-semibold text-brand-ink">{cl.completedAssignments}</p>
+          <p className="text-[10px] text-brand-muted">Total sessions</p>
+        </div>
+      </div>
 
       <p className="mb-2 mt-5 text-[11px] font-semibold tracking-wide text-brand-muted">QUICK ACTIONS</p>
       <div className="grid grid-cols-3 gap-2">
@@ -505,9 +537,9 @@ function CLMessagesScreen() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex items-center gap-2 border-b border-black/5 pb-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-green text-xs font-semibold text-white">SL</div>
+        <ProfileAvatar avatarKey="admin" name="Superadmin" size={36} editable={false} />
         <div>
-          <p className="text-sm font-semibold text-brand-ink">Sarah Lim</p>
+          <p className="text-sm font-semibold text-brand-ink">Superadmin</p>
           <p className="text-[10px] text-brand-muted">NR HQ</p>
         </div>
       </div>
@@ -648,8 +680,8 @@ function CLProfileScreen({
   return (
     <div className="flex-1">
       <div className="text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-pink text-lg font-semibold text-white">
-          {cl.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+        <div className="mx-auto flex justify-center">
+          <ProfileAvatar avatarKey={cl.id} name={cl.name} color={cl.avatarColor} size={72} />
         </div>
         <h3 className="mt-2 text-lg font-semibold text-brand-ink">{cl.name}</h3>
         <p className="text-xs text-brand-muted">
@@ -731,7 +763,26 @@ function CLProfileScreen({
 
 type SessionStep = 'checkin' | 'checklist' | 'final-photo' | 'completed';
 
-function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose: () => void }) {
+function formatElapsed(totalSeconds: number) {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    : `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function SessionFlow({
+  assignment,
+  cl,
+  myAssignments,
+  onClose,
+}: {
+  assignment: Assignment;
+  cl: ConfinementLady;
+  myAssignments: Assignment[];
+  onClose: () => void;
+}) {
   const { packageById } = useSettings();
   const client = clientById(assignment.clientId);
   const pkg = packageById(assignment.packageId);
@@ -742,9 +793,22 @@ function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose:
     checklistLabels.map((label) => ({ label, photoTaken: false, done: false })),
   );
   const [formPhotoTaken, setFormPhotoTaken] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [finalElapsed, setFinalElapsed] = useState(0);
+
+  useEffect(() => {
+    if (startedAt === null || step === 'completed') return;
+    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => window.clearInterval(id);
+  }, [startedAt, step]);
 
   const doneCount = items.filter((i) => i.done).length;
   const allDone = items.length > 0 && doneCount === items.length;
+
+  const upcomingToday = myAssignments.filter(
+    (a) => a.id !== assignment.id && a.date === TODAY_STR && (a.status === 'confirmed' || a.status === 'pending'),
+  );
 
   function takePhoto(index: number) {
     setItems((prev) => prev.map((it, i) => (i === index ? { ...it, photoTaken: true } : it)));
@@ -776,7 +840,10 @@ function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose:
             <ShieldCheck size={14} className="text-brand-green" />
           </div>
           <button
-            onClick={() => setStep('checklist')}
+            onClick={() => {
+              setStartedAt(Date.now());
+              setStep('checklist');
+            }}
             disabled={checklistLabels.length === 0}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-brand-green py-3 text-sm font-semibold text-white disabled:opacity-40"
           >
@@ -791,6 +858,9 @@ function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose:
     return (
       <div className="flex flex-1 flex-col">
         <StepHeader step={2} totalSteps={4} label="Package checklist" onBack={() => setStep('checkin')} />
+        <div className="mt-2 flex items-center gap-1.5 self-start rounded-full bg-brand-ink px-2.5 py-1 text-xs font-semibold text-white">
+          <Clock size={12} /> {formatElapsed(elapsed)}
+        </div>
         <p className="mt-2 text-xs text-brand-muted">
           {pkg?.name ?? 'Package'} · {doneCount} of {items.length} tasks done
         </p>
@@ -842,6 +912,9 @@ function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose:
     return (
       <div className="flex flex-1 flex-col">
         <StepHeader step={3} totalSteps={4} label="Signed form" onBack={() => setStep('checklist')} />
+        <div className="mt-2 flex items-center gap-1.5 self-start rounded-full bg-brand-ink px-2.5 py-1 text-xs font-semibold text-white">
+          <Clock size={12} /> {formatElapsed(elapsed)}
+        </div>
         <p className="mt-3 text-sm text-brand-ink">Take a photo of the signed checklist form to close out this session.</p>
         <div className="mt-4 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-black/10 p-6">
           {formPhotoTaken ? (
@@ -861,7 +934,10 @@ function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose:
         </div>
         <button
           disabled={!formPhotoTaken}
-          onClick={() => setStep('completed')}
+          onClick={() => {
+            setFinalElapsed(elapsed);
+            setStep('completed');
+          }}
           className="mt-4 w-full rounded-full bg-brand-pink py-3 text-sm font-semibold text-white disabled:opacity-30"
         >
           Complete session
@@ -871,15 +947,63 @@ function SessionFlow({ assignment, onClose }: { assignment: Assignment; onClose:
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <PartyPopper size={48} className="text-brand-pink" />
-      <h3 className="mt-3 text-xl font-semibold text-brand-ink">Session completed!</h3>
-      <p className="mt-1 max-w-[220px] text-sm text-brand-muted">
-        {items.length} tasks logged with photo proof. Admin has been notified and payment follow-up will begin.
-      </p>
-      <button onClick={onClose} className="mt-6 rounded-full bg-brand-green px-5 py-2.5 text-sm font-medium text-white">
-        Back to Home
-      </button>
+    <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="flex flex-1 flex-col items-center justify-center px-2 py-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-pink text-white shadow-lg shadow-brand-pink/30">
+          <PartyPopper size={30} />
+        </div>
+        <h3 className="mt-4 text-xl font-semibold text-brand-ink">Congratulations!</h3>
+        <p className="mt-2 max-w-[240px] text-sm text-brand-ink">
+          You've completed a session for <span className="font-semibold">{client?.name}</span> under the{' '}
+          <span className="font-semibold">{pkg?.name}</span> package.
+        </p>
+
+        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-brand-cream px-4 py-3">
+          <Clock size={16} className="text-brand-pink" />
+          <div className="text-left">
+            <p className="text-lg font-semibold leading-tight text-brand-ink">{formatElapsed(finalElapsed)}</p>
+            <p className="text-[10px] text-brand-muted">Total time taken</p>
+          </div>
+        </div>
+
+        <p className="mt-4 max-w-[240px] text-xs text-brand-muted">
+          This session will be sent to HQ for review and approval — your selfies and checklist photos are attached.
+        </p>
+      </div>
+
+      <div className="border-t border-black/5 px-1 pb-1 pt-4">
+        <p className="mb-2 flex items-center gap-1.5 px-1 text-[11px] font-semibold tracking-wide text-brand-muted">
+          <Briefcase size={13} /> YOUR UPCOMING ASSIGNMENTS TODAY
+        </p>
+        {upcomingToday.length === 0 ? (
+          <p className="rounded-xl border border-black/5 p-3 text-center text-xs text-brand-muted">
+            Nothing else scheduled for today — enjoy the rest of your day, {cl.name.split(' ')[0]}!
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {upcomingToday.map((a) => {
+              const upClient = clientById(a.clientId);
+              const upPkg = packageById(a.packageId);
+              return (
+                <div key={a.id} className="flex items-center justify-between rounded-xl border border-black/5 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-brand-ink">{upClient?.name}</p>
+                    <p className="text-xs text-brand-muted">
+                      {upPkg?.shortName} · {a.location}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-brand-pink-light px-2 py-0.5 text-[10px] font-medium text-brand-pink">
+                    {formatTime12(a.startTime)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <button onClick={onClose} className="mt-3 w-full rounded-full bg-brand-green py-3 text-sm font-semibold text-white">
+          Back to Home
+        </button>
+      </div>
     </div>
   );
 }
@@ -909,7 +1033,7 @@ const reviewCategories = [
   { key: 'communication', label: 'Communication', sub: 'Clear, respectful, and attentive' },
 ] as const;
 
-function MotherReviewScreen({
+function MotherReviewWebScreen({
   cl,
   mother,
   assignment,
@@ -932,65 +1056,78 @@ function MotherReviewScreen({
 
   if (submitted) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-brand-pink-light to-brand-cream px-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-pink text-white shadow-lg">
-          <PartyPopper size={28} />
+      <div className="flex min-h-[560px] flex-col items-center justify-center bg-gradient-to-b from-brand-pink-light to-white px-8 py-20 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-pink text-white shadow-lg shadow-brand-pink/30">
+          <PartyPopper size={32} />
         </div>
-        <h3 className="mt-4 text-xl font-semibold text-brand-ink">Thank you, {mother.name.split(' ')[0]}!</h3>
-        <p className="mt-2 text-sm text-brand-muted">Your review helps us keep every confinement lady's care at its best.</p>
+        <h3 className="mt-6 text-2xl font-semibold text-brand-ink">Thank you, {mother.name.split(' ')[0]}!</h3>
+        <p className="mt-2 max-w-sm text-sm text-brand-muted">
+          Your review helps us keep every confinement lady's care at its best. You can close this page now.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-brand-cream">
-      <div className="relative overflow-hidden bg-gradient-to-br from-brand-pink via-brand-pink to-brand-pink-dark px-6 pb-12 pt-6 text-white">
-        <div className="absolute -right-8 -top-12 h-32 w-32 rounded-full bg-white/10" />
-        <div className="absolute -left-10 bottom-0 h-24 w-24 rounded-full bg-white/10" />
-        <div className="absolute right-8 top-16 h-10 w-10 rounded-full bg-white/10" />
-        <div className="relative flex items-center gap-2 text-xs font-semibold">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/25">
-            <Sparkles size={14} />
+    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr]">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-pink via-brand-pink to-brand-pink-dark px-8 py-10 text-white">
+        <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10" />
+        <div className="absolute -left-12 bottom-0 h-32 w-32 rounded-full bg-white/10" />
+        <div className="absolute right-10 top-24 h-12 w-12 rounded-full bg-white/10" />
+
+        <div className="relative flex items-center gap-2 text-xs font-semibold tracking-wide">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/25">
+            <Sparkles size={16} />
           </div>
-          NR Mothercare
+          NR MOTHERCARE
         </div>
-        <h2 className="relative mt-4 text-[26px] font-semibold leading-tight">How was your session, {mother.name.split(' ')[0]}?</h2>
-        <p className="relative mt-2 text-sm leading-relaxed text-white/90">
+        <h2 className="relative mt-6 text-[28px] font-semibold leading-tight">How was your session, {mother.name.split(' ')[0]}?</h2>
+        <p className="relative mt-3 text-sm leading-relaxed text-white/90">
           A quick, honest review helps us keep every confinement lady's care at its best.
+        </p>
+
+        <div className="relative mt-10 flex items-center gap-3 rounded-2xl bg-white/15 p-4 ring-1 ring-white/20 backdrop-blur-sm">
+          <Avatar name={cl.name} color={cl.avatarColor} size={48} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-white">{cl.name}</p>
+            <p className="truncate text-xs text-white/80">
+              {pkg?.name ?? 'Package'}
+              {dayInfo ? ` · Day ${dayInfo.day}` : ''}
+            </p>
+            {assignment && <p className="truncate text-xs text-white/70">{formatDateLabel(assignment.date)}</p>}
+          </div>
+        </div>
+
+        {avgRating && (
+          <div className="relative mt-4 flex items-center gap-1.5 text-sm font-semibold text-white">
+            <Star size={16} className="fill-white text-white" /> {avgRating} average so far
+          </div>
+        )}
+
+        <p className="relative mt-auto pt-10 text-xs leading-relaxed text-white/75">
+          Something urgent? <span className="font-semibold text-white">Call NR Mothercare</span> directly instead of
+          waiting on this form.
         </p>
       </div>
 
-      <div className="flex-1 space-y-4 px-5 pb-5 -mt-7">
-        <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-md ring-1 ring-black/5">
-          <Avatar name={cl.name} color={cl.avatarColor} size={48} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-brand-ink">{cl.name}</p>
-            <p className="truncate text-xs text-brand-muted">
-              {pkg?.name ?? 'Package'}
-              {dayInfo ? ` · Day ${dayInfo.day}` : ''}
-              {assignment ? ` · ${formatDateLabel(assignment.date)}` : ''}
-            </p>
-          </div>
-          {avgRating && (
-            <div className="flex shrink-0 items-center gap-1 rounded-full bg-brand-pink-light px-2.5 py-1 text-xs font-semibold text-brand-pink-dark">
-              <Star size={12} className="fill-brand-pink-dark" /> {avgRating}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-brand-muted">Rate your session</p>
-          <div className="space-y-4">
+      <div className="space-y-6 px-8 py-10">
+        <div>
+          <p className="mb-4 text-xs font-bold uppercase tracking-wider text-brand-muted">Rate your session</p>
+          <div className="divide-y divide-black/5 rounded-2xl border border-black/5 bg-white shadow-sm">
             {reviewCategories.map((c) => (
-              <div key={c.key} className="flex items-center justify-between gap-3 border-b border-black/5 pb-4 last:border-b-0 last:pb-0">
+              <div key={c.key} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-brand-ink">{c.label}</p>
-                  <p className="truncate text-[11px] text-brand-muted">{c.sub}</p>
+                  <p className="text-xs text-brand-muted">{c.sub}</p>
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 gap-1.5">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} onClick={() => setRatings((r) => ({ ...r, [c.key]: n }))} className="transition-transform active:scale-90">
-                      <Star size={20} className={(ratings[c.key] ?? 0) >= n ? 'fill-brand-pink text-brand-pink' : 'fill-transparent text-brand-pink-light'} />
+                    <button
+                      key={n}
+                      onClick={() => setRatings((r) => ({ ...r, [c.key]: n }))}
+                      className="transition-transform hover:scale-110 active:scale-90"
+                    >
+                      <Star size={24} className={(ratings[c.key] ?? 0) >= n ? 'fill-brand-pink text-brand-pink' : 'fill-transparent text-brand-pink-light'} />
                     </button>
                   ))}
                 </div>
@@ -999,42 +1136,38 @@ function MotherReviewScreen({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <p className="mb-2 text-sm font-semibold text-brand-ink">Tell us more</p>
-          <p className="mb-2 text-[11px] text-brand-muted">Optional — and honesty is always welcome</p>
+        <div>
+          <p className="text-sm font-semibold text-brand-ink">Tell us more</p>
+          <p className="mb-2 text-xs text-brand-muted">Optional — and honesty is always welcome</p>
           <textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="What went well? What could be better?"
-            rows={3}
-            className="w-full resize-none rounded-xl border border-black/10 bg-brand-cream p-3 text-sm placeholder:text-brand-muted/70 focus:outline-none focus:ring-2 focus:ring-brand-pink"
+            rows={4}
+            className="w-full resize-none rounded-2xl border border-black/10 bg-white p-4 text-sm shadow-sm placeholder:text-brand-muted/70 focus:outline-none focus:ring-2 focus:ring-brand-pink"
           />
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-brand-muted">Confirm & sign off</p>
+        <div>
+          <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-brand-muted">Confirm & sign off</p>
           <button
             onClick={() => setSigned((s) => !s)}
-            className={`flex w-full items-center gap-2.5 rounded-xl border-2 border-dashed p-3.5 text-left text-xs font-medium transition-colors ${
-              signed ? 'border-brand-green bg-brand-green-light text-brand-green' : 'border-black/15 bg-brand-cream text-brand-muted'
+            className={`flex w-full items-center gap-3 rounded-2xl border-2 border-dashed p-4 text-left text-sm font-medium transition-colors ${
+              signed ? 'border-brand-green bg-brand-green-light text-brand-green' : 'border-black/15 bg-white text-brand-muted hover:border-black/25'
             }`}
           >
-            {signed ? <CheckCircle2 size={18} className="shrink-0" /> : <FileSignature size={18} className="shrink-0" />}
-            {signed ? 'Signed — thank you!' : 'Tap here to sign and confirm this session took place as described'}
+            {signed ? <CheckCircle2 size={20} className="shrink-0" /> : <FileSignature size={20} className="shrink-0" />}
+            {signed ? 'Signed — thank you!' : 'Click here to sign and confirm this session took place as described'}
           </button>
         </div>
 
         <button
           disabled={!canSubmit}
           onClick={() => setSubmitted(true)}
-          className="w-full rounded-full bg-brand-pink py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-pink/30 transition-opacity disabled:opacity-30 disabled:shadow-none"
+          className="w-full rounded-full bg-brand-pink py-4 text-sm font-bold text-white shadow-lg shadow-brand-pink/30 transition-opacity hover:opacity-90 disabled:opacity-30 disabled:shadow-none disabled:hover:opacity-30"
         >
           Submit Review
         </button>
-
-        <p className="pb-1 text-center text-[11px] leading-relaxed text-brand-muted">
-          Something urgent? <span className="font-semibold text-brand-pink">Call NR Mothercare</span> directly instead of waiting on this form.
-        </p>
       </div>
     </div>
   );
@@ -1045,19 +1178,58 @@ function MotherReviewScreen({
 function MotherHomeScreen({ mother, pkg, cl }: { mother: import('../types').Client; pkg?: Package; cl: ConfinementLady }) {
   return (
     <div className="flex-1">
-      <p className="text-xs text-brand-muted">Thursday, 13 Aug</p>
-      <h3 className="text-xl font-semibold text-brand-ink">Hello, {mother.name.split(' ')[0]}</h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <ProfileAvatar avatarKey={mother.id} name={mother.name} size={40} />
+          <div>
+            <p className="text-xs text-brand-muted">Good morning</p>
+            <p className="text-sm font-semibold text-brand-ink">{mother.name.split(' ')[0]} 👋</p>
+          </div>
+        </div>
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
+          <Bell size={16} className="text-brand-ink" />
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-brand-pink" />
+        </div>
+      </div>
 
       {pkg && (
-        <div className="mt-4 rounded-2xl bg-brand-green p-4 text-white">
-          <p className="text-[10px] font-semibold tracking-wide text-white/70">ACTIVE PACKAGE</p>
-          <p className="mt-1 text-lg font-semibold">{pkg.name}</p>
-          <div className="mt-2 flex items-center gap-2 text-xs text-white/85">
-            <Avatar name={cl.name} color={cl.avatarColor} size={22} />
-            Cared for by {cl.name}
+        <div className="relative mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-pink via-brand-pink to-brand-pink-dark p-4 text-white shadow-lg shadow-brand-pink/20">
+          <div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/10" />
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <PackageArt pkg={pkg} size={40} rounded="rounded-xl" />
+              <div>
+                <p className="text-sm font-semibold">{pkg.name}</p>
+                <p className="text-[11px] text-white/75">Cared for by {cl.name}</p>
+              </div>
+            </div>
+            <ProfileAvatar avatarKey={cl.id} name={cl.name} color={cl.avatarColor} size={40} editable={false} />
+          </div>
+          <div className="relative mt-4 flex items-center gap-2 text-[11px] text-white/80">
+            <Clock size={12} /> Since Day 1
+          </div>
+          <div className="relative mt-1 flex items-center gap-2 text-[11px] text-white/80">
+            <Repeat size={12} /> Next session tomorrow, 9:00 AM
           </div>
         </div>
       )}
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-xl bg-white p-3 shadow-sm">
+          <p className="flex items-center gap-1 text-[10px] font-medium text-brand-muted">
+            <CreditCard size={11} /> Outstanding
+          </p>
+          <p className="mt-1 text-lg font-semibold text-brand-ink">RM 1,200</p>
+          <p className="text-[10px] text-brand-muted">Due after Day 10</p>
+        </div>
+        <div className="rounded-xl bg-white p-3 shadow-sm">
+          <p className="flex items-center gap-1 text-[10px] font-medium text-brand-muted">
+            <MessageCircle size={11} /> Messages
+          </p>
+          <p className="mt-1 text-lg font-semibold text-brand-ink">2 unread</p>
+          <p className="text-[10px] text-brand-muted">from NR Mothercare</p>
+        </div>
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <button className="flex flex-col items-center gap-1.5 rounded-xl border border-black/5 bg-white p-3 text-xs font-medium text-brand-ink shadow-sm">
@@ -1072,12 +1244,6 @@ function MotherHomeScreen({ mother, pkg, cl }: { mother: import('../types').Clie
         <button className="flex flex-col items-center gap-1.5 rounded-xl border border-black/5 bg-white p-3 text-xs font-medium text-brand-ink shadow-sm">
           <Phone size={18} className="text-brand-pink" /> Call HQ
         </button>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-black/5 p-4">
-        <p className="text-sm font-medium text-brand-ink">Outstanding balance</p>
-        <p className="mt-1 text-2xl font-semibold text-brand-ink">RM 1,200</p>
-        <p className="text-xs text-brand-muted">Due after Day 10 — pay directly in-app</p>
       </div>
     </div>
   );
@@ -1094,10 +1260,14 @@ function MotherBookingsScreen({ mother }: { mother: import('../types').Client })
       <div className="mt-3 space-y-2">
         {mother.packageIds.map((pid) => {
           const pkg = packages.find((p) => p.id === pid);
+          if (!pkg) return null;
           return (
-            <div key={pid} className="rounded-xl border border-black/5 p-3">
-              <p className="text-sm font-medium text-brand-ink">{pkg?.name}</p>
-              <p className="text-xs text-brand-muted">{pkg?.durationEstimate}</p>
+            <div key={pid} className="flex items-center gap-3 rounded-xl border border-black/5 p-3">
+              <PackageArt pkg={pkg} size={44} rounded="rounded-xl" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-brand-ink">{pkg.name}</p>
+                <p className="text-xs text-brand-muted">{pkg.durationEstimate}</p>
+              </div>
             </div>
           );
         })}
@@ -1106,10 +1276,11 @@ function MotherBookingsScreen({ mother }: { mother: import('../types').Client })
       <p className="mb-2 mt-5 text-[11px] font-semibold tracking-wide text-brand-muted">ADD-ON PACKAGES</p>
       <div className="space-y-2">
         {addOns.map((p) => (
-          <div key={p.id} className="flex items-center justify-between rounded-xl border border-black/5 p-3">
-            <div>
+          <div key={p.id} className="flex items-center gap-3 rounded-xl border border-black/5 p-3">
+            <PackageArt pkg={p} size={44} rounded="rounded-xl" />
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-brand-ink">{p.name}</p>
-              <p className="text-xs text-brand-muted">{p.summary}</p>
+              <p className="truncate text-xs text-brand-muted">{p.summary}</p>
             </div>
             <button className="shrink-0 rounded-full bg-brand-amber px-3 py-1 text-xs font-medium text-white">Add</button>
           </div>
@@ -1155,7 +1326,9 @@ function MotherReviewsScreen({ cl }: { cl: ConfinementLady }) {
 function MotherProfileScreen({ mother }: { mother: import('../types').Client }) {
   return (
     <div className="flex-1 text-center">
-      <Avatar name={mother.name} size={64} />
+      <div className="flex justify-center">
+        <ProfileAvatar avatarKey={mother.id} name={mother.name} size={72} />
+      </div>
       <h3 className="mt-2 text-lg font-semibold text-brand-ink">{mother.name}</h3>
       <p className="text-xs text-brand-muted">{mother.location}</p>
 

@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { TrendingUp, Star, Award } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { TrendingUp, Star, Award, ChevronDown } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -18,17 +18,20 @@ import { useCLStore } from '../store/CLStore';
 import { monthlyRevenue, monthlyCompletedAssignments, ratingDistribution, packagePopularity } from '../data/reports';
 import { useSettings } from '../store/SettingsContext';
 
-const CURRENT_MONTH_INDEX = 7; // August
+const CURRENT_MONTH_INDEX = 7; // August — data only exists for Jan-Aug in the seed set
 
 export default function ReportsPage() {
   const { cls } = useCLStore();
   const { packageById } = useSettings();
+  const [selectedMonth, setSelectedMonth] = useState(monthlyRevenue[CURRENT_MONTH_INDEX].month);
+  const isCurrentMonth = selectedMonth === monthlyRevenue[CURRENT_MONTH_INDEX].month;
 
   const ytdRevenue = useMemo(
     () => monthlyRevenue.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.revenue, 0),
     [],
   );
-  const thisMonthRevenue = monthlyRevenue[CURRENT_MONTH_INDEX].revenue;
+  const selectedMonthRevenue = monthlyRevenue.find((m) => m.month === selectedMonth)?.revenue ?? 0;
+  const selectedMonthCompleted = monthlyCompletedAssignments.find((m) => m.month === selectedMonth)?.completed ?? 0;
   const ytdCompleted = useMemo(
     () => monthlyCompletedAssignments.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.completed, 0),
     [],
@@ -43,11 +46,34 @@ export default function ReportsPage() {
   const ratingColors: Record<number, string> = { 5: '#21493a', 4: '#3c6f57', 3: '#c98a3b', 2: '#b45f3b', 1: '#b23b3b' };
 
   return (
-    <PageShell title="Reports" subtitle="Revenue, bookings, and CL performance at a glance.">
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
+    <PageShell
+      title="Reports"
+      subtitle="Revenue, bookings, and CL performance at a glance."
+      headerAction={
+        <div className="relative">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="appearance-none rounded-full border border-black/10 bg-white py-2 pl-4 pr-9 text-sm font-medium text-brand-ink"
+          >
+            {monthlyRevenue.map((m) => (
+              <option key={m.month} value={m.month}>
+                {m.month} 2026
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted" />
+        </div>
+      }
+    >
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="YTD revenue" value={formatRM(ytdRevenue)} icon={<TrendingUp size={16} className="text-brand-green" />} />
-        <StatCard label="This month's revenue" value={formatRM(thisMonthRevenue)} />
         <StatCard label="YTD completed assignments" value={ytdCompleted} />
+        <StatCard
+          label={isCurrentMonth ? "This month's revenue" : `${selectedMonth} 2026 revenue`}
+          value={formatRM(selectedMonthRevenue)}
+        />
+        <StatCard label={`${selectedMonth} 2026 completed`} value={selectedMonthCompleted} />
         <StatCard label="Average CL rating" value={(cls.reduce((a, c) => a + c.rating, 0) / cls.length).toFixed(1)} icon={<Award size={16} className="text-brand-amber" />} />
       </div>
 
@@ -60,7 +86,7 @@ export default function ReportsPage() {
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
               <YAxis hide />
               <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Line type="monotone" dataKey="revenue" stroke="#d94f8c" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="revenue" stroke="#d94f8c" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -71,7 +97,11 @@ export default function ReportsPage() {
             <BarChart data={monthlyCompletedAssignments}>
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Bar dataKey="completed" radius={[8, 8, 8, 8]} fill="#4f8a6d" />
+              <Bar dataKey="completed" radius={[8, 8, 8, 8]}>
+                {monthlyCompletedAssignments.map((m) => (
+                  <Cell key={m.month} fill={m.month === selectedMonth ? '#d94f8c' : '#4f8a6d'} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Card>

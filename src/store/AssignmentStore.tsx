@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { assignments as seedAssignments, unassignedClientIds as seedUnassigned } from '../data/assignments';
-import type { Assignment, AssignmentStatus } from '../types';
+import type { Assignment, AssignmentStatus, ApprovalStatus } from '../types';
 
 const STORAGE_KEY = 'nrmc-assignments-v1';
 const UNASSIGNED_KEY = 'nrmc-unassigned-v1';
@@ -49,6 +49,7 @@ interface AssignmentStoreValue {
   reassignCL: (assignmentId: string, newClId: string) => void;
   reschedule: (assignmentId: string, date: string, startTime: string, endTime: string) => void;
   updateStatus: (assignmentId: string, status: AssignmentStatus) => void;
+  setApproval: (assignmentId: string, approvalStatus: ApprovalStatus, note?: string) => void;
   removeFromUnassigned: (clientId: string) => void;
   addToUnassigned: (clientId: string) => void;
   resetToDefaults: () => void;
@@ -96,8 +97,18 @@ export function AssignmentStoreProvider({ children }: { children: ReactNode }) {
       reassignCL: (assignmentId, newClId) =>
         setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, clId: newClId, status: 'pending' } : a))),
       reschedule: (assignmentId, date, startTime, endTime) =>
-        setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, date, startTime, endTime, status: 'pending' } : a))),
+        setAssignments((prev) =>
+          prev.map((a) => (a.id === assignmentId ? { ...a, date, startTime, endTime, status: 'pending', rescheduled: true } : a)),
+        ),
       updateStatus: (assignmentId, status) => setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, status } : a))),
+      setApproval: (assignmentId, approvalStatus, note) =>
+        setAssignments((prev) =>
+          prev.map((a) =>
+            a.id === assignmentId
+              ? { ...a, approvalStatus, approvalNote: note, paymentStatus: approvalStatus === 'approved' ? 'released' : 'in-review' }
+              : a,
+          ),
+        ),
       removeFromUnassigned: (clientId) => setUnassignedClientIds((prev) => prev.filter((id) => id !== clientId)),
       addToUnassigned: (clientId) => setUnassignedClientIds((prev) => (prev.includes(clientId) ? prev : [...prev, clientId])),
       resetToDefaults: () => {

@@ -53,13 +53,14 @@ export const packagePopularity = [
   { packageId: 'seri-ibu', bookings: 33 },
 ];
 
+// Real-world coordinates (WGS84) for the Klang Valley — Selangor & Kuala Lumpur, Malaysia.
 export const locationTotals = [
-  { name: 'Kuala Lumpur', lat: 28, lng: 62, count: 51 },
-  { name: 'Petaling', lat: 40, lng: 45, count: 37 },
-  { name: 'Gombak', lat: 18, lng: 68, count: 42 },
-  { name: 'Klang', lat: 55, lng: 30, count: 28 },
-  { name: 'Kuala Langat', lat: 68, lng: 38, count: 29 },
-  { name: 'Ulu Langat', lat: 52, lng: 66, count: 22 },
-  { name: 'Sepang', lat: 78, lng: 55, count: 18 },
-  { name: 'Putrajaya', lat: 70, lng: 52, count: 20 },
+  { name: 'Kuala Lumpur', lat: 3.139, lng: 101.6869, count: 51 },
+  { name: 'Petaling', lat: 3.1073, lng: 101.6067, count: 37 },
+  { name: 'Gombak', lat: 3.2637, lng: 101.7062, count: 42 },
+  { name: 'Klang', lat: 3.0333, lng: 101.45, count: 28 },
+  { name: 'Kuala Langat', lat: 2.8167, lng: 101.5, count: 29 },
+  { name: 'Ulu Langat', lat: 2.9925, lng: 101.7873, count: 22 },
+  { name: 'Sepang', lat: 2.7297, lng: 101.6906, count: 18 },
+  { name: 'Putrajaya', lat: 2.9264, lng: 101.6964, count: 20 },
 ];

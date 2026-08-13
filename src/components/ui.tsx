@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import { Camera } from 'lucide-react';
+import { useAvatarStore } from '../store/AvatarStore';
 
 export function Card({
   children,
@@ -64,19 +66,103 @@ export function Badge({ status, children }: { status: string; children: ReactNod
   );
 }
 
-export function Avatar({ name, color = '#d94f8c', size = 36 }: { name: string; color?: string; size?: number }) {
-  const initials = name
+function initialsOf(name: string) {
+  return name
     .split(' ')
     .map((p) => p[0])
     .slice(0, 2)
     .join('')
     .toUpperCase();
+}
+
+/** Darkens/mixes a hex color for a subtle two-tone gradient, so placeholder avatars read as a portrait, not a flat chip. */
+function shade(hex: string, amt: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, Math.max(0, (n >> 16) + amt));
+  const g = Math.min(255, Math.max(0, ((n >> 8) & 0xff) + amt));
+  const b = Math.min(255, Math.max(0, (n & 0xff) + amt));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+export function Avatar({
+  name,
+  color = '#d94f8c',
+  size = 36,
+  photoUrl,
+}: {
+  name: string;
+  color?: string;
+  size?: number;
+  /** Optional uploaded profile picture — falls back to a gradient initials placeholder when absent. */
+  photoUrl?: string;
+}) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className="shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
-      style={{ backgroundColor: color, width: size, height: size, fontSize: size * 0.38 }}
+      className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white ring-2 ring-white shadow-sm"
+      style={{
+        background: `linear-gradient(140deg, ${shade(color, 25)}, ${shade(color, -20)})`,
+        width: size,
+        height: size,
+        fontSize: size * 0.38,
+      }}
     >
-      {initials}
+      {initialsOf(name)}
+    </div>
+  );
+}
+
+/**
+ * Avatar wired to the demo-persistent avatar store, with a camera-badge affordance to
+ * upload/replace a profile picture. Used for the admin header and CL/mother profile screens.
+ */
+export function ProfileAvatar({
+  avatarKey,
+  name,
+  color = '#d94f8c',
+  size = 64,
+  editable = true,
+}: {
+  avatarKey: string;
+  name: string;
+  color?: string;
+  size?: number;
+  editable?: boolean;
+}) {
+  const { dataUrl, setAvatar } = useAvatarStore(avatarKey);
+  const inputId = `avatar-upload-${avatarKey}`;
+
+  function handleUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <Avatar name={name} color={color} size={size} photoUrl={dataUrl} />
+      {editable && (
+        <label
+          htmlFor={inputId}
+          className="absolute -bottom-0.5 -right-0.5 flex cursor-pointer items-center justify-center rounded-full border-2 border-white bg-brand-pink text-white shadow-sm hover:bg-brand-pink-dark"
+          style={{ width: Math.max(18, size * 0.32), height: Math.max(18, size * 0.32) }}
+          title="Upload profile picture"
+        >
+          <Camera size={Math.max(10, size * 0.18)} />
+          <input id={inputId} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+        </label>
+      )}
     </div>
   );
 }

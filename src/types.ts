@@ -75,6 +75,8 @@ export interface Client {
   address: string;
   location: string;
   packageIds: string[];
+  /** Selected day-tier per package id, for tiered packages (e.g. { melur: 14 }). Absent = package's default/first tier. */
+  packageDays?: Record<string, number>;
   dueOrBirthDate: string;
   status: 'active' | 'upcoming' | 'completed';
   notes?: string;
@@ -82,6 +84,7 @@ export interface Client {
 
 export type AssignmentStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'in-review' | 'released';
+export type ApprovalStatus = 'approved' | 'rejected';
 
 export interface Assignment {
   id: string;
@@ -95,6 +98,11 @@ export interface Assignment {
   status: AssignmentStatus;
   urgent?: boolean;
   paymentStatus?: PaymentStatus;
+  /** Set once a Superadmin has reviewed the check-in/out selfies + package checklist for a completed session. Absent = awaiting review. */
+  approvalStatus?: ApprovalStatus;
+  approvalNote?: string;
+  /** True once this booking has gone through Reassign/Reschedule at least once — surfaced on the Overview daily activity breakdown. */
+  rescheduled?: boolean;
 }
 
 export interface LocationCapacity {
