@@ -1,54 +1,58 @@
-# React + TypeScript + Vite
+# NR Mothercare Confinement — Admin Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A demo admin dashboard and confinement-lady (CL) mobile app showcase for **NR Mothercare Confinement**,
+built with React, TypeScript, Vite, Tailwind CSS, and Recharts.
 
-Currently, two official plugins are available:
+## What's in here
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Overview** — daily stats, active-CL trend, attendance breakdown, live operations map, today's assignments
+- **Schedule & Roster** — weekly calendar of CL assignments, unassigned-request queue with CL assignment picker
+- **Confinement Ladies** — staff directory with an internal profile (contact, IC, assignment history) and a
+  customer-facing profile view (print/PDF-style, no private info) with banned/complained flagging
+- **Clients** — customer directory with package, contact, and notes
+- **Operations map** — stylised live map of CL totals by area
+- **Reports** — revenue, completed assignments, package popularity, rating distribution, CL leaderboard
+- **Messages** — chat with CLs and clients
+- **Settings** — fully editable package catalogue (day-tier pricing, treatments, notes), company profile,
+  and admin team management — changes persist to the browser via `localStorage`
+- **Mobile app showcase** — interactive phone mockup of the CL-facing app (clock-in, care checklist, schedule, profile)
 
-## Expanding the ESLint configuration
+Package data (Pakej Melur, Mawar, Dahlia, Rafflesia, Cempaka, Oversea, Seri Ibu, Keguguran, Penutup Pantang)
+is sourced from the real NR Mothercare pricing flyers. A few tiers for Cempaka and Oversea were interpolated
+where the source flyers didn't cover every day-count — see the "estimated pricing" note in Settings.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Local development
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Production build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run build
+npm run preview   # sanity-check the production build locally
 ```
+
+## Deploying to Vercel
+
+This is a static single-page app — `vercel.json` already includes the SPA rewrite so client-side routes
+(e.g. `/schedule`, `/cls/:id`) work on refresh/direct link.
+
+**Option A — Vercel CLI**
+
+```bash
+npm i -g vercel
+vercel          # first run links/creates the project, deploys a preview
+vercel --prod   # promote to production
+```
+
+**Option B — GitHub + Vercel dashboard**
+
+1. Push this repo to GitHub.
+2. In the Vercel dashboard, "Add New Project" → import the repo.
+3. Framework preset: **Vite**. Build command `npm run build`, output directory `dist` (auto-detected).
+4. Deploy.
+
+No environment variables or backend are required — all data is local mock data plus `localStorage`.
