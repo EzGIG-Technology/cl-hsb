@@ -27,7 +27,7 @@ const navItems = [
 
 export function IconRail() {
   return (
-    <nav className="flex h-full w-16 flex-col items-center gap-1 bg-brand-maroon-dark py-4">
+    <nav className="flex h-full w-16 flex-col items-center gap-1 bg-brand-green-dark py-4">
       <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-white p-1 shadow-sm">
         <Logo variant="icon" size={34} />
       </div>
@@ -41,7 +41,7 @@ export function IconRail() {
             title={label}
             className={({ isActive }) =>
               `group relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
-                isActive ? 'bg-white text-brand-maroon-dark' : 'text-white/60 hover:bg-white/10 hover:text-white'
+                isActive ? 'bg-white text-brand-green-dark' : 'text-white/60 hover:bg-white/10 hover:text-white'
               }`
             }
           >

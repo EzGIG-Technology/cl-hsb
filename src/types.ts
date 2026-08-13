@@ -32,6 +32,8 @@ export interface Package {
 
 export type CLStatus = 'on-duty' | 'available' | 'on-leave' | 'off-duty';
 export type CLFlag = 'none' | 'complained' | 'banned';
+export type CLShift = 'morning' | 'afternoon' | 'both' | 'stay-in' | 'flexible';
+export type CLTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
 
 export interface ConfinementLady {
   id: string;
@@ -53,6 +55,16 @@ export interface ConfinementLady {
   flag: CLFlag;
   flagNote?: string;
   bio: string;
+  shiftAvailability: CLShift;
+  passportNumber?: string;
+  treatmentPhotoUrl?: string;
+}
+
+export function tierForCL(completedAssignments: number): CLTier {
+  if (completedAssignments >= 250) return 'Platinum';
+  if (completedAssignments >= 150) return 'Gold';
+  if (completedAssignments >= 50) return 'Silver';
+  return 'Bronze';
 }
 
 export interface Client {
@@ -62,13 +74,14 @@ export interface Client {
   email: string;
   address: string;
   location: string;
-  packageId: string;
+  packageIds: string[];
   dueOrBirthDate: string;
   status: 'active' | 'upcoming' | 'completed';
   notes?: string;
 }
 
 export type AssignmentStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
+export type PaymentStatus = 'pending' | 'in-review' | 'released';
 
 export interface Assignment {
   id: string;
@@ -81,6 +94,20 @@ export interface Assignment {
   location: string;
   status: AssignmentStatus;
   urgent?: boolean;
+  paymentStatus?: PaymentStatus;
+}
+
+export interface LocationCapacity {
+  location: string;
+  monthlySlots: number;
+}
+
+export type SlotCadence = 'daily' | 'weekly' | 'monthly';
+
+export interface PackageLocationSlot {
+  location: string;
+  cadence: SlotCadence;
+  slots: number;
 }
 
 export interface MessageThread {

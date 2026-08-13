@@ -80,7 +80,7 @@ export function OperationsMap({ compact = false }: OperationsMapProps) {
                   width: size,
                   height: size,
                   fontSize: size * 0.32,
-                  backgroundColor: loc.count > 40 ? '#6d2748' : '#c98a3b',
+                  backgroundColor: loc.count > 40 ? '#21493a' : '#c98a3b',
                 }}
                 title={`${loc.name}: ${loc.count} CLs`}
               >

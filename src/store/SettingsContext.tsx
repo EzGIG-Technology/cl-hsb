@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { packages as defaultPackages } from '../data/packages';
-import type { Package, PackageTier } from '../types';
+import { locationCapacity as defaultLocationCapacity } from '../data/capacity';
+import { locationTotals } from '../data/reports';
+import type { LocationCapacity, Package, PackageLocationSlot, PackageTier, SlotCadence } from '../types';
+
+function defaultPackageAvailability(): PackageLocationSlot[] {
+  return locationTotals.map((l) => ({ location: l.name, cadence: 'weekly' as SlotCadence, slots: Math.max(2, Math.round(l.count / 8)) }));
+}
 
 interface CompanyProfile {
   name: string;
@@ -9,6 +15,7 @@ interface CompanyProfile {
   adminAmyPhone: string;
   address: string;
   email: string;
+  logoDataUrl?: string;
 }
 
 interface AdminUser {
@@ -23,6 +30,8 @@ interface SettingsState {
   packages: Package[];
   company: CompanyProfile;
   admins: AdminUser[];
+  locationCapacity: LocationCapacity[];
+  packageAvailability: Record<string, PackageLocationSlot[]>;
 }
 
 interface SettingsContextValue extends SettingsState {
@@ -37,6 +46,9 @@ interface SettingsContextValue extends SettingsState {
   addAdmin: () => void;
   updateAdmin: (id: string, patch: Partial<AdminUser>) => void;
   removeAdmin: (id: string) => void;
+  updateLocationSlots: (location: string, monthlySlots: number) => void;
+  getPackageAvailability: (packageId: string) => PackageLocationSlot[];
+  updatePackageSlot: (packageId: string, location: string, patch: Partial<Omit<PackageLocationSlot, 'location'>>) => void;
   resetToDefaults: () => void;
 }
 
@@ -51,9 +63,12 @@ const defaultCompany: CompanyProfile = {
   email: 'hello@nrmothercare.my',
 };
 
+export const ADMIN_ROLES = ['Admin', 'Finance', 'Operations'] as const;
+
 const defaultAdmins: AdminUser[] = [
-  { id: 'admin-akma', name: 'Admin Akma', role: 'Operations Admin', phone: '010-249 7650', email: 'akma@nrmothercare.my' },
-  { id: 'admin-amy', name: 'Admin Amy', role: 'Operations Admin', phone: '010-229 7650', email: 'amy@nrmothercare.my' },
+  { id: 'admin-akma', name: 'Admin Akma', role: 'Admin', phone: '010-249 7650', email: 'akma@nrmothercare.my' },
+  { id: 'admin-amy', name: 'Admin Amy', role: 'Operations', phone: '010-229 7650', email: 'amy@nrmothercare.my' },
+  { id: 'admin-finance', name: 'Finance Team', role: 'Finance', phone: '010-339 7650', email: 'finance@nrmothercare.my' },
 ];
 
 function loadInitial(): SettingsState {
@@ -61,14 +76,20 @@ function loadInitial(): SettingsState {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as SettingsState;
-        if (parsed.packages?.length) return parsed;
+        const parsed = JSON.parse(raw) as Partial<SettingsState>;
+        if (parsed.packages?.length) {
+          return {
+            ...parsed,
+            locationCapacity: parsed.locationCapacity ?? defaultLocationCapacity,
+            packageAvailability: parsed.packageAvailability ?? {},
+          } as SettingsState;
+        }
       }
     } catch {
       // fall through to defaults
     }
   }
-  return { packages: defaultPackages, company: defaultCompany, admins: defaultAdmins };
+  return { packages: defaultPackages, company: defaultCompany, admins: defaultAdmins, locationCapacity: defaultLocationCapacity, packageAvailability: {} };
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -147,7 +168,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       updateAdmin: (id, patch) =>
         setState((s) => ({ ...s, admins: s.admins.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
       removeAdmin: (id) => setState((s) => ({ ...s, admins: s.admins.filter((a) => a.id !== id) })),
-      resetToDefaults: () => setState({ packages: defaultPackages, company: defaultCompany, admins: defaultAdmins }),
+      updateLocationSlots: (location, monthlySlots) =>
+        setState((s) => ({
+          ...s,
+          locationCapacity: s.locationCapacity.map((l) => (l.location === location ? { ...l, monthlySlots } : l)),
+        })),
+      getPackageAvailability: (packageId) => state.packageAvailability[packageId] ?? defaultPackageAvailability(),
+      updatePackageSlot: (packageId, location, patch) =>
+        setState((s) => {
+          const current = s.packageAvailability[packageId] ?? defaultPackageAvailability();
+          const updated = current.map((slot) => (slot.location === location ? { ...slot, ...patch } : slot));
+          return { ...s, packageAvailability: { ...s.packageAvailability, [packageId]: updated } };
+        }),
+      resetToDefaults: () =>
+        setState({
+          packages: defaultPackages,
+          company: defaultCompany,
+          admins: defaultAdmins,
+          locationCapacity: defaultLocationCapacity,
+          packageAvailability: {},
+        }),
     }),
     [state],
   );

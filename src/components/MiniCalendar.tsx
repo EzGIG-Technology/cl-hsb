@@ -43,26 +43,26 @@ export function MiniCalendar({ selectedDate, onSelect }: MiniCalendarProps) {
   const monthLabel = cursor.toLocaleDateString('en-US', { month: 'long' });
 
   return (
-    <div className="rounded-2xl bg-white/10 p-4">
+    <div>
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold">{monthLabel}</span>
+        <span className="text-sm font-semibold text-brand-ink">{monthLabel}</span>
         <div className="flex gap-1">
           <button
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            className="rounded-md p-1 text-white/70 hover:bg-white/10 hover:text-white"
+            className="rounded-md p-1 text-brand-muted hover:bg-brand-cream hover:text-brand-ink"
           >
             <ChevronLeft size={14} />
           </button>
           <button
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            className="rounded-md p-1 text-white/70 hover:bg-white/10 hover:text-white"
+            className="rounded-md p-1 text-brand-muted hover:bg-brand-cream hover:text-brand-ink"
           >
             <ChevronRight size={14} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1 text-center text-[10px] text-white/50">
+      <div className="grid grid-cols-7 gap-y-1 text-center text-[10px] text-brand-muted">
         {WEEKDAYS.map((w) => (
           <span key={w}>{w}</span>
         ))}
@@ -77,12 +77,12 @@ export function MiniCalendar({ selectedDate, onSelect }: MiniCalendarProps) {
               onClick={() => onSelect?.(date)}
               className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
                 selected
-                  ? 'bg-white font-semibold text-brand-maroon-dark'
+                  ? 'bg-brand-pink font-semibold text-white'
                   : isToday
-                    ? 'border border-white/60 text-white'
+                    ? 'border border-brand-pink text-brand-pink'
                     : inMonth
-                      ? 'text-white/85 hover:bg-white/10'
-                      : 'text-white/30'
+                      ? 'text-brand-ink hover:bg-brand-cream'
+                      : 'text-brand-muted/40'
               }`}
             >
               {day}

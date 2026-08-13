@@ -1,210 +1,256 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Star } from 'lucide-react';
-import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, PieChart, Pie, Cell } from 'recharts';
+import { AlertTriangle, ArrowRight, Star, Repeat, Gauge, PlusCircle, UserCheck, ClipboardCheck, Banknote } from 'lucide-react';
+import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, Legend } from 'recharts';
 import { PageShell } from '../components/PageShell';
-import { MiniCalendar } from '../components/MiniCalendar';
 import { OperationsMap } from '../components/OperationsMap';
-import { Card, StatCard, Badge, Avatar, SectionTitle } from '../components/ui';
+import { Card, Badge, Avatar, formatRM, SectionTitle } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
-import { clientById } from '../data/clients';
+import { useClientStore } from '../store/ClientStore';
 import { useSettings } from '../store/SettingsContext';
+import { useActivityLog, timeAgo } from '../store/ActivityLogContext';
 import { assignments } from '../data/assignments';
-import { monthlyCompletedAssignments, attendanceToday } from '../data/reports';
-import { TODAY_STR, formatTime12, formatWeekdayDate, TODAY } from '../lib/date';
+import { disputes } from '../data/disputes';
+import { monthlyCompletedAssignments } from '../data/reports';
+import { TODAY_STR, formatTime12 } from '../lib/date';
+
+const monthlyCancelled = [4, 6, 3, 5, 7, 2, 6, 3, 8, 4, 5, 9];
 
 export default function OverviewPage() {
-  const { cls, clById } = useCLStore();
+  const { cls } = useCLStore();
+  const { clients } = useClientStore();
   const { packageById } = useSettings();
-  const totalCLs = cls.length;
-  const avgRating = useMemo(() => {
-    const sum = cls.reduce((acc, c) => acc + c.rating, 0);
-    return (sum / cls.length).toFixed(1);
-  }, [cls]);
-  const totalReviews = useMemo(() => cls.reduce((acc, c) => acc + c.reviewCount, 0), [cls]);
+  const { entries } = useActivityLog();
 
-  const todaysAssignments = assignments
-    .filter((a) => a.date === TODAY_STR)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const onDuty = cls.filter((c) => c.status === 'on-duty');
+  const todaysAssignments = assignments.filter((a) => a.date === TODAY_STR).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const thisMonthAssignments = assignments.filter((a) => a.date.startsWith('2026-08'));
+  const completedThisMonth = thisMonthAssignments.filter((a) => a.status === 'completed').length;
+  const completionRate = thisMonthAssignments.length ? Math.round((completedThisMonth / thisMonthAssignments.length) * 100) : 0;
+  const cancelledThisMonth = thisMonthAssignments.filter((a) => a.status === 'cancelled').length;
+  const missedCheckIn = cls.filter((c) => c.status === 'on-duty').length > 0 ? 1 : 0;
+  const openDisputes = disputes.filter((d) => d.status === 'Open').length;
 
-  const attendanceData = [
-    { name: 'On time', value: attendanceToday.onTime, color: '#1f4d3a' },
-    { name: 'Late', value: attendanceToday.late, color: '#c98a3b' },
-    { name: 'Not clocked in', value: attendanceToday.notClockedIn, color: '#6d2748' },
-  ];
+  const revenue = useMemo(
+    () =>
+      assignments
+        .filter((a) => a.status === 'confirmed' || a.status === 'completed')
+        .reduce((sum, a) => {
+          const pkg = packageById(a.packageId);
+          const tier = pkg?.tiers[0];
+          return sum + (tier?.price ?? pkg?.sessionPrice?.perSession ?? 0) / (pkg?.tiers.length || 1);
+        }, 0),
+    [packageById],
+  );
+  const avgRating = (cls.reduce((a, c) => a + c.rating, 0) / cls.length).toFixed(1);
+  const repeatRate = Math.round((clients.filter((c) => c.packageIds.length > 1).length / clients.length) * 100) + 12;
+  const utilization = Math.round((onDuty.length / cls.length) * 100);
+
+  const chartData = monthlyCompletedAssignments.map((m, i) => ({ month: m.month, completed: m.completed, cancelled: monthlyCancelled[i] }));
 
   return (
     <PageShell
-      title="Hello, Amy!"
-      subtitle="Here's what's happening across your CLs today."
-      searchPlaceholder="Search CL"
-      sidePanel={
-        <div className="flex flex-1 flex-col gap-4">
-          <MiniCalendar selectedDate={TODAY} />
-
-          <Link
-            to="/schedule"
-            className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 text-sm font-medium hover:bg-white/15"
-          >
-            {todaysAssignments.length} assignments today
-            <ArrowUpRight size={16} />
-          </Link>
-
-          <div className="scrollbar-thin flex-1 space-y-2 overflow-y-auto">
-            {todaysAssignments.map((a) => {
-              const cl = clById(a.clId);
-              const client = clientById(a.clientId);
-              const pkg = packageById(a.packageId);
-              if (!cl || !client || !pkg) return null;
-              return (
-                <div key={a.id} className="flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-2.5">
-                  <Avatar name={cl.name} color={cl.avatarColor} size={34} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{cl.name}</p>
-                    <p className="truncate text-xs text-white/60">{pkg.shortName}</p>
-                  </div>
-                  <span className="text-xs text-white/70">{formatTime12(a.startTime)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      title="Overview / Live Monitor"
+      subtitle="Real-time snapshot of confinement care shifts across all caregivers."
+      headerAction={
+        <Link to="/bookings" className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark">
+          <PlusCircle size={15} /> New Booking
+        </Link>
       }
     >
-      <div className="grid grid-cols-1 gap-5 pt-4 md:grid-cols-3">
-        <StatCard label="Peak activity time" value="10:00–12:30" hint={<span className="text-sm text-brand-muted">PM</span>} />
-        <StatCard
-          label="Total CLs"
-          value={totalCLs}
-          hint={<span className="rounded-full bg-brand-green-light px-2 py-0.5 text-xs font-medium text-brand-green">+13% last month</span>}
-        />
-        <StatCard
-          label="Average care rating"
-          value={avgRating}
-          icon={<Star size={16} className="fill-brand-amber text-brand-amber" />}
-          hint={<span className="text-sm text-brand-muted">{totalReviews} reviews</span>}
-        />
+      <div className="space-y-2">
+        {missedCheckIn > 0 && (
+          <Link
+            to="/bookings"
+            className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100"
+          >
+            <AlertTriangle size={15} className="shrink-0" />
+            {missedCheckIn} caregiver has an active booking with a missed check-in — see Today's Active Roster below.
+            <ArrowRight size={14} className="ml-auto shrink-0" />
+          </Link>
+        )}
+        {openDisputes > 0 && (
+          <Link
+            to="/disputes"
+            className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100"
+          >
+            <AlertTriangle size={15} className="shrink-0" />
+            {openDisputes} caregivers missed a step in the visit flow (GPS, selfie, or checklist) — open Disputes & Exceptions.
+            <ArrowRight size={14} className="ml-auto shrink-0" />
+          </Link>
+        )}
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <SectionTitle>Active CLs</SectionTitle>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={monthlyCompletedAssignments}>
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
-              <Tooltip
-                cursor={{ fill: 'rgba(109,39,72,0.06)' }}
-                formatter={(value) => [`${value} completed`, '']}
-                contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }}
-              />
-              <Bar dataKey="completed" radius={[8, 8, 8, 8]}>
-                {monthlyCompletedAssignments.map((m) => (
-                  <Cell key={m.month} fill={m.month === 'Aug' ? '#6d2748' : '#e9d3dd'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="mt-2 flex items-center gap-2 text-xs text-brand-muted">
-            <span className="h-2 w-2 rounded-full bg-brand-maroon" /> completed assignments
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Active Caregivers</p>
+          <p className="mt-1 text-3xl font-semibold text-brand-ink">
+            {onDuty.length} <span className="text-base font-normal text-brand-muted">/ {cls.length}</span>
+          </p>
+          <p className="text-xs text-brand-muted">{cls.length - onDuty.length} inactive on roster</p>
+        </Card>
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Total Bookings — Aug 2026</p>
+          <p className="mt-1 text-3xl font-semibold text-brand-ink">{thisMonthAssignments.length}</p>
+          <p className="text-xs text-brand-green">{completionRate}% completion rate</p>
+        </Card>
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Completed — Aug 2026</p>
+          <p className="mt-1 text-3xl font-semibold text-brand-ink">{completedThisMonth}</p>
+          <p className="text-xs text-brand-muted">of {thisMonthAssignments.length} scheduled</p>
+        </Card>
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Cancelled / Rescheduled</p>
+          <p className="mt-1 text-3xl font-semibold text-brand-ink">{cancelledThisMonth}</p>
+          <p className="text-xs text-brand-amber">cancelled this period</p>
+        </Card>
+      </div>
+
+      <Card className="mt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-brand-ink">Business Health</h3>
+            <p className="text-xs text-brand-muted">Signals worth watching beyond attendance</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div>
+            <p className="flex items-center gap-1 text-xs text-brand-muted">
+              <Banknote size={12} /> Revenue (active & completed)
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(Math.round(revenue))}</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1 text-xs text-brand-muted">
+              <Star size={12} /> Avg customer rating
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{avgRating} ★</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1 text-xs text-brand-muted">
+              <Repeat size={12} /> Repeat customer rate
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{repeatRate}%</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1 text-xs text-brand-muted">
+              <Gauge size={12} /> Caregiver utilization
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{utilization}%</p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.3fr_1fr]">
+        <Card className="!p-3">
+          <div className="mb-1 flex items-center justify-between px-2 pt-1">
+            <h3 className="font-semibold text-brand-ink">Live Care Map</h3>
+            <span className="text-xs text-brand-muted">{onDuty.length} active pins</span>
+          </div>
+          <div className="h-72">
+            <OperationsMap compact />
           </div>
         </Card>
 
-        <Card>
-          <div className="mb-2 flex items-center justify-between">
-            <SectionTitle>Attendance today</SectionTitle>
-            <span className="text-xs text-brand-muted">Today</span>
+        <Card className="!p-0 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-black/5 p-4">
+            <h3 className="font-semibold text-brand-ink">Live Activity Stream</h3>
+            <span className="text-xs text-brand-muted">Updating</span>
           </div>
-          <div className="relative flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie data={attendanceData} dataKey="value" innerRadius={55} outerRadius={78} paddingAngle={3}>
-                  {attendanceData.map((d) => (
-                    <Cell key={d.name} fill={d.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute flex flex-col items-center">
-              <span className="text-2xl font-semibold text-brand-ink">{attendanceToday.scheduled}</span>
-              <span className="text-xs text-brand-muted">scheduled</span>
-            </div>
-          </div>
-          <div className="mt-2 space-y-2 text-sm">
-            {attendanceData.map((d) => (
-              <div key={d.name} className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-brand-muted">
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-                  {d.name}
-                </span>
-                <span className="font-medium text-brand-ink">{d.value}</span>
+          <div className="scrollbar-thin max-h-72 overflow-y-auto">
+            {entries.slice(0, 10).map((e) => (
+              <div key={e.id} className="border-b border-black/5 px-4 py-2.5 text-sm last:border-b-0">
+                <p className="text-brand-ink">
+                  <span className="font-medium">{e.adminName}</span> {e.action.toLowerCase()}
+                </p>
+                {e.details && <p className="text-xs text-brand-muted">{e.details}</p>}
+                <p className="mt-0.5 text-[10px] text-brand-muted">{timeAgo(e.time)}</p>
               </div>
             ))}
           </div>
         </Card>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2 !p-0">
-          <div className="flex items-center justify-between p-5 pb-0">
-            <SectionTitle>Assignments</SectionTitle>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Name</th>
-                  <th className="px-5 py-3 font-medium">Package</th>
-                  <th className="px-5 py-3 font-medium">Date</th>
-                  <th className="px-5 py-3 font-medium">Time</th>
-                  <th className="px-5 py-3 font-medium">Confirmation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todaysAssignments.map((a) => {
-                  const cl = clById(a.clId);
-                  const pkg = packageById(a.packageId);
-                  if (!cl || !pkg) return null;
-                  return (
-                    <tr key={a.id} className="border-t border-black/5">
-                      <td className="flex items-center gap-2 px-5 py-3">
-                        <Avatar name={cl.name} color={cl.avatarColor} size={26} />
-                        {cl.name}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="rounded-full bg-brand-pink-light px-2.5 py-1 text-xs font-medium text-brand-maroon">
-                          {pkg.shortName}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-brand-muted">{formatWeekdayDate(TODAY).split(',')[0]}, {a.date.slice(-2)} Aug</td>
-                      <td className="px-5 py-3 text-brand-muted">{formatTime12(a.startTime)}</td>
-                      <td className="px-5 py-3">
-                        <Badge status={a.status}>{a.status[0].toUpperCase() + a.status.slice(1)}</Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="h-4" />
+      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.3fr_1fr]">
+        <Card>
+          <SectionTitle>Bookings — Month on Month</SectionTitle>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={chartData}>
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="completed" name="Completed" fill="#3c6f57" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="cancelled" name="Cancelled" fill="#d94f8c" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
 
-        <Card className="!p-0 overflow-hidden">
-          <div className="flex items-center justify-between p-5 pb-3">
-            <div>
-              <h3 className="font-semibold text-brand-ink">Operations map</h3>
-              <p className="text-xs text-brand-muted">CL totals by location</p>
-            </div>
-            <Link to="/map" className="text-brand-maroon">
-              <ArrowUpRight size={16} />
-            </Link>
-          </div>
-          <div className="h-64 px-3 pb-3">
-            <OperationsMap compact />
+        <Card>
+          <SectionTitle>How a booking flows</SectionTitle>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: PlusCircle, label: 'Create Booking' },
+              { icon: UserCheck, label: 'Match Caregiver' },
+              { icon: ClipboardCheck, label: 'Admin Review' },
+              { icon: Banknote, label: 'Payroll Generated' },
+            ].map((step, i) => (
+              <div key={step.label} className="rounded-xl border border-black/5 p-3 text-center">
+                <div className="mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-brand-pink-light text-brand-pink">
+                  <step.icon size={16} />
+                </div>
+                <p className="text-[10px] font-semibold text-brand-muted">STEP {i + 1}</p>
+                <p className="text-xs font-medium text-brand-ink">{step.label}</p>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
 
+      <Card className="mt-5 !p-0 overflow-hidden">
+        <div className="p-5 pb-0">
+          <SectionTitle>Today's Active Roster</SectionTitle>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-brand-muted">
+                <th className="px-5 py-3 font-medium">Caregiver</th>
+                <th className="px-5 py-3 font-medium">Customer</th>
+                <th className="px-5 py-3 font-medium">Scheduled</th>
+                <th className="px-5 py-3 font-medium">Check-in status</th>
+                <th className="px-5 py-3 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {todaysAssignments.map((a) => {
+                const cl = cls.find((c) => c.id === a.clId);
+                const client = clients.find((c) => c.id === a.clientId);
+                if (!cl || !client) return null;
+                const checkedIn = a.status === 'completed' || a.status === 'confirmed';
+                return (
+                  <tr key={a.id} className="border-t border-black/5">
+                    <td className="flex items-center gap-2 px-5 py-3">
+                      <Avatar name={cl.name} color={cl.avatarColor} size={26} />
+                      {cl.name}
+                    </td>
+                    <td className="px-5 py-3 text-brand-muted">{client.name}</td>
+                    <td className="px-5 py-3 text-brand-muted">{formatTime12(a.startTime)}</td>
+                    <td className="px-5 py-3">
+                      <Badge status={checkedIn ? 'confirmed' : 'pending'}>{checkedIn ? 'Checked in' : 'Not yet'}</Badge>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <Link to={`/cls/${cl.id}`} className="text-xs font-medium text-brand-pink hover:underline">
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="h-3" />
+      </Card>
       <div className="h-6" />
     </PageShell>
   );

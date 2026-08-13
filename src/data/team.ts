@@ -1,6 +1,6 @@
 import type { ConfinementLady } from '../types';
 
-const colors = ['#6d2748', '#4f8a6d', '#c98a3b', '#7f3255', '#3b6d8a', '#8a5b3b', '#5b6d3b'];
+const colors = ['#d94f8c', '#3c6f57', '#c98a3b', '#b13570', '#21493a', '#e0829f', '#6fa583'];
 
 function color(i: number) {
   return colors[i % colors.length];
@@ -26,6 +26,8 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 7,
     flag: 'none',
     bio: 'Senior CL specialising in Pakej Melur and Pakej Rafflesia placements. Consistently top-rated for mother-and-baby aftercare.',
+    shiftAvailability: 'both',
+    passportNumber: 'A39207714',
   },
   {
     id: 'cl-02',
@@ -46,6 +48,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 3,
     flag: 'none',
     bio: 'Known for meticulous bengkung technique and reliable Pakej Mawar cooking service.',
+    shiftAvailability: 'both',
   },
   {
     id: 'cl-03',
@@ -66,6 +69,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 5,
     flag: 'none',
     bio: 'Gentle bedside manner with newborns, frequently requested for repeat clients.',
+    shiftAvailability: 'morning',
   },
   {
     id: 'cl-04',
@@ -87,6 +91,7 @@ export const confinementLadies: ConfinementLady[] = [
     flag: 'complained',
     flagNote: 'Client reported a late arrival on 2026-06-02. Verbal warning issued, no repeat since.',
     bio: 'Strong technical skills; admin is monitoring punctuality after one client complaint.',
+    shiftAvailability: 'afternoon',
   },
   {
     id: 'cl-05',
@@ -107,6 +112,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 9,
     flag: 'none',
     bio: 'One of the most senior CLs — handles the premium Pakej Rafflesia and Cempaka stay-in placements.',
+    shiftAvailability: 'stay-in',
   },
   {
     id: 'cl-06',
@@ -127,6 +133,8 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 2,
     flag: 'none',
     bio: 'Fluent English speaker, primary CL assigned to Pakej Oversea placements.',
+    shiftAvailability: 'stay-in',
+    passportNumber: 'A48219073',
   },
   {
     id: 'cl-07',
@@ -147,6 +155,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 5,
     flag: 'none',
     bio: 'On maternity leave until end of August — scheduled to return for September bookings.',
+    shiftAvailability: 'flexible',
   },
   {
     id: 'cl-08',
@@ -167,6 +176,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 1,
     flag: 'none',
     bio: 'Newest CL on the roster, completed onboarding training in September.',
+    shiftAvailability: 'morning',
   },
   {
     id: 'cl-09',
@@ -187,6 +197,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 8,
     flag: 'none',
     bio: 'Trusted with high day-count Pakej Melur bookings; excellent client retention.',
+    shiftAvailability: 'both',
   },
   {
     id: 'cl-10',
@@ -208,6 +219,7 @@ export const confinementLadies: ConfinementLady[] = [
     flag: 'banned',
     flagNote: 'Suspended 2026-05-10 after repeated no-shows confirmed by two clients. Not eligible for new bookings.',
     bio: 'Long-tenured CL, currently suspended pending review — excluded from the assignment pool.',
+    shiftAvailability: 'flexible',
   },
   {
     id: 'cl-11',
@@ -228,6 +240,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 6,
     flag: 'none',
     bio: 'Popular with Tamil-speaking clients, gentle and detail-oriented.',
+    shiftAvailability: 'both',
   },
   {
     id: 'cl-12',
@@ -248,6 +261,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 4,
     flag: 'none',
     bio: 'Handles Pakej Dahlia and Pakej Cempaka bookings across Cheras and KL.',
+    shiftAvailability: 'afternoon',
   },
   {
     id: 'cl-13',
@@ -268,6 +282,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 3,
     flag: 'none',
     bio: 'Reliable for Rawang and Gombak-area placements.',
+    shiftAvailability: 'morning',
   },
   {
     id: 'cl-14',
@@ -288,6 +303,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 2,
     flag: 'none',
     bio: 'Rising CL with strong client feedback in her first year.',
+    shiftAvailability: 'morning',
   },
   {
     id: 'cl-15',
@@ -308,6 +324,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 7,
     flag: 'none',
     bio: 'On approved leave this week, returning for next week’s Pakej Rafflesia booking.',
+    shiftAvailability: 'both',
   },
   {
     id: 'cl-16',
@@ -328,6 +345,7 @@ export const confinementLadies: ConfinementLady[] = [
     yearsExperience: 2,
     flag: 'none',
     bio: 'Covers the Sepang and KLIA-adjacent client base.',
+    shiftAvailability: 'flexible',
   },
 ];
 

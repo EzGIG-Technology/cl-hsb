@@ -1,29 +1,42 @@
 import type { ReactNode } from 'react';
-import { IconRail } from './IconRail';
-import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+import { TopBar } from './TopBar';
 
 interface PageShellProps {
   title: string;
   subtitle?: string;
   searchPlaceholder?: string;
   onSearch?: (value: string) => void;
-  sidePanel?: ReactNode;
+  headerAction?: ReactNode;
   children: ReactNode;
 }
 
-export function PageShell({ title, subtitle, searchPlaceholder, onSearch, sidePanel, children }: PageShellProps) {
+export function PageShell({ title, subtitle, searchPlaceholder, onSearch, headerAction, children }: PageShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-brand-cream">
-      <IconRail />
-      {sidePanel && (
-        <aside className="scrollbar-thin flex h-full w-[360px] shrink-0 flex-col overflow-y-auto rounded-r-3xl bg-gradient-to-b from-brand-maroon to-brand-maroon-dark p-5 text-white">
-          {sidePanel}
-        </aside>
-      )}
+      <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Header title={title} subtitle={subtitle} searchPlaceholder={searchPlaceholder} onSearch={onSearch} />
-        <main className="scrollbar-thin flex-1 overflow-y-auto px-8 pb-8">{children}</main>
+        <TopBar searchPlaceholder={searchPlaceholder} onSearch={onSearch} />
+        <main className="scrollbar-thin flex-1 overflow-y-auto px-6 py-6">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold text-brand-ink">{title}</h1>
+              {subtitle && <p className="mt-1 text-sm text-brand-muted">{subtitle}</p>}
+            </div>
+            {headerAction}
+          </div>
+          {children}
+        </main>
       </div>
+    </div>
+  );
+}
+
+export function SidePanelCard({ title, children, className = '' }: { title?: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-black/5 bg-white p-4 shadow-sm ${className}`}>
+      {title && <h3 className="mb-3 text-sm font-semibold text-brand-ink">{title}</h3>}
+      {children}
     </div>
   );
 }

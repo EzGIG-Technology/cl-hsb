@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, ShieldAlert, ShieldX, Phone } from 'lucide-react';
+import { Star, ShieldAlert, ShieldX, Trophy } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
-import type { CLStatus } from '../types';
+import { leaderboardRank } from '../lib/clMetrics';
+import { tierForCL, type CLStatus } from '../types';
 
 const statusFilters: { label: string; value: CLStatus | 'all' | 'flagged' }[] = [
   { label: 'All', value: 'all' },
@@ -14,6 +15,15 @@ const statusFilters: { label: string; value: CLStatus | 'all' | 'flagged' }[] = 
   { label: 'Off duty', value: 'off-duty' },
   { label: 'Flagged', value: 'flagged' },
 ];
+
+const tierStyles: Record<string, string> = {
+  Bronze: 'bg-amber-100 text-amber-800',
+  Silver: 'bg-gray-200 text-gray-700',
+  Gold: 'bg-brand-amber-light text-brand-amber',
+  Platinum: 'bg-brand-pink-light text-brand-pink',
+};
+
+const podiumStyles = ['border-brand-amber bg-brand-amber-light', 'border-gray-300 bg-gray-100', 'border-amber-700/30 bg-amber-50'];
 
 export default function CLsPage() {
   const navigate = useNavigate();
@@ -30,6 +40,9 @@ export default function CLsPage() {
     return base;
   }, [cls]);
 
+  const ranked = useMemo(() => leaderboardRank(cls), [cls]);
+  const top3 = ranked.slice(0, 3);
+
   const filtered = cls.filter((c) => {
     const matchesQuery = c.name.toLowerCase().includes(query.toLowerCase()) || c.location.toLowerCase().includes(query.toLowerCase());
     const matchesFilter = filter === 'all' ? true : filter === 'flagged' ? c.flag !== 'none' : c.status === filter;
@@ -38,95 +51,120 @@ export default function CLsPage() {
 
   return (
     <PageShell
-      title="Confinement Ladies"
-      subtitle={`${cls.length} CLs on the roster`}
+      title="Caregiver (CL) Directory"
+      subtitle={`${cls.length} CLs on the roster — ${counts.flagged} flagged for review`}
       searchPlaceholder="Search CL by name or area"
       onSearch={setQuery}
-      sidePanel={
-        <div className="flex flex-1 flex-col gap-4">
-          <div>
-            <h3 className="mb-3 text-sm font-semibold text-white/80">Roster status</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {['on-duty', 'available', 'on-leave', 'off-duty'].map((s) => (
-                <div key={s} className="rounded-xl bg-white/10 p-3">
-                  <p className="text-2xl font-semibold">{counts[s]}</p>
-                  <p className="text-xs capitalize text-white/60">{s.replace('-', ' ')}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-white/10 p-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <ShieldAlert size={16} />
-              {counts.flagged} flagged profiles
-            </div>
-            <p className="mt-1 text-xs text-white/60">CLs tagged as complained or banned. Review before assigning new bookings.</p>
-          </div>
-
-          <div className="mt-2 flex-1">
-            <h3 className="mb-2 text-sm font-semibold text-white/80">Filter</h3>
-            <div className="flex flex-col gap-1">
-              {statusFilters.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setFilter(f.value)}
-                  className={`rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    filter === f.value ? 'bg-white font-medium text-brand-maroon-dark' : 'text-white/80 hover:bg-white/10'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      }
     >
-      <div className="grid grid-cols-1 gap-4 pt-4 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((cl) => (
-          <Card key={cl.id} className="cursor-pointer transition-shadow hover:shadow-md">
-            <div onClick={() => navigate(`/cls/${cl.id}`)}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar name={cl.name} color={cl.avatarColor} size={44} />
-                  <div>
-                    <p className="font-semibold text-brand-ink">{cl.name}</p>
+      <Card className="mb-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Trophy size={16} className="text-brand-amber" />
+          <h3 className="font-semibold text-brand-ink">Leaderboard — Top 3</h3>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {top3.map((cl, i) => {
+            const tier = tierForCL(cl.completedAssignments);
+            return (
+              <button
+                key={cl.id}
+                onClick={() => navigate(`/cls/${cl.id}`)}
+                className={`rounded-xl border p-3 text-left ${podiumStyles[i]}`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-brand-ink">#{i + 1}</span>
+                  <Avatar name={cl.name} color={cl.avatarColor} size={36} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-brand-ink">{cl.name}</p>
                     <p className="text-xs text-brand-muted">{cl.location}</p>
                   </div>
                 </div>
-                {cl.flag === 'banned' && <ShieldX size={18} className="text-red-500" />}
-                {cl.flag === 'complained' && <ShieldAlert size={18} className="text-brand-amber" />}
-              </div>
-
-              <div className="mt-3 flex items-center gap-3 text-sm">
-                <Badge status={cl.status}>{cl.status.replace('-', ' ')}</Badge>
-                <span className="flex items-center gap-1 text-brand-ink">
-                  <Star size={14} className="fill-brand-amber text-brand-amber" />
-                  {cl.rating}
-                  <span className="text-brand-muted">({cl.reviewCount})</span>
-                </span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {cl.specialties.slice(0, 2).map((s) => (
-                  <span key={s} className="rounded-full bg-brand-cream px-2 py-1 text-[11px] text-brand-muted">
-                    {s}
+                <div className="mt-2 flex items-center justify-between">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tierStyles[tier]}`}>{tier}</span>
+                  <span className="flex items-center gap-1 text-xs text-brand-ink">
+                    <Star size={12} className="fill-brand-amber text-brand-amber" /> {cl.rating}
                   </span>
-                ))}
-              </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
 
-              <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-3 text-xs text-brand-muted">
-                <span className="flex items-center gap-1">
-                  <Phone size={12} /> {cl.phone}
-                </span>
-                <span>{cl.completedAssignments} completed</span>
-              </div>
-            </div>
-          </Card>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {statusFilters.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setFilter(f.value)}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+              filter === f.value ? 'bg-brand-pink text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+            }`}
+          >
+            {f.label}
+          </button>
         ))}
-        {filtered.length === 0 && <p className="text-sm text-brand-muted">No CLs match your search.</p>}
       </div>
+
+      <Card className="!p-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-brand-muted">
+                <th className="px-5 py-3 font-medium">Name</th>
+                <th className="px-5 py-3 font-medium">Phone</th>
+                <th className="px-5 py-3 font-medium">Base area</th>
+                <th className="px-5 py-3 font-medium">Tier</th>
+                <th className="px-5 py-3 font-medium">Points</th>
+                <th className="px-5 py-3 font-medium">Rating</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((cl) => {
+                const tier = tierForCL(cl.completedAssignments);
+                const points = cl.completedAssignments * 12 + Math.round(cl.rating * 40);
+                return (
+                  <tr key={cl.id} className="border-t border-black/5 hover:bg-brand-cream/60">
+                    <td className="flex items-center gap-2 px-5 py-3">
+                      <Avatar name={cl.name} color={cl.avatarColor} size={28} />
+                      <span className="text-brand-ink">{cl.name}</span>
+                      {cl.flag === 'banned' && <ShieldX size={14} className="text-red-500" />}
+                      {cl.flag === 'complained' && <ShieldAlert size={14} className="text-brand-amber" />}
+                    </td>
+                    <td className="px-5 py-3 text-brand-muted">{cl.phone}</td>
+                    <td className="px-5 py-3 text-brand-muted">{cl.location}</td>
+                    <td className="px-5 py-3">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tierStyles[tier]}`}>{tier}</span>
+                    </td>
+                    <td className="px-5 py-3 text-brand-muted">{points.toLocaleString()}</td>
+                    <td className="px-5 py-3">
+                      <span className="flex items-center gap-1 text-brand-ink">
+                        <Star size={12} className="fill-brand-amber text-brand-amber" /> {cl.rating}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge status={cl.status}>{cl.status.replace('-', ' ')}</Badge>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <button onClick={() => navigate(`/cls/${cl.id}`)} className="text-xs font-medium text-brand-pink hover:underline">
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-5 py-6 text-center text-sm text-brand-muted">
+                    No CLs match your search.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="h-2" />
+      </Card>
       <div className="h-6" />
     </PageShell>
   );

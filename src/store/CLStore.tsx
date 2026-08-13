@@ -24,6 +24,8 @@ interface CLStoreValue {
   clById: (id: string) => ConfinementLady | undefined;
   updateFlag: (id: string, flag: CLFlag, note?: string) => void;
   updateStatus: (id: string, status: CLStatus) => void;
+  updateTreatmentPhoto: (id: string, dataUrl: string | undefined) => void;
+  updatePassport: (id: string, passportNumber: string) => void;
   resetToDefaults: () => void;
 }
 
@@ -47,6 +49,9 @@ export function CLStoreProvider({ children }: { children: ReactNode }) {
       updateFlag: (id, flag, note) =>
         setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, flag, flagNote: flag === 'none' ? undefined : note } : c))),
       updateStatus: (id, status) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c))),
+      updateTreatmentPhoto: (id, dataUrl) =>
+        setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, treatmentPhotoUrl: dataUrl } : c))),
+      updatePassport: (id, passportNumber) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, passportNumber } : c))),
       resetToDefaults: () => setCLs(seedCLs),
     }),
     [cls],

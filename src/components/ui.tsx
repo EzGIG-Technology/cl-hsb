@@ -1,7 +1,19 @@
 import type { ReactNode } from 'react';
 
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl border border-black/5 bg-white p-5 shadow-sm ${className}`}>{children}</div>;
+export function Card({
+  children,
+  className = '',
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <div className={`rounded-2xl border border-black/5 bg-white p-5 shadow-sm ${className}`} onClick={onClick}>
+      {children}
+    </div>
+  );
 }
 
 interface StatCardProps {
@@ -52,7 +64,7 @@ export function Badge({ status, children }: { status: string; children: ReactNod
   );
 }
 
-export function Avatar({ name, color = '#6d2748', size = 36 }: { name: string; color?: string; size?: number }) {
+export function Avatar({ name, color = '#d94f8c', size = 36 }: { name: string; color?: string; size?: number }) {
   const initials = name
     .split(' ')
     .map((p) => p[0])

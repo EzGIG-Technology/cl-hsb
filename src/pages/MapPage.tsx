@@ -3,12 +3,15 @@ import { PageShell } from '../components/PageShell';
 import { OperationsMap } from '../components/OperationsMap';
 import { Card, Badge, Avatar, SectionTitle } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
+import { useSettings } from '../store/SettingsContext';
 import { locationTotals } from '../data/reports';
 
 export default function MapPage() {
   const { cls } = useCLStore();
+  const { locationCapacity } = useSettings();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
+  const capFor = (name: string) => locationCapacity.find((l) => l.location === name)?.monthlySlots;
   const totalCount = locationTotals.reduce((acc, l) => acc + l.count, 0);
 
   const filteredCLs = useMemo(() => {
@@ -17,49 +20,51 @@ export default function MapPage() {
   }, [cls, selectedLocation]);
 
   return (
-    <PageShell
-      title="Operations map"
-      subtitle="Live view of CL totals across Selangor & Kuala Lumpur."
-      sidePanel={
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="rounded-2xl bg-white/10 p-4 text-center">
-            <p className="text-3xl font-semibold">{totalCount}</p>
-            <p className="text-xs text-white/60">CL totals across all tracked areas</p>
+    <PageShell title="Operations map" subtitle="Live view of CL totals across Selangor & Kuala Lumpur.">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_1.4fr_1fr]">
+        <Card className="!p-3">
+          <div className="rounded-xl bg-brand-cream p-3 text-center">
+            <p className="text-2xl font-semibold text-brand-ink">{totalCount}</p>
+            <p className="text-xs text-brand-muted">CL totals, all areas</p>
           </div>
-
-          <div className="flex-1">
-            <h3 className="mb-2 text-sm font-semibold text-white/80">By location</h3>
-            <div className="space-y-1">
-              <button
-                onClick={() => setSelectedLocation(null)}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
-                  !selectedLocation ? 'bg-white font-medium text-brand-maroon-dark' : 'text-white/80 hover:bg-white/10'
-                }`}
-              >
-                All areas
-                <span>{totalCount}</span>
-              </button>
-              {locationTotals
-                .slice()
-                .sort((a, b) => b.count - a.count)
-                .map((loc) => (
+          <div className="mt-3 space-y-1">
+            <button
+              onClick={() => setSelectedLocation(null)}
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
+                !selectedLocation ? 'bg-brand-pink-light font-medium text-brand-pink-dark' : 'text-brand-ink/80 hover:bg-brand-cream'
+              }`}
+            >
+              All areas
+              <span>{totalCount}</span>
+            </button>
+            {locationTotals
+              .slice()
+              .sort((a, b) => b.count - a.count)
+              .map((loc) => {
+                const cap = capFor(loc.name);
+                const nearFull = cap ? loc.count / cap >= 0.9 : false;
+                return (
                   <button
                     key={loc.name}
                     onClick={() => setSelectedLocation(loc.name)}
                     className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
-                      selectedLocation === loc.name ? 'bg-white font-medium text-brand-maroon-dark' : 'text-white/80 hover:bg-white/10'
+                      selectedLocation === loc.name ? 'bg-brand-pink-light font-medium text-brand-pink-dark' : 'text-brand-ink/80 hover:bg-brand-cream'
                     }`}
                   >
-                    {loc.name}
-                    <span>{loc.count}</span>
+                    <span className="flex items-center gap-1.5">
+                      {loc.name}
+                      {nearFull && <span className="h-1.5 w-1.5 rounded-full bg-red-500" title="Near capacity" />}
+                    </span>
+                    <span className="text-brand-muted">
+                      {loc.count}
+                      {cap ? `/${cap}` : ''}
+                    </span>
                   </button>
-                ))}
-            </div>
+                );
+              })}
           </div>
-        </div>
-      }
-    >
-      <div className="grid grid-cols-1 gap-5 pt-4 xl:grid-cols-[1.4fr_1fr]">
+        </Card>
+
         <Card className="!p-3">
           <div className="h-[480px]">
             <OperationsMap />

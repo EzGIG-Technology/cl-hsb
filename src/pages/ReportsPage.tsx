@@ -40,47 +40,13 @@ export default function ReportsPage() {
     .map((p) => ({ name: packageById(p.packageId)?.shortName ?? p.packageId, bookings: p.bookings }))
     .sort((a, b) => b.bookings - a.bookings);
 
-  const ratingColors: Record<number, string> = { 5: '#1f4d3a', 4: '#4f8a6d', 3: '#c98a3b', 2: '#b45f3b', 1: '#b23b3b' };
+  const ratingColors: Record<number, string> = { 5: '#21493a', 4: '#3c6f57', 3: '#c98a3b', 2: '#b45f3b', 1: '#b23b3b' };
 
   return (
-    <PageShell
-      title="Reports"
-      subtitle="Revenue, bookings, and CL performance at a glance."
-      sidePanel={
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="rounded-2xl bg-white/10 p-4">
-            <p className="text-xs text-white/60">Year to date revenue</p>
-            <p className="mt-1 text-2xl font-semibold">{formatRM(ytdRevenue)}</p>
-          </div>
-          <div className="rounded-2xl bg-white/10 p-4">
-            <p className="text-xs text-white/60">Completed assignments (YTD)</p>
-            <p className="mt-1 text-2xl font-semibold">{ytdCompleted}</p>
-          </div>
-          <div className="rounded-2xl bg-white/10 p-4">
-            <p className="text-xs text-white/60">This month's revenue</p>
-            <p className="mt-1 text-2xl font-semibold">{formatRM(thisMonthRevenue)}</p>
-          </div>
-
-          <div className="flex-1 rounded-2xl bg-white/10 p-4">
-            <h3 className="mb-2 text-sm font-semibold text-white/80">Top rated CLs</h3>
-            <div className="space-y-2">
-              {topCLs.slice(0, 4).map((cl, i) => (
-                <div key={cl.id} className="flex items-center gap-2 text-sm">
-                  <span className="w-4 text-xs text-white/50">{i + 1}</span>
-                  <Avatar name={cl.name} color={cl.avatarColor} size={26} />
-                  <span className="min-w-0 flex-1 truncate">{cl.name}</span>
-                  <span className="flex items-center gap-1 text-xs text-white/70">
-                    <Star size={11} className="fill-brand-amber text-brand-amber" /> {cl.rating}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <div className="grid grid-cols-1 gap-5 pt-4 md:grid-cols-3">
+    <PageShell title="Reports" subtitle="Revenue, bookings, and CL performance at a glance.">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
         <StatCard label="YTD revenue" value={formatRM(ytdRevenue)} icon={<TrendingUp size={16} className="text-brand-green" />} />
+        <StatCard label="This month's revenue" value={formatRM(thisMonthRevenue)} />
         <StatCard label="YTD completed assignments" value={ytdCompleted} />
         <StatCard label="Average CL rating" value={(cls.reduce((a, c) => a + c.rating, 0) / cls.length).toFixed(1)} icon={<Award size={16} className="text-brand-amber" />} />
       </div>
@@ -94,7 +60,7 @@ export default function ReportsPage() {
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
               <YAxis hide />
               <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Line type="monotone" dataKey="revenue" stroke="#6d2748" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="revenue" stroke="#d94f8c" strokeWidth={2.5} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

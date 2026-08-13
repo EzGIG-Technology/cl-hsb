@@ -3,15 +3,14 @@
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* NR Mothercare brand palette, sampled from the product screenshots */
-  --color-brand-maroon: #6d2748;
-  --color-brand-maroon-dark: #551d39;
-  --color-brand-maroon-light: #7f3255;
-  --color-brand-pink: #e8a0bb;
-  --color-brand-pink-light: #f6dde7;
+  /* NR Mothercare brand palette, sampled directly from the logo: pink wordmark + green silhouette */
+  --color-brand-pink: #d94f8c;
+  --color-brand-pink-dark: #b13570;
+  --color-brand-pink-light: #fbe3ef;
+  --color-brand-green: #3c6f57;
+  --color-brand-green-dark: #21493a;
+  --color-brand-green-light: #e3f0e8;
   --color-brand-cream: #faf6f0;
-  --color-brand-green: #1f4d3a;
-  --color-brand-green-light: #e4efe8;
   --color-brand-amber: #c98a3b;
   --color-brand-amber-light: #f6e9d4;
   --color-brand-ink: #26202a;
