@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* NR Mothercare brand palette, sampled from the product screenshots */
+  --color-brand-maroon: #6d2748;
+  --color-brand-maroon-dark: #551d39;
+  --color-brand-maroon-light: #7f3255;
+  --color-brand-pink: #e8a0bb;
+  --color-brand-pink-light: #f6dde7;
+  --color-brand-cream: #faf6f0;
+  --color-brand-green: #1f4d3a;
+  --color-brand-green-light: #e4efe8;
+  --color-brand-amber: #c98a3b;
+  --color-brand-amber-light: #f6e9d4;
+  --color-brand-ink: #26202a;
+  --color-brand-muted: #8b7d87;
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-brand-cream);
+    color: var(--color-brand-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-cl,
+  #printable-cl * {
+    visibility: visible;
+  }
+  #printable-cl {
+    position: absolute;
+    inset: 0;
+    margin: 2rem auto;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
