@@ -18,7 +18,7 @@ import {
 import { Logo } from './Logo';
 import { useSettings } from '../store/SettingsContext';
 import { useAssignmentStore } from '../store/AssignmentStore';
-import { disputes } from '../data/disputes';
+import { useDisputeStore } from '../store/DisputeStore';
 
 interface NavItem {
   to: string;
@@ -74,6 +74,7 @@ const groups: NavGroup[] = [
 export function Sidebar() {
   const { company } = useSettings();
   const { unassignedClientIds } = useAssignmentStore();
+  const { disputes } = useDisputeStore();
   const openDisputes = disputes.filter((d) => d.status === 'Open').length;
 
   const badgeCounts: Record<string, number> = {

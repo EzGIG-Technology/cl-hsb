@@ -20,3 +20,28 @@ export function formatDateLabel(dateStr: string) {
 export function formatWeekdayDate(d: Date) {
   return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 }
+
+export type ExpiryUrgency = 'expired' | 'critical' | 'warning' | 'ok';
+
+/** Days-to-expiry bucket used for certification / work-permit / passport expiry badges. */
+export function expiryUrgency(dateStr: string, todayStr: string = TODAY_STR): ExpiryUrgency {
+  const daysLeft = Math.floor((new Date(`${dateStr}T00:00:00`).getTime() - new Date(`${todayStr}T00:00:00`).getTime()) / 86400000);
+  if (daysLeft < 0) return 'expired';
+  if (daysLeft < 30) return 'critical';
+  if (daysLeft < 90) return 'warning';
+  return 'ok';
+}
+
+export const expiryUrgencyStyles: Record<ExpiryUrgency, string> = {
+  expired: 'bg-red-100 text-red-700',
+  critical: 'bg-red-100 text-red-700',
+  warning: 'bg-brand-amber-light text-brand-amber',
+  ok: 'bg-brand-green-light text-brand-green',
+};
+
+export const expiryUrgencyLabels: Record<ExpiryUrgency, string> = {
+  expired: 'Expired',
+  critical: 'Expiring soon',
+  warning: 'Renew soon',
+  ok: 'Valid',
+};

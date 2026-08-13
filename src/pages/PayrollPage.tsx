@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Download, CheckCheck } from 'lucide-react';
+import { useMemo } from 'react';
+import { Download, CheckCheck, Clock } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Avatar, Badge, formatRM } from '../components/ui';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useCLStore } from '../store/CLStore';
 import { useActivityLog } from '../store/ActivityLogContext';
-
-const HOURLY_RATE = 22;
+import { HOURLY_RATE } from '../lib/clMetrics';
+import { downloadCSV } from '../lib/csv';
 
 function hoursFor(startTime: string, endTime: string) {
   const [sh, sm] = startTime.split(':').map(Number);
@@ -15,12 +15,15 @@ function hoursFor(startTime: string, endTime: string) {
 }
 
 export default function PayrollPage() {
-  const { assignments } = useAssignmentStore();
+  const { assignments, markPaymentStatus } = useAssignmentStore();
   const { cls } = useCLStore();
   const { logAction } = useActivityLog();
-  const [paidMonth, setPaidMonth] = useState(false);
 
   const monthAssignments = assignments.filter((a) => a.date.startsWith('2026-08') && a.status === 'completed');
+  // Sessions nobody ever ran through Visit approval — eligible for month-end payout. Anything
+  // sitting 'in-review' is left untouched here since that can also mean a live rejection, not
+  // just an unreviewed session — only a Superadmin approval/reject on Visits should resolve it.
+  const unreviewed = monthAssignments.filter((a) => (a.paymentStatus ?? 'pending') === 'pending');
 
   const rows = useMemo(() => {
     const byCL: Record<string, { hours: number; count: number; paymentStatuses: string[] }> = {};
@@ -36,45 +39,55 @@ export default function PayrollPage() {
         const cl = cls.find((c) => c.id === clId);
         const allReleased = data.paymentStatuses.every((s) => s === 'released');
         const anyReview = data.paymentStatuses.some((s) => s === 'in-review');
-        const status = allReleased ? 'Approved' : anyReview ? 'Awaiting Review' : 'Pending Month-End';
+        const status = allReleased ? 'Paid' : anyReview ? 'Awaiting Review' : 'Pending Month-End';
         return { cl, hours: Math.round(data.hours * 10) / 10, sessions: data.count, pay: Math.round(data.hours * HOURLY_RATE), status };
       })
       .filter((r) => r.cl);
   }, [monthAssignments, cls]);
 
-  const approvedHours = rows.filter((r) => r.status === 'Approved').reduce((s, r) => s + r.hours, 0);
-  const disputedHours = rows.filter((r) => r.status !== 'Approved').reduce((s, r) => s + r.hours, 0);
+  const approvedHours = rows.filter((r) => r.status === 'Paid').reduce((s, r) => s + r.hours, 0);
+  const disputedHours = rows.filter((r) => r.status !== 'Paid').reduce((s, r) => s + r.hours, 0);
   const totalPay = rows.reduce((s, r) => s + r.pay, 0);
 
   function markAllPaid() {
-    setPaidMonth(true);
-    logAction('Admin Amy', 'Marked Aug 2026 payroll as paid', `${rows.length} caregivers, ${formatRM(totalPay)}`);
+    unreviewed.forEach((a) => markPaymentStatus(a.id, 'released'));
+    logAction('Admin Amy', 'Marked Aug 2026 payroll as paid', `${unreviewed.length} sessions released for payment`);
+  }
+
+  function exportCSV(kind: 'CSV' | 'Excel') {
+    downloadCSV(`nrmc-payroll-aug-2026.csv`, [
+      ['Caregiver', 'Sessions', 'Hours', 'Pay (RM)', 'Status'],
+      ...rows.map((r) => [r.cl!.name, r.sessions, r.hours, r.pay, r.status]),
+    ]);
+    logAction('Admin Amy', `Exported payroll ${kind}`, 'Aug 2026');
   }
 
   return (
     <PageShell
       title="Hourly Payroll"
       subtitle="Aug 2026 — approved hours, disputed hours, and total pay by caregiver."
+      icon={Clock}
+      accentColor="#c98a3b"
       headerAction={
         <div className="flex gap-2">
           <button
-            onClick={() => logAction('Admin Amy', 'Exported payroll CSV', 'Aug 2026')}
+            onClick={() => exportCSV('CSV')}
             className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-brand-ink hover:bg-brand-cream"
           >
             <Download size={14} /> CSV
           </button>
           <button
-            onClick={() => logAction('Admin Amy', 'Exported payroll Excel', 'Aug 2026')}
+            onClick={() => exportCSV('Excel')}
             className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-brand-ink hover:bg-brand-cream"
           >
             <Download size={14} /> Excel
           </button>
           <button
             onClick={markAllPaid}
-            disabled={paidMonth}
+            disabled={unreviewed.length === 0}
             className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark disabled:opacity-40"
           >
-            <CheckCheck size={14} /> {paidMonth ? 'Marked as Paid' : 'Mark Aug 2026 as Paid'}
+            <CheckCheck size={14} /> {unreviewed.length === 0 ? 'All Sessions Paid' : 'Mark Aug 2026 as Paid'}
           </button>
         </div>
       }
@@ -85,11 +98,11 @@ export default function PayrollPage() {
           <p className="mt-1 text-3xl font-semibold text-brand-ink">{rows.length}</p>
         </Card>
         <Card>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Approved hours</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Paid hours</p>
           <p className="mt-1 text-3xl font-semibold text-brand-green">{approvedHours}h</p>
         </Card>
         <Card>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Disputed / pending hours</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Awaiting review / pending hours</p>
           <p className="mt-1 text-3xl font-semibold text-brand-amber">{disputedHours}h</p>
         </Card>
         <Card>
@@ -121,9 +134,7 @@ export default function PayrollPage() {
                   <td className="px-5 py-3 text-brand-muted">{r.hours}h</td>
                   <td className="px-5 py-3 text-brand-muted">{formatRM(r.pay)}</td>
                   <td className="px-5 py-3">
-                    <Badge status={paidMonth ? 'completed' : r.status === 'Approved' ? 'confirmed' : r.status === 'Awaiting Review' ? 'pending' : 'upcoming'}>
-                      {paidMonth ? 'Paid' : r.status}
-                    </Badge>
+                    <Badge status={r.status === 'Paid' ? 'completed' : r.status === 'Awaiting Review' ? 'pending' : 'upcoming'}>{r.status}</Badge>
                   </td>
                 </tr>
               ))}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { TrendingUp, Star, Award, ChevronDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Star, Award, ChevronDown, Wallet, PiggyBank } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -9,13 +9,14 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   CartesianGrid,
   Cell,
 } from 'recharts';
 import { PageShell } from '../components/PageShell';
 import { Card, StatCard, SectionTitle, Avatar, formatRM } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
-import { monthlyRevenue, monthlyCompletedAssignments, ratingDistribution, packagePopularity } from '../data/reports';
+import { monthlyRevenue, monthlyPayroll, monthlyCompletedAssignments, ratingDistribution, packagePopularity } from '../data/reports';
 import { useSettings } from '../store/SettingsContext';
 
 const CURRENT_MONTH_INDEX = 7; // August — data only exists for Jan-Aug in the seed set
@@ -36,6 +37,19 @@ export default function ReportsPage() {
     () => monthlyCompletedAssignments.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.completed, 0),
     [],
   );
+
+  const financeChartData = monthlyRevenue.map((m) => {
+    const payroll = monthlyPayroll.find((p) => p.month === m.month)?.payroll ?? 0;
+    return { month: m.month, revenue: m.revenue, payroll, margin: m.revenue - payroll };
+  });
+  const selectedMonthPayroll = monthlyPayroll.find((m) => m.month === selectedMonth)?.payroll ?? 0;
+  const selectedMonthMargin = selectedMonthRevenue - selectedMonthPayroll;
+  const selectedMonthMarginPct = selectedMonthRevenue ? Math.round((selectedMonthMargin / selectedMonthRevenue) * 100) : 0;
+  const ytdPayroll = useMemo(
+    () => monthlyPayroll.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.payroll, 0),
+    [],
+  );
+  const ytdMargin = ytdRevenue - ytdPayroll;
 
   const topCLs = useMemo(() => [...cls].sort((a, b) => b.rating - a.rating || b.completedAssignments - a.completedAssignments).slice(0, 6), [cls]);
 
@@ -76,6 +90,63 @@ export default function ReportsPage() {
         <StatCard label={`${selectedMonth} 2026 completed`} value={selectedMonthCompleted} />
         <StatCard label="Average CL rating" value={(cls.reduce((a, c) => a + c.rating, 0) / cls.length).toFixed(1)} icon={<Award size={16} className="text-brand-amber" />} />
       </div>
+
+      <Card className="mt-5">
+        <SectionTitle action={<span className="text-xs text-brand-muted">{isCurrentMonth ? 'This month' : `${selectedMonth} 2026`}</span>}>
+          Revenue vs. Payroll
+        </SectionTitle>
+        <p className="-mt-3 mb-4 text-xs text-brand-muted">What customers pay in, what CLs are paid out, and what's left over.</p>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl bg-brand-cream p-3">
+            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+              <TrendingUp size={11} className="text-brand-green" /> Revenue collected
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthRevenue)}</p>
+            <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdRevenue)}</p>
+          </div>
+          <div className="rounded-xl bg-brand-cream p-3">
+            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+              <Wallet size={11} className="text-brand-amber" /> Paid out to CLs
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthPayroll)}</p>
+            <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdPayroll)}</p>
+          </div>
+          <div className="rounded-xl bg-brand-cream p-3">
+            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+              <PiggyBank size={11} className="text-brand-pink" /> Gross margin
+            </p>
+            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthMargin)}</p>
+            <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdMargin)}</p>
+          </div>
+          <div className="rounded-xl bg-brand-cream p-3">
+            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+              {selectedMonthMarginPct >= 0 ? (
+                <TrendingUp size={11} className="text-brand-green" />
+              ) : (
+                <TrendingDown size={11} className="text-red-500" />
+              )}
+              Margin %
+            </p>
+            <p className={`mt-1 text-xl font-semibold ${selectedMonthMarginPct >= 0 ? 'text-brand-ink' : 'text-red-600'}`}>{selectedMonthMarginPct}%</p>
+            <p className="text-[10px] text-brand-muted">of revenue kept after payroll</p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={financeChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <YAxis hide />
+              <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="revenue" name="Revenue" fill="#d94f8c" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="payroll" name="Paid to CLs" fill="#c98a3b" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card>

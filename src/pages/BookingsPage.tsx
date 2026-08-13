@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, X, ChevronRight, ChevronLeft, Star, Sparkles, Check } from 'lucide-react';
+import { PlusCircle, X, ChevronRight, ChevronLeft, Star, Sparkles, Check, ClipboardList } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { PackageArt } from '../components/PackageArt';
 import { Card, Badge, Avatar, formatRM } from '../components/ui';
@@ -10,6 +10,7 @@ import { useCLStore } from '../store/CLStore';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatDateLabel, formatTime12, TODAY, toDateStr } from '../lib/date';
+import type { Client, Package, ConfinementLady } from '../types';
 
 type Tab = 'unassigned' | 'active' | 'completed' | 'cancelled';
 
@@ -45,6 +46,8 @@ export default function BookingsPage() {
     <PageShell
       title="Bookings & Assignment"
       subtitle="Manage every booking from request to payroll."
+      icon={ClipboardList}
+      accentColor="#d94f8c"
       headerAction={
         <button
           onClick={() => setWizardOpen(true)}
@@ -185,8 +188,21 @@ export default function BookingsPage() {
   );
 }
 
+function specialtyMatchBonus(cl: ConfinementLady, pkg: Package | null): number {
+  if (!pkg) return 0;
+  const pkgText = `${pkg.name} ${pkg.summary} ${pkg.category}`.toLowerCase();
+  const overlaps = cl.specialties.some((s) =>
+    s
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+      .some((w) => pkgText.includes(w)),
+  );
+  return overlaps ? 1.5 : 0;
+}
+
 function NewBookingWizard({ onClose }: { onClose: () => void }) {
-  const { clients } = useClientStore();
+  const { clients, addClient } = useClientStore();
   const { cls } = useCLStore();
   const { packages } = useSettings();
   const { addBooking } = useAssignmentStore();
@@ -196,44 +212,57 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerLocation, setNewCustomerLocation] = useState('');
   const [packageId, setPackageId] = useState<string | null>(null);
   const [tierDays, setTierDays] = useState<number | null>(null);
   const [clId, setClId] = useState<string | null>(null);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
+  const [confirmedCustomer, setConfirmedCustomer] = useState<Client | null>(null);
 
   const selectedPackage = packages.find((p) => p.id === packageId) ?? null;
   const selectedTier = selectedPackage?.tiers.find((t) => t.days === tierDays) ?? null;
   const quoted = selectedTier?.price ?? selectedPackage?.sessionPrice?.perSession ?? 0;
   const customer = customerId ? clients.find((c) => c.id === customerId) : null;
-  const customerLocation = customer?.location ?? '';
+  const customerLocation = customer?.location ?? newCustomerLocation;
+  const bookingDate = toDateStr(TODAY);
 
   const rankedCLs = useMemo(() => {
-    const available = cls.filter((c) => c.status === 'available' || c.status === 'on-duty');
+    const available = cls.filter(
+      (c) =>
+        (c.status === 'available' || c.status === 'on-duty') &&
+        !c.leavePeriods.some((p) => bookingDate >= p.start && bookingDate <= p.end),
+    );
     return [...available]
       .map((c) => {
         const tier = c.completedAssignments >= 250 ? 3 : c.completedAssignments >= 150 ? 2 : c.completedAssignments >= 50 ? 1 : 0;
         const proximity = customerLocation && c.location.split(',')[0] === customerLocation.split(',')[0] ? 2 : 0;
-        const score = proximity * 10 + tier * 3 + c.rating;
+        const score = proximity * 10 + tier * 3 + c.rating + specialtyMatchBonus(c, selectedPackage);
         return { cl: c, score };
       })
       .sort((a, b) => b.score - a.score)
       .map((x) => x.cl);
-  }, [cls, customerLocation]);
+  }, [cls, customerLocation, selectedPackage, bookingDate]);
 
   const selectedCL = clId ? cls.find((c) => c.id === clId) : null;
 
   function confirmBooking() {
-    if (!customer || !packageId || !clId) return;
+    const finalCustomer =
+      customer ??
+      (newCustomerName.trim() && newCustomerLocation.trim()
+        ? addClient({ name: newCustomerName.trim(), phone: newCustomerPhone.trim(), location: newCustomerLocation.trim() })
+        : null);
+    if (!finalCustomer || !packageId || !clId) return;
     const booking = addBooking({
-      clientId: customer.id,
+      clientId: finalCustomer.id,
       clId,
       packageId,
-      date: toDateStr(TODAY),
+      date: bookingDate,
       startTime: '09:00',
       endTime: '13:00',
-      location: customer.location,
+      location: finalCustomer.location,
     });
-    logAction('Admin Amy', 'Created new booking', `#${booking.id.toUpperCase()} — ${customer.name}`);
+    logAction('Admin Amy', 'Created new booking', `#${booking.id.toUpperCase()} — ${finalCustomer.name}`);
+    setConfirmedCustomer(finalCustomer);
     setConfirmedBookingId(booking.id);
   }
 
@@ -259,7 +288,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
               <p className="mt-3 text-lg font-semibold text-brand-ink">Booking confirmed</p>
               <p className="mt-1 font-mono text-sm text-brand-pink">#{confirmedBookingId.toUpperCase()}</p>
               <p className="mt-2 max-w-xs text-sm text-brand-muted">
-                {customer?.name} is now matched with {selectedCL?.name} for {selectedPackage?.name}.
+                {confirmedCustomer?.name} is now matched with {selectedCL?.name} for {selectedPackage?.name}.
               </p>
             </div>
           ) : (
@@ -298,6 +327,12 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                         className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
                       />
                     </div>
+                    <input
+                      value={newCustomerLocation}
+                      onChange={(e) => setNewCustomerLocation(e.target.value)}
+                      placeholder="Area (e.g. Shah Alam, Selangor)"
+                      className="mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+                    />
                   </div>
                 </div>
               )}
@@ -427,7 +462,11 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
               {step < 4 ? (
                 <button
                   onClick={() => setStep((s) => s + 1)}
-                  disabled={(step === 1 && !customerId && !newCustomerName) || (step === 2 && (!packageId || !tierDays)) || (step === 3 && !clId)}
+                  disabled={
+                    (step === 1 && !customerId && !(newCustomerName.trim() && newCustomerPhone.trim() && newCustomerLocation.trim())) ||
+                    (step === 2 && (!packageId || !tierDays)) ||
+                    (step === 3 && !clId)
+                  }
                   className="flex items-center gap-1 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white disabled:opacity-30"
                 >
                   Next <ChevronRight size={14} />

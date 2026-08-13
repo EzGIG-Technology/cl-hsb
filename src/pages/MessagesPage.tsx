@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { Send, Search } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Avatar, Badge, Card } from '../components/ui';
-import { messageThreads as seedThreads } from '../data/messages';
-import type { MessageThread } from '../types';
+import { useMessageStore } from '../store/MessageStore';
 
 export default function MessagesPage() {
-  const [threads, setThreads] = useState<MessageThread[]>(seedThreads);
-  const [activeId, setActiveId] = useState(seedThreads[0]?.id ?? '');
+  const { threads, sendMessage, markRead } = useMessageStore();
+  const [activeId, setActiveId] = useState(threads[0]?.id ?? '');
   const [draft, setDraft] = useState('');
   const [query, setQuery] = useState('');
 
@@ -16,25 +15,13 @@ export default function MessagesPage() {
 
   function send() {
     if (!draft.trim() || !active) return;
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === active.id
-          ? {
-              ...t,
-              lastMessage: draft,
-              lastMessageAt: 'Now',
-              unread: 0,
-              messages: [...t.messages, { id: `m-${Date.now()}`, from: 'admin', text: draft, time: 'Now' }],
-            }
-          : t,
-      ),
-    );
+    sendMessage(active.id, draft);
     setDraft('');
   }
 
   function selectThread(id: string) {
     setActiveId(id);
-    setThreads((prev) => prev.map((t) => (t.id === id ? { ...t, unread: 0 } : t)));
+    markRead(id);
   }
 
   return (

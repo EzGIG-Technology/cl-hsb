@@ -1,5 +1,5 @@
 import type { ChangeEvent, ReactNode } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, ChefHat, Baby, Droplets, Milk, Footprints, Plane, Languages, Home, Shirt, ShieldPlus, Flower2, Sparkles } from 'lucide-react';
 import { useAvatarStore } from '../store/AvatarStore';
 
 export function Card({
@@ -56,6 +56,13 @@ const badgeStyles: Record<string, string> = {
   complained: 'bg-brand-amber-light text-brand-amber',
   banned: 'bg-red-100 text-red-600',
   none: 'bg-gray-100 text-gray-500',
+  Verified: 'bg-brand-green-light text-brand-green',
+  'In Progress': 'bg-blue-100 text-blue-700',
+  'Missing Check-Out Selfie': 'bg-red-100 text-red-600',
+  'GPS Mismatch': 'bg-red-100 text-red-600',
+  'Pending Approval': 'bg-brand-amber-light text-brand-amber',
+  Approved: 'bg-brand-green-light text-brand-green',
+  Rejected: 'bg-red-100 text-red-600',
 };
 
 export function Badge({ status, children }: { status: string; children: ReactNode }) {
@@ -84,6 +91,43 @@ function shade(hex: string, amt: number) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+/** Small deterministic hash so a person's placeholder pattern/variant stays stable across renders. */
+function hashOf(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h += s.charCodeAt(i);
+  return h;
+}
+
+const AVATAR_PATTERNS = ['arcs', 'diagonals', 'dots'] as const;
+
+/** Subtle geometric texture layered under the initials — purely procedural, never an attempt at a photorealistic face. */
+function AvatarPattern({ pattern }: { pattern: (typeof AVATAR_PATTERNS)[number] }) {
+  const common = { viewBox: '0 0 100 100', className: 'absolute inset-0 h-full w-full', style: { opacity: 0.16 } };
+  if (pattern === 'arcs') {
+    return (
+      <svg {...common}>
+        <circle cx="100" cy="0" r="28" fill="none" stroke="white" strokeWidth="7" />
+        <circle cx="100" cy="0" r="48" fill="none" stroke="white" strokeWidth="7" />
+        <circle cx="100" cy="0" r="68" fill="none" stroke="white" strokeWidth="7" />
+      </svg>
+    );
+  }
+  if (pattern === 'diagonals') {
+    return (
+      <svg {...common}>
+        {[-20, 10, 40, 70, 100, 130].map((x) => (
+          <line key={x} x1={x} y1="0" x2={x - 45} y2="100" stroke="white" strokeWidth="7" />
+        ))}
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      {[18, 42, 66, 90].flatMap((cy) => [18, 42, 66, 90].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4.5" fill="white" />))}
+    </svg>
+  );
+}
+
 export function Avatar({
   name,
   color = '#d94f8c',
@@ -106,17 +150,20 @@ export function Avatar({
       />
     );
   }
+  const pattern = AVATAR_PATTERNS[hashOf(name) % AVATAR_PATTERNS.length];
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white ring-2 ring-white shadow-sm"
+      className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white ring-2 ring-white"
       style={{
         background: `linear-gradient(140deg, ${shade(color, 25)}, ${shade(color, -20)})`,
         width: size,
         height: size,
         fontSize: size * 0.38,
+        boxShadow: `0 2px 8px ${color}55`,
       }}
     >
-      {initialsOf(name)}
+      <AvatarPattern pattern={pattern} />
+      <span className="relative">{initialsOf(name)}</span>
     </div>
   );
 }
@@ -177,5 +224,34 @@ export function SectionTitle({ children, action }: { children: ReactNode; action
       <h2 className="text-lg font-semibold text-brand-ink">{children}</h2>
       {action}
     </div>
+  );
+}
+
+const specialtyIconRules: { keywords: string[]; icon: typeof ChefHat }[] = [
+  { keywords: ['cook'], icon: ChefHat },
+  { keywords: ['baby'], icon: Baby },
+  { keywords: ['herbal', 'bath', 'tangas', 'sauna'], icon: Droplets },
+  { keywords: ['lactation'], icon: Milk },
+  { keywords: ['reflexology'], icon: Footprints },
+  { keywords: ['first aid', 'cpr'], icon: ShieldPlus },
+  { keywords: ['stay-in', 'full-day'], icon: Home },
+  { keywords: ['overseas'], icon: Plane },
+  { keywords: ['english', 'mandarin', 'tamil', 'speaking'], icon: Languages },
+  { keywords: ['bengkung'], icon: Shirt },
+  { keywords: ['massage', 'therapy'], icon: Flower2 },
+];
+
+function specialtyIcon(label: string) {
+  const lower = label.toLowerCase();
+  return specialtyIconRules.find((r) => r.keywords.some((k) => lower.includes(k)))?.icon ?? Sparkles;
+}
+
+/** Icon-tagged pill for a CL specialty/skill — keyword-matched so no per-specialty authoring is needed as new ones are added. */
+export function SpecialtyChip({ label }: { label: string }) {
+  const Icon = specialtyIcon(label);
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-brand-pink-light px-2.5 py-1 text-xs text-brand-pink">
+      <Icon size={11} /> {label}
+    </span>
   );
 }

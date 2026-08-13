@@ -27,9 +27,9 @@ import { useClientStore } from '../store/ClientStore';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog, timeAgo } from '../store/ActivityLogContext';
 import { useAssignmentStore } from '../store/AssignmentStore';
-import { disputes } from '../data/disputes';
+import { useDisputeStore } from '../store/DisputeStore';
 import { monthlyCompletedAssignments } from '../data/reports';
-import { TODAY, TODAY_STR, formatTime12, toDateStr } from '../lib/date';
+import { TODAY, TODAY_STR, formatTime12, toDateStr, expiryUrgency } from '../lib/date';
 
 const monthlyCancelled = [4, 6, 3, 5, 7, 2, 6, 3, 8, 4, 5, 9];
 const weekdayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -65,6 +65,7 @@ export default function OverviewPage() {
   const { packageById } = useSettings();
   const { entries } = useActivityLog();
   const { assignments, unassignedClientIds: unassignedForEngagement } = useAssignmentStore();
+  const { disputes } = useDisputeStore();
   const [activityFilter, setActivityFilter] = useState<'all' | ActivityCategory>('all');
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
@@ -76,6 +77,12 @@ export default function OverviewPage() {
   const cancelledThisMonth = thisMonthAssignments.filter((a) => a.status === 'cancelled').length;
   const missedCheckIn = cls.filter((c) => c.status === 'on-duty').length > 0 ? 1 : 0;
   const openDisputes = disputes.filter((d) => d.status === 'Open').length;
+  const expiringCompliance = cls.reduce((count, c) => {
+    const certExpiring = c.certifications.filter((cert) => expiryUrgency(cert.expiryDate) !== 'ok').length;
+    const permitExpiring = c.workPermitExpiry && expiryUrgency(c.workPermitExpiry) !== 'ok' ? 1 : 0;
+    const passportExpiring = c.passportExpiry && expiryUrgency(c.passportExpiry) !== 'ok' ? 1 : 0;
+    return count + certExpiring + permitExpiring + passportExpiring;
+  }, 0);
 
   const revenue = useMemo(
     () =>
@@ -148,6 +155,16 @@ export default function OverviewPage() {
           >
             <AlertTriangle size={15} className="shrink-0" />
             {openDisputes} caregivers missed a step in the visit flow (GPS, selfie, or checklist) — open Disputes & Exceptions.
+            <ArrowRight size={14} className="ml-auto shrink-0" />
+          </Link>
+        )}
+        {expiringCompliance > 0 && (
+          <Link
+            to="/cls"
+            className="flex items-center gap-2 rounded-xl border border-brand-amber/30 bg-brand-amber-light px-4 py-2.5 text-sm text-brand-amber hover:opacity-90"
+          >
+            <AlertTriangle size={15} className="shrink-0" />
+            {expiringCompliance} certification{expiringCompliance === 1 ? '' : 's'}/permit{expiringCompliance === 1 ? '' : 's'} expiring soon — review the Caregiver Directory.
             <ArrowRight size={14} className="ml-auto shrink-0" />
           </Link>
         )}

@@ -5,26 +5,31 @@ import { Card, Avatar, Badge } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
 import { useClientStore } from '../store/ClientStore';
 import { useActivityLog } from '../store/ActivityLogContext';
-import { disputes as seedDisputes, type Dispute } from '../data/disputes';
+import { useDisputeStore } from '../store/DisputeStore';
 import { formatDateLabel } from '../lib/date';
 
 export default function DisputesPage() {
   const { cls } = useCLStore();
   const { clients } = useClientStore();
   const { logAction } = useActivityLog();
-  const [disputes, setDisputes] = useState<Dispute[]>(seedDisputes);
+  const { disputes, resolveDispute } = useDisputeStore();
   const [filter, setFilter] = useState<'Open' | 'Resolved'>('Open');
 
   const filtered = disputes.filter((d) => d.status === filter);
 
   function resolve(id: string) {
     const dispute = disputes.find((d) => d.id === id);
-    setDisputes((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'Resolved' } : d)));
+    resolveDispute(id);
     logAction('Admin Amy', 'Resolved dispute', `${id} — ${dispute?.issue}`);
   }
 
   return (
-    <PageShell title="Disputes & Exceptions Center" subtitle="Missed visit-flow steps, flagged for review before payroll release.">
+    <PageShell
+      title="Disputes & Exceptions Center"
+      subtitle="Missed visit-flow steps, flagged for review before payroll release."
+      icon={AlertTriangle}
+      accentColor="#c98a3b"
+    >
       <div className="mb-4 flex gap-2">
         {(['Open', 'Resolved'] as const).map((f) => (
           <button

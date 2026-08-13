@@ -9,6 +9,8 @@ import { CLStoreProvider } from './store/CLStore'
 import { ClientStoreProvider } from './store/ClientStore'
 import { ActivityLogProvider } from './store/ActivityLogContext'
 import { AssignmentStoreProvider } from './store/AssignmentStore'
+import { DisputeStoreProvider } from './store/DisputeStore'
+import { MessageStoreProvider } from './store/MessageStore'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,7 +20,11 @@ createRoot(document.getElementById('root')!).render(
           <CLStoreProvider>
             <ClientStoreProvider>
               <AssignmentStoreProvider>
-                <App />
+                <DisputeStoreProvider>
+                  <MessageStoreProvider>
+                    <App />
+                  </MessageStoreProvider>
+                </DisputeStoreProvider>
               </AssignmentStoreProvider>
             </ClientStoreProvider>
           </CLStoreProvider>

@@ -1,8 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { confinementLadies as seedCLs } from '../data/team';
-import type { CLFlag, CLStatus, ConfinementLady } from '../types';
+import { TODAY_STR } from '../lib/date';
+import type { CLFlag, CLStatus, ConfinementLady, Review, Certification, LeavePeriod } from '../types';
 
-const STORAGE_KEY = 'nrmc-cls-v1';
+// v2: added reviews/certifications/nationality/leavePeriods/flagHistory/payroll fields — bumped so
+// browsers holding a pre-existing v1 record (old shape, missing these) don't crash on load.
+const STORAGE_KEY = 'nrmc-cls-v2';
 
 function loadInitial(): ConfinementLady[] {
   if (typeof window !== 'undefined') {
@@ -41,7 +44,33 @@ interface CLStoreValue {
   updateStatus: (id: string, status: CLStatus) => void;
   updateTreatmentPhoto: (id: string, dataUrl: string | undefined) => void;
   updatePassport: (id: string, passportNumber: string) => void;
-  updateDetails: (id: string, patch: Partial<Pick<ConfinementLady, 'phone' | 'email' | 'address' | 'icNumber' | 'yearsExperience' | 'languages' | 'bio' | 'specialties'>>) => void;
+  updateDetails: (
+    id: string,
+    patch: Partial<
+      Pick<
+        ConfinementLady,
+        | 'phone'
+        | 'email'
+        | 'address'
+        | 'icNumber'
+        | 'yearsExperience'
+        | 'languages'
+        | 'bio'
+        | 'specialties'
+        | 'nationality'
+        | 'workPermitExpiry'
+        | 'passportExpiry'
+        | 'bankName'
+        | 'bankAccountMasked'
+        | 'paymentMethod'
+      >
+    >,
+  ) => void;
+  addReview: (clId: string, review: Omit<Review, 'id'>) => void;
+  addCertification: (clId: string, cert: Omit<Certification, 'id'>) => void;
+  removeCertification: (clId: string, certId: string) => void;
+  addLeavePeriod: (clId: string, period: LeavePeriod) => void;
+  removeLeavePeriod: (clId: string, index: number) => void;
   resetToDefaults: () => void;
 }
 
@@ -81,19 +110,61 @@ export function CLStoreProvider({ children }: { children: ReactNode }) {
           languages: input.languages ?? ['Bahasa Malaysia'],
           yearsExperience: input.yearsExperience ?? 0,
           flag: 'none',
+          flagHistory: [],
           bio: '',
           shiftAvailability: input.shiftAvailability ?? 'flexible',
+          reviews: [],
+          certifications: [],
+          nationality: 'Malaysian',
+          leavePeriods: [],
         };
         setCLs((prev) => [...prev, newCL]);
         return newCL;
       },
       updateDetails: (id, patch) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c))),
       updateFlag: (id, flag, note) =>
-        setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, flag, flagNote: flag === 'none' ? undefined : note } : c))),
+        setCLs((prev) =>
+          prev.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  flag,
+                  flagNote: flag === 'none' ? undefined : note,
+                  flagHistory: [{ date: TODAY_STR, flag, note }, ...c.flagHistory],
+                }
+              : c,
+          ),
+        ),
       updateStatus: (id, status) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c))),
       updateTreatmentPhoto: (id, dataUrl) =>
         setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, treatmentPhotoUrl: dataUrl } : c))),
       updatePassport: (id, passportNumber) => setCLs((prev) => prev.map((c) => (c.id === id ? { ...c, passportNumber } : c))),
+      addReview: (clId, review) =>
+        setCLs((prev) =>
+          prev.map((c) => {
+            if (c.id !== clId) return c;
+            const newReview: Review = { ...review, id: `rev-${Date.now()}` };
+            const newCount = c.reviewCount + 1;
+            const newRating = Math.round(((c.rating * c.reviewCount + review.rating) / newCount) * 10) / 10;
+            return { ...c, reviews: [newReview, ...c.reviews], reviewCount: newCount, rating: newRating };
+          }),
+        ),
+      addCertification: (clId, cert) =>
+        setCLs((prev) =>
+          prev.map((c) =>
+            c.id === clId ? { ...c, certifications: [...c.certifications, { ...cert, id: `cert-${Date.now()}` }] } : c,
+          ),
+        ),
+      removeCertification: (clId, certId) =>
+        setCLs((prev) =>
+          prev.map((c) => (c.id === clId ? { ...c, certifications: c.certifications.filter((cert) => cert.id !== certId) } : c)),
+        ),
+      addLeavePeriod: (clId, period) =>
+        setCLs((prev) => prev.map((c) => (c.id === clId ? { ...c, leavePeriods: [...c.leavePeriods, period] } : c))),
+      removeLeavePeriod: (clId, index) =>
+        setCLs((prev) =>
+          prev.map((c) => (c.id === clId ? { ...c, leavePeriods: c.leavePeriods.filter((_, i) => i !== index) } : c)),
+        ),
       resetToDefaults: () => setCLs(seedCLs),
     }),
     [cls],
