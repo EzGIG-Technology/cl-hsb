@@ -1,13 +1,4 @@
-export interface Dispute {
-  id: string;
-  date: string;
-  clId: string;
-  clientId: string;
-  issue: string;
-  detail: string;
-  severity: 'High' | 'Medium';
-  status: 'Open' | 'Resolved';
-}
+import type { Dispute } from '../types';
 
 export const disputes: Dispute[] = [
   {

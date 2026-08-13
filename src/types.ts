@@ -34,6 +34,34 @@ export type CLStatus = 'on-duty' | 'available' | 'on-leave' | 'off-duty';
 export type CLFlag = 'none' | 'complained' | 'banned';
 export type CLShift = 'morning' | 'afternoon' | 'both' | 'stay-in' | 'flexible';
 export type CLTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+export type PaymentMethod = 'bank-transfer' | 'cash' | 'e-wallet';
+
+export interface Review {
+  id: string;
+  rating: number;
+  text?: string;
+  date: string; // yyyy-mm-dd
+  clientName: string;
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  expiryDate: string; // yyyy-mm-dd
+}
+
+export interface LeavePeriod {
+  start: string; // yyyy-mm-dd
+  end: string; // yyyy-mm-dd
+  reason?: string;
+}
+
+export interface FlagHistoryEntry {
+  date: string; // yyyy-mm-dd
+  flag: CLFlag;
+  note?: string;
+}
 
 export interface ConfinementLady {
   id: string;
@@ -48,16 +76,29 @@ export interface ConfinementLady {
   status: CLStatus;
   rating: number;
   reviewCount: number;
+  reviews: Review[];
   completedAssignments: number;
   specialties: string[];
   languages: string[];
   yearsExperience: number;
   flag: CLFlag;
   flagNote?: string;
+  flagHistory: FlagHistoryEntry[];
   bio: string;
   shiftAvailability: CLShift;
   passportNumber?: string;
   treatmentPhotoUrl?: string;
+  // Credentialing & compliance
+  certifications: Certification[];
+  nationality: string;
+  workPermitExpiry?: string; // omit for Malaysian citizens
+  passportExpiry?: string; // expiry tracking only — never document custody
+  // Availability
+  leavePeriods: LeavePeriod[];
+  // Payroll identity
+  bankName?: string;
+  bankAccountMasked?: string; // e.g. "•••• 4821" — masked, never a full account number
+  paymentMethod?: PaymentMethod;
 }
 
 export function tierForCL(completedAssignments: number): CLTier {
@@ -116,6 +157,20 @@ export interface PackageLocationSlot {
   location: string;
   cadence: SlotCadence;
   slots: number;
+}
+
+export type DisputeSeverity = 'High' | 'Medium';
+export type DisputeStatus = 'Open' | 'Resolved';
+
+export interface Dispute {
+  id: string;
+  date: string;
+  clId: string;
+  clientId: string;
+  issue: string;
+  detail: string;
+  severity: DisputeSeverity;
+  status: DisputeStatus;
 }
 
 export interface MessageThread {

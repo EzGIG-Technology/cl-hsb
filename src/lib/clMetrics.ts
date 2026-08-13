@@ -1,7 +1,7 @@
 import type { ConfinementLady, Assignment } from '../types';
 
-const HOURLY_RATE = 22;
-const HOURS_PER_SESSION = 4;
+export const HOURLY_RATE = 22;
+export const HOURS_PER_SESSION = 4;
 /** Last 6 months ending at the demo's "today" (Aug 2026) — Aug uses real seeded assignment data, earlier months are deterministic mock history. */
 const MONTH_LABELS = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'] as const;
 
@@ -59,12 +59,24 @@ export function monthlyFinancialsForCL(cl: ConfinementLady, assignmentsForCL: As
   });
 }
 
+/**
+ * Good/poor review split blended from real per-review data plus legacy aggregate history.
+ * `reviewCount` predates the `reviews[]` array, so any count beyond what's in `reviews[]` is
+ * assumed to follow the original 91% positive baseline; real reviews always count exactly.
+ */
+function reviewSplit(cl: ConfinementLady) {
+  const detailedGood = cl.reviews.filter((r) => r.rating >= 4).length;
+  const detailedPoor = cl.reviews.length - detailedGood;
+  const legacyCount = Math.max(0, cl.reviewCount - cl.reviews.length);
+  const legacyGood = Math.round(legacyCount * 0.91);
+  return { goodReviews: detailedGood + legacyGood, poorReviews: detailedPoor + (legacyCount - legacyGood) };
+}
+
 export function computeCLMetrics(cl: ConfinementLady, assignmentsForCL: Assignment[]) {
   const leaderboardPoints = cl.completedAssignments * 12 + Math.round(cl.rating * 40);
-  const verifiedHours = cl.completedAssignments * 4;
-  const lifetimeEarnings = verifiedHours * 22;
-  const goodReviews = Math.round(cl.reviewCount * 0.91);
-  const poorReviews = cl.reviewCount - goodReviews;
+  const verifiedHours = cl.completedAssignments * HOURS_PER_SESSION;
+  const lifetimeEarnings = verifiedHours * HOURLY_RATE;
+  const { goodReviews, poorReviews } = reviewSplit(cl);
   const currentJob = assignmentsForCL.find((a) => a.status === 'confirmed' || a.status === 'pending');
   return {
     leaderboardPoints,

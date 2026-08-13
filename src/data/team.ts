@@ -6,7 +6,9 @@ function color(i: number) {
   return colors[i % colors.length];
 }
 
-export const confinementLadies: ConfinementLady[] = [
+type RawCL = Omit<ConfinementLady, 'reviews' | 'flagHistory' | 'certifications' | 'nationality' | 'leavePeriods'>;
+
+const rawCLs: RawCL[] = [
   {
     id: 'cl-01',
     name: 'Mariam Yusof',
@@ -348,6 +350,96 @@ export const confinementLadies: ConfinementLady[] = [
     shiftAvailability: 'flexible',
   },
 ];
+
+type CLExtras = Partial<
+  Pick<
+    ConfinementLady,
+    | 'reviews'
+    | 'flagHistory'
+    | 'certifications'
+    | 'nationality'
+    | 'workPermitExpiry'
+    | 'passportExpiry'
+    | 'leavePeriods'
+    | 'bankName'
+    | 'bankAccountMasked'
+    | 'paymentMethod'
+  >
+>;
+
+/**
+ * Hand-authored extras for a handful of CLs, layered onto the defaults below, so the
+ * certifications/compliance/leave/review/flag-history UI has real data to demo instead of
+ * empty states everywhere. Not every CL needs every field — that's realistic (e.g. a brand-new
+ * CL with no payroll info on file yet).
+ */
+const extras: Record<string, CLExtras> = {
+  'cl-01': {
+    reviews: [
+      { id: 'rev-seed-1', rating: 5, text: 'Extremely attentive with the baby and taught us so much about confinement food.', date: '2026-07-28', clientName: 'Puan Elina Zulkifli' },
+      { id: 'rev-seed-2', rating: 5, text: 'Punctual, warm, and very experienced. Highly recommend.', date: '2026-06-15', clientName: 'Puan Nadia Ismail' },
+    ],
+    certifications: [{ id: 'cert-seed-1', name: 'Postnatal & Newborn Care (150-hr)', issuer: 'SCEM-SITE', expiryDate: '2027-06-01' }],
+    bankName: 'Maybank',
+    bankAccountMasked: '•••• 4821',
+    paymentMethod: 'bank-transfer',
+  },
+  'cl-02': {
+    certifications: [{ id: 'cert-seed-2', name: 'Confinement Cooking & Bengkung Certificate', issuer: 'MummyNanny Training Centre', expiryDate: '2026-09-05' }],
+    bankName: 'CIMB Bank',
+    bankAccountMasked: '•••• 1190',
+    paymentMethod: 'bank-transfer',
+  },
+  'cl-03': {
+    nationality: 'Indonesian',
+    workPermitExpiry: '2026-08-30',
+    passportExpiry: '2028-04-12',
+    paymentMethod: 'e-wallet',
+  },
+  'cl-04': {
+    flagHistory: [{ date: '2026-06-02', flag: 'complained', note: 'Client reported a late arrival on 2026-06-02. Verbal warning issued, no repeat since.' }],
+  },
+  'cl-05': {
+    reviews: [{ id: 'rev-seed-3', rating: 5, text: 'The most experienced CL we worked with — handled our stay-in placement flawlessly.', date: '2026-07-20', clientName: 'Puan Farah Adilah' }],
+    certifications: [{ id: 'cert-seed-3', name: 'First Aid & Infant CPR', issuer: 'St John Ambulance Malaysia', expiryDate: '2026-08-25' }],
+    bankName: 'Public Bank',
+    bankAccountMasked: '•••• 7734',
+    paymentMethod: 'bank-transfer',
+  },
+  'cl-07': {
+    leavePeriods: [{ start: '2026-08-01', end: '2026-08-31', reason: 'Maternity leave' }],
+  },
+  'cl-09': {
+    certifications: [{ id: 'cert-seed-4', name: 'Lactation Support Practitioner', issuer: 'Malaysian Breastfeeding Association', expiryDate: '2027-01-20' }],
+    bankName: 'Bank Islam',
+    bankAccountMasked: '•••• 2098',
+    paymentMethod: 'bank-transfer',
+  },
+  'cl-10': {
+    flagHistory: [{ date: '2026-05-10', flag: 'banned', note: 'Suspended 2026-05-10 after repeated no-shows confirmed by two clients. Not eligible for new bookings.' }],
+  },
+  'cl-12': {
+    nationality: 'Filipino',
+    workPermitExpiry: '2027-02-15',
+    passportExpiry: '2026-10-01',
+    paymentMethod: 'e-wallet',
+  },
+  'cl-11': {
+    bankName: 'RHB Bank',
+    bankAccountMasked: '•••• 5560',
+    paymentMethod: 'cash',
+  },
+};
+
+export const confinementLadies: ConfinementLady[] = rawCLs.map((cl) => ({
+  ...cl,
+  reviews: [],
+  flagHistory: [],
+  certifications: [],
+  nationality: 'Malaysian',
+  leavePeriods: [],
+  ...extras[cl.id],
+}));
 
 export const clById = (id: string) => confinementLadies.find((c) => c.id === id);
 

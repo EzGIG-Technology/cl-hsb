@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { assignments as seedAssignments, unassignedClientIds as seedUnassigned } from '../data/assignments';
-import type { Assignment, AssignmentStatus, ApprovalStatus } from '../types';
+import type { Assignment, AssignmentStatus, ApprovalStatus, PaymentStatus } from '../types';
 
 const STORAGE_KEY = 'nrmc-assignments-v1';
 const UNASSIGNED_KEY = 'nrmc-unassigned-v1';
@@ -50,6 +50,7 @@ interface AssignmentStoreValue {
   reschedule: (assignmentId: string, date: string, startTime: string, endTime: string) => void;
   updateStatus: (assignmentId: string, status: AssignmentStatus) => void;
   setApproval: (assignmentId: string, approvalStatus: ApprovalStatus, note?: string) => void;
+  markPaymentStatus: (assignmentId: string, paymentStatus: PaymentStatus) => void;
   removeFromUnassigned: (clientId: string) => void;
   addToUnassigned: (clientId: string) => void;
   resetToDefaults: () => void;
@@ -109,6 +110,8 @@ export function AssignmentStoreProvider({ children }: { children: ReactNode }) {
               : a,
           ),
         ),
+      markPaymentStatus: (assignmentId, paymentStatus) =>
+        setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, paymentStatus } : a))),
       removeFromUnassigned: (clientId) => setUnassignedClientIds((prev) => prev.filter((id) => id !== clientId)),
       addToUnassigned: (clientId) => setUnassignedClientIds((prev) => (prev.includes(clientId) ? prev : [...prev, clientId])),
       resetToDefaults: () => {
