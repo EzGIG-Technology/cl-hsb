@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, X, MapPin, Phone, CalendarClock } from 'lucide-react';
+import { UserPlus, X, MapPin, Phone, CalendarClock, Contact } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar } from '../components/ui';
 import { useSettings } from '../store/SettingsContext';
@@ -55,6 +55,8 @@ export default function ClientsPage() {
     <PageShell
       title="Customer Directory"
       subtitle={`${clients.length} customers on file — ${activeCustomers.length} active with packages`}
+      icon={Contact}
+      accentColor="#d94f8c"
       searchPlaceholder="Search customer by name or area"
       onSearch={setQuery}
       headerAction={

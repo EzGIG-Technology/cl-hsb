@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, ShieldAlert, ShieldX, Trophy, UserPlus, X, Phone, MapPin, IdCard, Mail } from 'lucide-react';
+import { Star, ShieldAlert, ShieldX, Trophy, UserPlus, X, Phone, MapPin, IdCard, Mail, Users } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
@@ -63,6 +63,8 @@ export default function CLsPage() {
     <PageShell
       title="Caregiver (CL) Directory"
       subtitle={`${cls.length} CLs on the roster — ${counts.flagged} flagged for review`}
+      icon={Users}
+      accentColor="#d94f8c"
       searchPlaceholder="Search CL by name or area"
       onSearch={setQuery}
       headerAction={

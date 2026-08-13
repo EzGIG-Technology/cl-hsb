@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, Users, Palmtree, AlertTriangle, X, Repeat, CalendarCog, Filter } from 'lucide-react';
+import { CalendarClock, Users, Palmtree, AlertTriangle, X, Repeat, CalendarCog, Filter, CalendarDays } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { MiniCalendar } from '../components/MiniCalendar';
 import { Card, StatCard, Badge, Avatar, SectionTitle } from '../components/ui';
@@ -122,7 +122,13 @@ export default function SchedulePage() {
   }
 
   return (
-    <PageShell title="Schedule & Roster" subtitle="Plan CL assignments, availability, and replacements." searchPlaceholder="Search CL or client">
+    <PageShell
+      title="Schedule & Roster"
+      subtitle="Plan CL assignments, availability, and replacements."
+      icon={CalendarDays}
+      accentColor="#d94f8c"
+      searchPlaceholder="Search CL or client"
+    >
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Scheduled" value={scheduledCount} icon={<CalendarClock size={16} className="text-brand-pink" />} />
         <StatCard label="Available CLs" value={availableCLs.length} icon={<Users size={16} className="text-blue-600" />} />

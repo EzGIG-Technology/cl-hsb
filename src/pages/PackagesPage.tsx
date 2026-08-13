@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Package } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { PackageArt } from '../components/PackageArt';
 import { Card, formatRM } from '../components/ui';
@@ -15,6 +15,8 @@ export default function PackagesPage() {
     <PageShell
       title="Packages & Availability"
       subtitle="Manage every active package, its pricing tiers, and weekly slot limits by location."
+      icon={Package}
+      accentColor="#38bdf8"
       headerAction={
         <button
           onClick={() => {
