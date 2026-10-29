@@ -29,7 +29,7 @@ function hoursFor(a: Assignment) {
 }
 
 const approvalNoticeStyles: Record<'Approved' | 'Rejected', string> = {
-  Approved: 'bg-brand-green-light text-brand-green',
+  Approved: 'bg-brand-lavender-light text-brand-lavender',
   Rejected: 'bg-red-100 text-red-600',
 };
 
@@ -70,7 +70,7 @@ export default function VisitsPage() {
   const cl = inspecting ? cls.find((c) => c.id === inspecting.clId) : null;
   const client = inspecting ? clients.find((c) => c.id === inspecting.clientId) : null;
   const pkg = inspecting ? packageById(inspecting.packageId) : null;
-  const checklist = inspecting && pkg ? checklistFor(inspecting, [...pkg.dailyMotherCare, ...pkg.babyCare]) : [];
+  const checklist = inspecting && pkg ? checklistFor(inspecting, pkg.treatmentSteps) : [];
   const allChecked = checklist.every((c) => c.done);
 
   function approve() {
@@ -138,7 +138,7 @@ export default function VisitsPage() {
                 const rowCl = cls.find((c) => c.id === a.clId);
                 const rowClient = clients.find((c) => c.id === a.clientId);
                 const rowPkg = packageById(a.packageId);
-                const amount = rowPkg?.tiers[0]?.price ?? rowPkg?.sessionPrice?.perSession ?? 0;
+                const amount = rowPkg?.tiers[0]?.price ?? 0;
                 return (
                   <tr key={a.id} className="border-t border-black/5">
                     <td className="px-5 py-3 text-brand-muted">
@@ -215,7 +215,7 @@ export default function VisitsPage() {
                     kind="checkin"
                     label="Before — check-in selfie"
                     time={formatTime12(inspecting.startTime)}
-                    colorClass="from-brand-green-light to-brand-green/20 text-brand-green"
+                    colorClass="from-brand-lavender-light to-brand-lavender/20 text-brand-lavender"
                   />
                   <VisitSelfieTile
                     assignmentId={inspecting.id}
@@ -226,7 +226,7 @@ export default function VisitsPage() {
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-2 rounded-lg bg-brand-cream p-2.5 text-xs text-brand-ink">
-                  <MapPin size={13} className="shrink-0 text-brand-green" /> GPS pin at {inspecting.location} — within 80m of registered address, matched both check-in and check-out
+                  <MapPin size={13} className="shrink-0 text-brand-lavender" /> GPS pin at {inspecting.location} — within 80m of registered address, matched both check-in and check-out
                 </div>
               </div>
 
@@ -238,7 +238,7 @@ export default function VisitsPage() {
                   {checklist.map((c, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs">
                       {c.done ? (
-                        <ShieldCheck size={13} className="shrink-0 text-brand-green" />
+                        <ShieldCheck size={13} className="shrink-0 text-brand-lavender" />
                       ) : (
                         <ShieldX size={13} className="shrink-0 text-red-500" />
                       )}
@@ -291,7 +291,7 @@ export default function VisitsPage() {
                   <button onClick={reject} className="flex items-center gap-1.5 rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
                     <ShieldX size={14} /> Reject
                   </button>
-                  <button onClick={approve} className="flex items-center gap-1.5 rounded-full bg-brand-green px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+                  <button onClick={approve} className="flex items-center gap-1.5 rounded-full bg-brand-lavender px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                     <ShieldCheck size={14} /> Approve session
                   </button>
                 </>

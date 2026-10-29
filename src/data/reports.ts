@@ -69,14 +69,15 @@ export const packagePopularity = [
   { packageId: 'seri-ibu', bookings: 33 },
 ];
 
-// Real-world coordinates (WGS84) for the Klang Valley — Selangor & Kuala Lumpur, Malaysia.
+// Real-world coordinates (WGS84) for Honey Spa's catchment around Bangi Sentral, Selangor.
+// `count` = clients on the books who live in each area.
 export const locationTotals = [
-  { name: 'Kuala Lumpur', lat: 3.139, lng: 101.6869, count: 51 },
-  { name: 'Petaling', lat: 3.1073, lng: 101.6067, count: 37 },
-  { name: 'Gombak', lat: 3.2637, lng: 101.7062, count: 42 },
-  { name: 'Klang', lat: 3.0333, lng: 101.45, count: 28 },
-  { name: 'Kuala Langat', lat: 2.8167, lng: 101.5, count: 29 },
-  { name: 'Ulu Langat', lat: 2.9925, lng: 101.7873, count: 22 },
-  { name: 'Sepang', lat: 2.7297, lng: 101.6906, count: 18 },
-  { name: 'Putrajaya', lat: 2.9264, lng: 101.6964, count: 20 },
+  { name: 'Bandar Baru Bangi', lat: 2.9637, lng: 101.7686, count: 58 },
+  { name: 'Kajang', lat: 2.993, lng: 101.788, count: 34 },
+  { name: 'Putrajaya', lat: 2.9264, lng: 101.6964, count: 21 },
+  { name: 'Cyberjaya', lat: 2.9213, lng: 101.6559, count: 15 },
+  { name: 'Semenyih', lat: 2.9516, lng: 101.8433, count: 14 },
+  { name: 'Seri Kembangan', lat: 3.0217, lng: 101.7055, count: 11 },
+  { name: 'Nilai', lat: 2.8143, lng: 101.7974, count: 9 },
+  { name: 'Dengkil', lat: 2.858, lng: 101.681, count: 6 },
 ];

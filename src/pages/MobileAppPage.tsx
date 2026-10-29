@@ -42,7 +42,7 @@ import { useClientStore } from '../store/ClientStore';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatTime12, formatDateLabel, TODAY_STR } from '../lib/date';
 import { HOURLY_RATE } from '../lib/clMetrics';
-import type { Assignment, ConfinementLady, Package } from '../types';
+import type { Assignment, Therapist, Package } from '../types';
 
 const FEATURED_MOTHER_ID = 'cli-01'; // Siti Rahman — matches seeded assignments
 const PERSONA_IDS = ['cl-01', 'cl-04', 'cl-05', 'cl-06'];
@@ -105,7 +105,7 @@ export default function MobileAppPage() {
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-brand-cream">
-      <div className="h-[3px] w-full shrink-0 bg-gradient-to-r from-brand-pink to-brand-green" />
+      <div className="h-[3px] w-full shrink-0 bg-gradient-to-r from-brand-pink to-brand-lavender" />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <div className="scrollbar-thin flex-1 overflow-y-auto">
@@ -135,7 +135,7 @@ export default function MobileAppPage() {
                   key={m.id}
                   onClick={() => setAppMode(m.id)}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    appMode === m.id ? 'bg-brand-green text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+                    appMode === m.id ? 'bg-brand-lavender text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
                   }`}
                 >
                   {m.label}
@@ -147,7 +147,7 @@ export default function MobileAppPage() {
           {appMode === 'mother-review' ? (
             <div className="px-8 py-8">
               <div className="mx-auto max-w-2xl text-center">
-                <span className="inline-block rounded-full bg-brand-green-light px-3 py-1 text-xs font-semibold text-brand-green">
+                <span className="inline-block rounded-full bg-brand-lavender-light px-3 py-1 text-xs font-semibold text-brand-lavender">
                   Phase 1 — built now
                 </span>
                 <h2 className="mt-4 text-3xl font-semibold text-brand-ink">Session review, not an app</h2>
@@ -165,7 +165,7 @@ export default function MobileAppPage() {
                 </div>
               </div>
 
-              <div className="mx-auto mt-10 max-w-4xl rounded-3xl bg-gradient-to-br from-brand-pink-light via-white to-brand-green-light p-8">
+              <div className="mx-auto mt-10 max-w-4xl rounded-3xl bg-gradient-to-br from-brand-pink-light via-white to-brand-lavender-light p-8">
                 <BrowserFrame url="review.nrmothercare.com/r/8f2a91">
                   <MotherReviewWebScreen cl={reviewCl} mother={mother} assignment={reviewedAssignment} pkg={motherPkg} />
                 </BrowserFrame>
@@ -187,7 +187,7 @@ export default function MobileAppPage() {
                     <div className="mt-8 grid grid-cols-2 gap-3 max-w-md">
                       {features.map((f) => (
                         <div key={f} className="flex items-center gap-2 rounded-xl border border-black/5 bg-white px-3 py-3 text-sm text-brand-ink shadow-sm">
-                          <CheckCircle2 size={16} className="shrink-0 text-brand-green" />
+                          <CheckCircle2 size={16} className="shrink-0 text-brand-lavender" />
                           {f}
                         </div>
                       ))}
@@ -224,7 +224,7 @@ export default function MobileAppPage() {
                 )}
               </div>
 
-              <div className="flex justify-center rounded-3xl bg-gradient-to-br from-brand-pink-light via-white to-brand-green-light p-8">
+              <div className="flex justify-center rounded-3xl bg-gradient-to-br from-brand-pink-light via-white to-brand-lavender-light p-8">
                 {appMode === 'cl' && <CLAppSection />}
 
                 {appMode === 'mother-app' && (
@@ -301,7 +301,7 @@ function BrowserFrame({ children, url }: { children: ReactNode; url: string }) {
           <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
         </div>
         <div className="flex flex-1 items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs text-brand-muted ring-1 ring-black/5">
-          <ShieldCheck size={12} className="shrink-0 text-brand-green" />
+          <ShieldCheck size={12} className="shrink-0 text-brand-lavender" />
           <span className="truncate">{url}</span>
         </div>
       </div>
@@ -354,7 +354,7 @@ function CLAppSection() {
 }
 
 function dayOfTotal(assignment: Assignment, pkg?: Package) {
-  const total = pkg?.tiers[0]?.days ?? 1;
+  const total = pkg?.tiers[0]?.minutes ?? 1;
   const hash = assignment.id.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
   return { day: (hash % total) + 1, total };
 }
@@ -365,7 +365,7 @@ function CLHomeScreen({
   onOpenJob,
   onGoTo,
 }: {
-  cl: ConfinementLady;
+  cl: Therapist;
   assignments: Assignment[];
   onOpenJob: (id: string) => void;
   onGoTo: (tab: CLTab) => void;
@@ -399,8 +399,8 @@ function CLHomeScreen({
           <Bell size={16} className="text-brand-ink" />
         </div>
       </div>
-      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand-green-light px-2 py-1 text-[10px] font-medium text-brand-green">
-        <span className="h-1.5 w-1.5 rounded-full bg-brand-green" /> Data synced · Thursday, 13 Aug
+      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand-lavender-light px-2 py-1 text-[10px] font-medium text-brand-lavender">
+        <span className="h-1.5 w-1.5 rounded-full bg-brand-lavender" /> Data synced · Thursday, 13 Aug
       </span>
 
       {todaysJob && client && pkg ? (
@@ -474,7 +474,7 @@ function CLJobsScreen({
   assignments: myAssignments,
   onOpenJob,
 }: {
-  cl: ConfinementLady;
+  cl: Therapist;
   assignments: Assignment[];
   onOpenJob: (id: string) => void;
 }) {
@@ -595,7 +595,7 @@ const PAST_PAYSLIPS = [
   { month: 'May 2026', sessions: 11, hours: 68, pay: 3000 },
 ];
 
-function CLEarningsScreen({ cl, assignments: myAssignments }: { cl: ConfinementLady; assignments: Assignment[] }) {
+function CLEarningsScreen({ cl, assignments: myAssignments }: { cl: Therapist; assignments: Assignment[] }) {
   const [month, setMonth] = useState('Aug 2026 (Current)');
   const monthAssignments = myAssignments.filter((a) => a.date.startsWith('2026-08') && a.status === 'completed');
   const hours = monthAssignments.reduce((sum, a) => {
@@ -690,7 +690,7 @@ function CLProfileScreen({
   personaId,
   onPersonaChange,
 }: {
-  cl: ConfinementLady;
+  cl: Therapist;
   personaId: string;
   onPersonaChange: (id: string) => void;
 }) {
@@ -799,7 +799,7 @@ function SessionFlow({
   onClose,
 }: {
   assignment: Assignment;
-  cl: ConfinementLady;
+  cl: Therapist;
   myAssignments: Assignment[];
   onClose: () => void;
 }) {
@@ -807,7 +807,7 @@ function SessionFlow({
   const { clientById } = useClientStore();
   const client = clientById(assignment.clientId);
   const pkg = packageById(assignment.packageId);
-  const checklistLabels = pkg ? [...pkg.dailyMotherCare, ...pkg.babyCare] : [];
+  const checklistLabels = pkg ? pkg.treatmentSteps : [];
 
   const [step, setStep] = useState<SessionStep>('checkin');
   const [checkinSelfieUrl, setCheckinSelfieUrl] = useState<string>();
@@ -870,7 +870,7 @@ function SessionFlow({
               <Camera size={14} /> {checkinSelfieUrl ? 'Selfie captured' : 'Selfie required'}
             </span>
             {checkinSelfieUrl ? (
-              <img src={checkinSelfieUrl} alt="Check-in selfie" className="h-8 w-8 rounded-full object-cover ring-2 ring-brand-green" />
+              <img src={checkinSelfieUrl} alt="Check-in selfie" className="h-8 w-8 rounded-full object-cover ring-2 ring-brand-lavender" />
             ) : (
               <ShieldCheck size={14} className="text-brand-muted" />
             )}
@@ -894,7 +894,7 @@ function SessionFlow({
               setStep('checklist');
             }}
             disabled={checklistLabels.length === 0 || !checkinSelfieUrl}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-brand-green py-3 text-sm font-semibold text-white disabled:opacity-40"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-brand-lavender py-3 text-sm font-semibold text-white disabled:opacity-40"
           >
             <Camera size={15} /> Check in & start session
           </button>
@@ -914,14 +914,14 @@ function SessionFlow({
           {pkg?.name ?? 'Package'} · {doneCount} of {items.length} tasks done
         </p>
         <div className="mt-1 h-2 overflow-hidden rounded-full bg-brand-cream">
-          <div className="h-full rounded-full bg-brand-green transition-all" style={{ width: `${items.length ? (doneCount / items.length) * 100 : 0}%` }} />
+          <div className="h-full rounded-full bg-brand-lavender transition-all" style={{ width: `${items.length ? (doneCount / items.length) * 100 : 0}%` }} />
         </div>
 
         <div className="mt-4 flex-1 space-y-2 overflow-y-auto">
           {items.map((item, i) => (
-            <div key={item.label} className={`rounded-xl border p-3 ${item.done ? 'border-brand-green/30 bg-brand-green-light' : 'border-black/5'}`}>
+            <div key={item.label} className={`rounded-xl border p-3 ${item.done ? 'border-brand-lavender/30 bg-brand-lavender-light' : 'border-black/5'}`}>
               <div className="flex items-center gap-2">
-                {item.done ? <CheckCircle2 size={16} className="shrink-0 text-brand-green" /> : <Circle size={16} className="shrink-0 text-brand-muted" />}
+                {item.done ? <CheckCircle2 size={16} className="shrink-0 text-brand-lavender" /> : <Circle size={16} className="shrink-0 text-brand-muted" />}
                 <p className="text-sm text-brand-ink">{item.label}</p>
               </div>
               {!item.done && (
@@ -943,10 +943,10 @@ function SessionFlow({
                   ) : (
                     <>
                       <img src={item.photoUrl} alt="" className="h-6 w-6 rounded object-cover" />
-                      <span className="flex items-center gap-1 rounded-full bg-brand-green-light px-2 py-1 text-[10px] font-medium text-brand-green">
+                      <span className="flex items-center gap-1 rounded-full bg-brand-lavender-light px-2 py-1 text-[10px] font-medium text-brand-lavender">
                         <CheckCircle2 size={11} /> Photo attached
                       </span>
-                      <button onClick={() => markDone(i)} className="rounded-full bg-brand-green px-3 py-1.5 text-xs font-medium text-white">
+                      <button onClick={() => markDone(i)} className="rounded-full bg-brand-lavender px-3 py-1.5 text-xs font-medium text-white">
                         Mark done
                       </button>
                     </>
@@ -1070,7 +1070,7 @@ function SessionFlow({
             })}
           </div>
         )}
-        <button onClick={onClose} className="mt-3 w-full rounded-full bg-brand-green py-3 text-sm font-semibold text-white">
+        <button onClick={onClose} className="mt-3 w-full rounded-full bg-brand-lavender py-3 text-sm font-semibold text-white">
           Back to Home
         </button>
       </div>
@@ -1109,7 +1109,7 @@ function MotherReviewWebScreen({
   assignment,
   pkg,
 }: {
-  cl: ConfinementLady;
+  cl: Therapist;
   mother: import('../types').Client;
   assignment?: Assignment;
   pkg?: Package;
@@ -1235,7 +1235,7 @@ function MotherReviewWebScreen({
           <button
             onClick={() => setSigned((s) => !s)}
             className={`flex w-full items-center gap-3 rounded-2xl border-2 border-dashed p-4 text-left text-sm font-medium transition-colors ${
-              signed ? 'border-brand-green bg-brand-green-light text-brand-green' : 'border-black/15 bg-white text-brand-muted hover:border-black/25'
+              signed ? 'border-brand-lavender bg-brand-lavender-light text-brand-lavender' : 'border-black/15 bg-white text-brand-muted hover:border-black/25'
             }`}
           >
             {signed ? <CheckCircle2 size={20} className="shrink-0" /> : <FileSignature size={20} className="shrink-0" />}
@@ -1257,7 +1257,7 @@ function MotherReviewWebScreen({
 
 // ---------- Mother's app (Phase 2 preview) ----------
 
-function MotherHomeScreen({ mother, pkg, cl }: { mother: import('../types').Client; pkg?: Package; cl: ConfinementLady }) {
+function MotherHomeScreen({ mother, pkg, cl }: { mother: import('../types').Client; pkg?: Package; cl: Therapist }) {
   return (
     <div className="flex-1">
       <div className="flex items-center justify-between">
@@ -1370,7 +1370,7 @@ function MotherBookingsScreen({
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-brand-ink">{p.name}</p>
               <p className="truncate text-xs text-brand-muted">
-                {p.tiers[0] ? `from ${formatRM(p.tiers[0].price)}` : p.sessionPrice ? `${formatRM(p.sessionPrice.perSession)}/session` : p.summary}
+                {p.tiers[0] ? `from ${formatRM(p.tiers[0].price)}` : p.summary}
               </p>
             </div>
             <button
@@ -1416,21 +1416,21 @@ function PackagePurchaseFlow({
   const pkg = packageById(packageId);
 
   const [step, setStep] = useState<PurchaseStep>('detail');
-  const [tierDays, setTierDays] = useState<number | null>(pkg?.tiers[0]?.days ?? null);
+  const [tierMinutes, setTierMinutes] = useState<number | null>(pkg?.tiers[0]?.minutes ?? null);
   const [methodId, setMethodId] = useState<(typeof paymentMethods)[number]['id']>('card');
   const [processing, setProcessing] = useState(false);
 
   if (!pkg) return null;
 
-  const selectedTier = pkg.tiers.find((t) => t.days === tierDays) ?? null;
-  const price = selectedTier?.price ?? pkg.sessionPrice?.perSession ?? 0;
+  const selectedTier = pkg.tiers.find((t) => t.minutes === tierMinutes) ?? null;
+  const price = selectedTier?.price ?? 0;
   const deposit = Math.round((price * pkg.bookingDepositPct) / 100);
 
   function confirmPayment() {
     setProcessing(true);
     window.setTimeout(() => {
-      addPackageToClient(mother.id, pkg!.id, tierDays ?? undefined);
-      logAction(mother.name, 'Purchased add-on package', `${pkg!.name}${selectedTier ? ` — ${selectedTier.days} Hari` : ''} via mobile app`);
+      addPackageToClient(mother.id, pkg!.id, tierMinutes ?? undefined);
+      logAction(mother.name, 'Purchased add-on package', `${pkg!.name}${selectedTier ? ` — ${selectedTier.minutes} min` : ''} via mobile app`);
       setProcessing(false);
       setStep('success');
     }, 700);
@@ -1439,13 +1439,13 @@ function PackagePurchaseFlow({
   if (step === 'success') {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-2 py-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-green text-white shadow-lg shadow-brand-green/30">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-lavender text-white shadow-lg shadow-brand-lavender/30">
           <CheckCircle2 size={30} />
         </div>
         <h3 className="mt-4 text-xl font-semibold text-brand-ink">Package added!</h3>
         <p className="mt-2 max-w-[240px] text-sm text-brand-ink">
           <span className="font-semibold">{pkg.name}</span>
-          {selectedTier ? ` (${selectedTier.days} Hari)` : ''} is now part of {mother.name.split(' ')[0]}'s bookings.
+          {selectedTier ? ` (${selectedTier.minutes} min)` : ''} is now part of {mother.name.split(' ')[0]}'s bookings.
         </p>
         <p className="mt-3 max-w-[240px] text-xs text-brand-muted">
           A confirmation will be sent via WhatsApp/SMS. Our team will be in touch to schedule your sessions.
@@ -1467,7 +1467,7 @@ function PackagePurchaseFlow({
             <PackageArt pkg={pkg} size={36} rounded="rounded-lg" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-brand-ink">{pkg.name}</p>
-              <p className="text-xs text-brand-muted">{selectedTier ? `${selectedTier.days} Hari` : 'Per session'}</p>
+              <p className="text-xs text-brand-muted">{selectedTier ? `${selectedTier.minutes} min` : 'Per session'}</p>
             </div>
             <p className="shrink-0 text-sm font-semibold text-brand-ink">{formatRM(price)}</p>
           </div>
@@ -1522,11 +1522,11 @@ function PackagePurchaseFlow({
       </div>
       <p className="mt-2 text-xs text-brand-ink">{pkg.summary}</p>
 
-      {pkg.dailyMotherCare.length > 0 && (
+      {pkg.treatmentSteps.length > 0 && (
         <ul className="mt-3 space-y-1">
-          {pkg.dailyMotherCare.slice(0, 3).map((item) => (
+          {pkg.treatmentSteps.slice(0, 3).map((item) => (
             <li key={item} className="flex items-start gap-1.5 text-xs text-brand-ink">
-              <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-brand-green" /> {item}
+              <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-brand-lavender" /> {item}
             </li>
           ))}
         </ul>
@@ -1538,24 +1538,18 @@ function PackagePurchaseFlow({
           <div className="flex flex-wrap gap-1.5">
             {pkg.tiers.map((t) => (
               <button
-                key={t.days}
-                onClick={() => setTierDays(t.days)}
+                key={t.minutes}
+                onClick={() => setTierMinutes(t.minutes)}
                 className={`rounded-full border px-3 py-1.5 text-xs ${
-                  tierDays === t.days ? 'border-brand-pink bg-brand-pink text-white' : 'border-black/10 text-brand-ink hover:bg-brand-cream'
+                  tierMinutes === t.minutes ? 'border-brand-pink bg-brand-pink text-white' : 'border-black/10 text-brand-ink hover:bg-brand-cream'
                 }`}
               >
-                {t.days} Hari · {formatRM(t.price)}
+                {t.minutes} min · {formatRM(t.price)}
               </button>
             ))}
           </div>
         </div>
-      ) : (
-        pkg.sessionPrice && (
-          <div className="mt-4 rounded-xl bg-brand-cream p-3 text-sm text-brand-ink">
-            {formatRM(pkg.sessionPrice.perSession)} per session
-          </div>
-        )
-      )}
+      ) : null}
 
       <div className="mt-4 flex items-center justify-between rounded-xl border border-black/5 p-3 text-sm">
         <span className="text-brand-muted">Total price</span>
@@ -1563,7 +1557,7 @@ function PackagePurchaseFlow({
       </div>
 
       <button
-        disabled={pkg.tiers.length > 0 && !tierDays}
+        disabled={pkg.tiers.length > 0 && !tierMinutes}
         onClick={() => setStep('payment')}
         className="mt-4 w-full rounded-full bg-brand-pink py-3 text-sm font-semibold text-white disabled:opacity-30"
       >
@@ -1573,7 +1567,7 @@ function PackagePurchaseFlow({
   );
 }
 
-function MotherReviewsScreen({ cl }: { cl: ConfinementLady }) {
+function MotherReviewsScreen({ cl }: { cl: Therapist }) {
   return (
     <div className="flex-1">
       <h3 className="text-lg font-semibold text-brand-ink">My reviews</h3>
@@ -1626,7 +1620,7 @@ function MotherProfileScreen({ mother }: { mother: import('../types').Client }) 
         </div>
         <div className="rounded-xl border border-black/5 p-3">
           <p className="text-[11px] text-brand-muted">Due / birth date</p>
-          <p className="text-sm text-brand-ink">{formatDateLabel(mother.dueOrBirthDate)}</p>
+          <p className="text-sm text-brand-ink">{formatDateLabel(mother.preferredDate)}</p>
         </div>
       </div>
 

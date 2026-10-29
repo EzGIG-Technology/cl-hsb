@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { messageThreads as seedThreads } from '../data/messages';
 import type { MessageThread } from '../types';
 
-const STORAGE_KEY = 'nrmc-messages-v1';
+const STORAGE_KEY = 'honeyspa-messages-v1';
 
 function loadInitial(): MessageThread[] {
   if (typeof window !== 'undefined') {

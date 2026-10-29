@@ -46,7 +46,7 @@ export default function ClientsPage() {
 
   function handleAdd(input: { name: string; phone: string; location: string }) {
     const client = addClient(input);
-    logAction('Admin Amy', 'Added new customer', client.name);
+    logAction('Front Desk', 'Added new customer', client.name);
     setShowAdd(false);
     navigate(`/clients/${client.id}`);
   }
@@ -56,7 +56,7 @@ export default function ClientsPage() {
       title="Customer Directory"
       subtitle={`${clients.length} customers on file — ${activeCustomers.length} active with packages`}
       icon={Contact}
-      accentColor="#d94f8c"
+      accentColor="#c42474"
       searchPlaceholder="Search customer by name or area"
       onSearch={setQuery}
       headerAction={

@@ -36,7 +36,7 @@ export const expiryUrgencyStyles: Record<ExpiryUrgency, string> = {
   expired: 'bg-red-100 text-red-700',
   critical: 'bg-red-100 text-red-700',
   warning: 'bg-brand-amber-light text-brand-amber',
-  ok: 'bg-brand-green-light text-brand-green',
+  ok: 'bg-brand-lavender-light text-brand-lavender',
 };
 
 export const expiryUrgencyLabels: Record<ExpiryUrgency, string> = {

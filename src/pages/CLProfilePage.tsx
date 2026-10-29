@@ -43,7 +43,7 @@ import { useClientStore } from '../store/ClientStore';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { computeCLMetrics, monthlyFinancialsForCL, HOURLY_RATE, HOURS_PER_SESSION } from '../lib/clMetrics';
 import { formatTime12, formatDateLabel, TODAY_STR, expiryUrgency, expiryUrgencyStyles, expiryUrgencyLabels } from '../lib/date';
-import { tierForCL, type CLFlag, type CLStatus, type ConfinementLady, type PaymentMethod } from '../types';
+import { tierForCL, type CLFlag, type CLStatus, type Therapist, type PaymentMethod } from '../types';
 
 const shiftLabels: Record<string, string> = {
   morning: 'Morning only',
@@ -115,13 +115,13 @@ export default function CLProfilePage() {
   function saveFlag() {
     if (!cl) return;
     updateFlag(cl.id, flagDraft, noteDraft);
-    logAction('Admin Amy', 'Updated CL flag', `${cl.name} → ${flagDraft === 'none' ? 'no issues' : flagDraft}`);
+    logAction('Front Desk', 'Updated CL flag', `${cl.name} → ${flagDraft === 'none' ? 'no issues' : flagDraft}`);
   }
 
   function handleStatusChange(status: CLStatus) {
     if (!cl) return;
     updateStatus(cl.id, status);
-    logAction('Admin Amy', 'Updated CL status', `${cl.name} → ${status.replace('-', ' ')}`);
+    logAction('Front Desk', 'Updated CL status', `${cl.name} → ${status.replace('-', ' ')}`);
   }
 
   function markInactive() {
@@ -138,7 +138,7 @@ export default function CLProfilePage() {
       setPrintTarget(mode);
     });
     window.print();
-    logAction('Admin Amy', mode === 'company' ? 'Generated company report' : 'Generated customer report', cl.name);
+    logAction('Front Desk', mode === 'company' ? 'Generated company report' : 'Generated customer report', cl.name);
     setPrintTarget(null);
   }
 
@@ -182,7 +182,7 @@ export default function CLProfilePage() {
               href={`https://wa.me/${cl.phone.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-brand-green px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+              className="flex items-center gap-1.5 rounded-full bg-brand-lavender px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
             >
               <MessageCircle size={13} /> WhatsApp
             </a>
@@ -295,7 +295,7 @@ export default function CLProfilePage() {
                                 {m.month}
                                 {m.isCurrent && <span className="ml-1.5 rounded-full bg-brand-pink px-1.5 py-0.5 text-[9px] font-semibold text-white">Current</span>}
                               </td>
-                              <td className="px-3 py-2 text-brand-green">{m.approvedSessions}</td>
+                              <td className="px-3 py-2 text-brand-lavender">{m.approvedSessions}</td>
                               <td className="px-3 py-2 text-red-600">{m.disapprovedSessions}</td>
                               <td className="px-3 py-2 font-medium text-brand-ink">RM {m.earned.toLocaleString()}</td>
                               <td className="px-3 py-2 text-red-500">RM {m.lost.toLocaleString()}</td>
@@ -303,7 +303,7 @@ export default function CLProfilePage() {
                           ))}
                           <tr className="bg-brand-cream font-semibold text-brand-ink">
                             <td className="px-3 py-2">6-month total</td>
-                            <td className="px-3 py-2 text-brand-green">{monthlyFinancials.reduce((s, m) => s + m.approvedSessions, 0)}</td>
+                            <td className="px-3 py-2 text-brand-lavender">{monthlyFinancials.reduce((s, m) => s + m.approvedSessions, 0)}</td>
                             <td className="px-3 py-2 text-red-600">{monthlyFinancials.reduce((s, m) => s + m.disapprovedSessions, 0)}</td>
                             <td className="px-3 py-2">RM {monthlyFinancials.reduce((s, m) => s + m.earned, 0).toLocaleString()}</td>
                             <td className="px-3 py-2 text-red-500">RM {monthlyFinancials.reduce((s, m) => s + m.lost, 0).toLocaleString()}</td>
@@ -405,7 +405,7 @@ export default function CLProfilePage() {
               <p className="mb-3 text-xs text-brand-muted">Tag this CL if a client complaint was filed, or suspend them from new bookings.</p>
 
               <div className="mb-3 flex items-center gap-2">
-                {cl.flag === 'none' && <ShieldCheck size={16} className="text-brand-green" />}
+                {cl.flag === 'none' && <ShieldCheck size={16} className="text-brand-lavender" />}
                 {cl.flag === 'complained' && <ShieldAlert size={16} className="text-brand-amber" />}
                 {cl.flag === 'banned' && <ShieldX size={16} className="text-red-500" />}
                 <Badge status={cl.flag}>{cl.flag === 'none' ? 'No issues' : cl.flag}</Badge>
@@ -511,7 +511,7 @@ function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value
   );
 }
 
-function PassportRow({ cl }: { cl: import('../types').ConfinementLady }) {
+function PassportRow({ cl }: { cl: import('../types').Therapist }) {
   const { updatePassport } = useCLStore();
   const { logAction } = useActivityLog();
   const [editing, setEditing] = useState(false);
@@ -533,7 +533,7 @@ function PassportRow({ cl }: { cl: import('../types').ConfinementLady }) {
           <button
             onClick={() => {
               updatePassport(cl.id, draft);
-              logAction('Admin Amy', 'Updated CL passport number', cl.name);
+              logAction('Front Desk', 'Updated CL passport number', cl.name);
               setEditing(false);
             }}
             className="rounded-md bg-brand-pink px-2 text-xs font-medium text-white"
@@ -555,7 +555,7 @@ function PassportRow({ cl }: { cl: import('../types').ConfinementLady }) {
   );
 }
 
-function TreatmentPhotoUpload({ cl }: { cl: import('../types').ConfinementLady }) {
+function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
   const { updateTreatmentPhoto } = useCLStore();
   const { logAction } = useActivityLog();
 
@@ -565,7 +565,7 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').ConfinementLady }
     const reader = new FileReader();
     reader.onload = () => {
       updateTreatmentPhoto(cl.id, reader.result as string);
-      logAction('Admin Amy', 'Uploaded CL treatment photo', cl.name);
+      logAction('Front Desk', 'Uploaded CL treatment photo', cl.name);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -590,7 +590,7 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').ConfinementLady }
   );
 }
 
-function CustomerProfileView({ cl }: { cl: ConfinementLady }) {
+function CustomerProfileView({ cl }: { cl: Therapist }) {
   return (
     <div className="mt-5">
       <div className="mb-3 flex justify-end">
@@ -613,7 +613,7 @@ function CustomerProfileView({ cl }: { cl: ConfinementLady }) {
 }
 
 /** Shared print/PDF card, used by the Customer tab's "Generate customer PDF" and, in `mode="company"`, the Internal tab's report buttons. */
-function PrintableCLCard({ cl, mode }: { cl: ConfinementLady; mode: 'customer' | 'company' }) {
+function PrintableCLCard({ cl, mode }: { cl: Therapist; mode: 'customer' | 'company' }) {
   const tier = tierForCL(cl.completedAssignments);
   return (
     <Card className="text-center">
@@ -715,7 +715,7 @@ function ExpiryInfoRow({ icon, label, date }: { icon: ReactNode; label: string; 
   );
 }
 
-function CertificationList({ cl }: { cl: ConfinementLady }) {
+function CertificationList({ cl }: { cl: Therapist }) {
   const { addCertification, removeCertification } = useCLStore();
   const { logAction } = useActivityLog();
   const [adding, setAdding] = useState(false);
@@ -726,7 +726,7 @@ function CertificationList({ cl }: { cl: ConfinementLady }) {
   function submit() {
     if (!name.trim() || !issuer.trim() || !expiryDate) return;
     addCertification(cl.id, { name: name.trim(), issuer: issuer.trim(), expiryDate });
-    logAction('Admin Amy', 'Added CL certification', `${cl.name} — ${name.trim()}`);
+    logAction('Front Desk', 'Added CL certification', `${cl.name} — ${name.trim()}`);
     setName('');
     setIssuer('');
     setExpiryDate('');
@@ -750,7 +750,7 @@ function CertificationList({ cl }: { cl: ConfinementLady }) {
                 <button
                   onClick={() => {
                     removeCertification(cl.id, c.id);
-                    logAction('Admin Amy', 'Removed CL certification', `${cl.name} — ${c.name}`);
+                    logAction('Front Desk', 'Removed CL certification', `${cl.name} — ${c.name}`);
                   }}
                   className="text-brand-muted hover:text-red-600"
                 >
@@ -803,7 +803,7 @@ function CertificationList({ cl }: { cl: ConfinementLady }) {
   );
 }
 
-function LeaveList({ cl }: { cl: ConfinementLady }) {
+function LeaveList({ cl }: { cl: Therapist }) {
   const { addLeavePeriod, removeLeavePeriod } = useCLStore();
   const { logAction } = useActivityLog();
   const [adding, setAdding] = useState(false);
@@ -814,7 +814,7 @@ function LeaveList({ cl }: { cl: ConfinementLady }) {
   function submit() {
     if (!start || !end) return;
     addLeavePeriod(cl.id, { start, end, reason: reason.trim() || undefined });
-    logAction('Admin Amy', 'Added CL leave period', `${cl.name} — ${start} to ${end}`);
+    logAction('Front Desk', 'Added CL leave period', `${cl.name} — ${start} to ${end}`);
     setStart('');
     setEnd('');
     setReason('');
@@ -843,7 +843,7 @@ function LeaveList({ cl }: { cl: ConfinementLady }) {
               <button
                 onClick={() => {
                   removeLeavePeriod(cl.id, i);
-                  logAction('Admin Amy', 'Removed CL leave period', `${cl.name} — ${p.start} to ${p.end}`);
+                  logAction('Front Desk', 'Removed CL leave period', `${cl.name} — ${p.start} to ${p.end}`);
                 }}
                 className="text-brand-muted hover:text-red-600"
               >
@@ -884,7 +884,7 @@ function LeaveList({ cl }: { cl: ConfinementLady }) {
   );
 }
 
-function EditCLModal({ cl, onClose }: { cl: ConfinementLady; onClose: () => void }) {
+function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
   const { updateDetails } = useCLStore();
   const { logAction } = useActivityLog();
   const [phone, setPhone] = useState(cl.phone);
@@ -919,7 +919,7 @@ function EditCLModal({ cl, onClose }: { cl: ConfinementLady; onClose: () => void
       bankAccountMasked: bankAccountMasked.trim() || undefined,
       paymentMethod: paymentMethod || undefined,
     });
-    logAction('Admin Amy', 'Edited CL profile', cl.name);
+    logAction('Front Desk', 'Edited CL profile', cl.name);
     onClose();
   }
 

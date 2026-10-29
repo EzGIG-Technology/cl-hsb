@@ -1,12 +1,12 @@
-import type { ConfinementLady } from '../types';
+import type { Therapist } from '../types';
 
-const colors = ['#d94f8c', '#3c6f57', '#c98a3b', '#b13570', '#21493a', '#e0829f', '#6fa583'];
+const colors = ['#c42474', '#6f76b0', '#d9921f', '#9c1a5b', '#2f2b55', '#e07aa8', '#9aa0d4'];
 
 function color(i: number) {
   return colors[i % colors.length];
 }
 
-type RawCL = Omit<ConfinementLady, 'reviews' | 'flagHistory' | 'certifications' | 'nationality' | 'leavePeriods'>;
+type RawCL = Omit<Therapist, 'reviews' | 'flagHistory' | 'certifications' | 'nationality' | 'leavePeriods'>;
 
 const rawCLs: RawCL[] = [
   {
@@ -353,7 +353,7 @@ const rawCLs: RawCL[] = [
 
 type CLExtras = Partial<
   Pick<
-    ConfinementLady,
+    Therapist,
     | 'reviews'
     | 'flagHistory'
     | 'certifications'
@@ -431,7 +431,7 @@ const extras: Record<string, CLExtras> = {
   },
 };
 
-export const confinementLadies: ConfinementLady[] = rawCLs.map((cl) => ({
+export const confinementLadies: Therapist[] = rawCLs.map((cl) => ({
   ...cl,
   reviews: [],
   flagHistory: [],

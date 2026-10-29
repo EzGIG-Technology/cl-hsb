@@ -36,7 +36,7 @@ export default function CLsPage() {
 
   function handleAdd(input: { name: string; phone: string; location: string; icNumber: string; email?: string }) {
     const cl = addCL(input);
-    logAction('Admin Amy', 'Added new caregiver', cl.name);
+    logAction('Front Desk', 'Added new caregiver', cl.name);
     setShowAdd(false);
     navigate(`/cls/${cl.id}`);
   }
@@ -64,7 +64,7 @@ export default function CLsPage() {
       title="Caregiver (CL) Directory"
       subtitle={`${cls.length} CLs on the roster — ${counts.flagged} flagged for review`}
       icon={Users}
-      accentColor="#d94f8c"
+      accentColor="#c42474"
       searchPlaceholder="Search CL by name or area"
       onSearch={setQuery}
       headerAction={

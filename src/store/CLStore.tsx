@@ -1,18 +1,18 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { confinementLadies as seedCLs } from '../data/team';
 import { TODAY_STR } from '../lib/date';
-import type { CLFlag, CLStatus, ConfinementLady, Review, Certification, LeavePeriod } from '../types';
+import type { CLFlag, CLStatus, Therapist, Review, Certification, LeavePeriod } from '../types';
 
 // v2: added reviews/certifications/nationality/leavePeriods/flagHistory/payroll fields — bumped so
 // browsers holding a pre-existing v1 record (old shape, missing these) don't crash on load.
-const STORAGE_KEY = 'nrmc-cls-v2';
+const STORAGE_KEY = 'honeyspa-cls-v1';
 
-function loadInitial(): ConfinementLady[] {
+function loadInitial(): Therapist[] {
   if (typeof window !== 'undefined') {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as ConfinementLady[];
+        const parsed = JSON.parse(raw) as Therapist[];
         if (parsed.length) return parsed;
       }
     } catch {
@@ -22,7 +22,7 @@ function loadInitial(): ConfinementLady[] {
   return seedCLs;
 }
 
-const avatarPalette = ['#d94f8c', '#3c6f57', '#c98a3b', '#4f8a6d', '#b13570', '#3b6d8a', '#8b5fbf', '#2f9b87'];
+const avatarPalette = ['#c42474', '#6f76b0', '#d9921f', '#8c94c4', '#9c1a5b', '#3b6d8a', '#8b5fbf', '#2f9b87'];
 
 export interface NewCLInput {
   name: string;
@@ -33,13 +33,13 @@ export interface NewCLInput {
   address?: string;
   yearsExperience?: number;
   languages?: string[];
-  shiftAvailability?: ConfinementLady['shiftAvailability'];
+  shiftAvailability?: Therapist['shiftAvailability'];
 }
 
 interface CLStoreValue {
-  cls: ConfinementLady[];
-  clById: (id: string) => ConfinementLady | undefined;
-  addCL: (input: NewCLInput) => ConfinementLady;
+  cls: Therapist[];
+  clById: (id: string) => Therapist | undefined;
+  addCL: (input: NewCLInput) => Therapist;
   updateFlag: (id: string, flag: CLFlag, note?: string) => void;
   updateStatus: (id: string, status: CLStatus) => void;
   updateTreatmentPhoto: (id: string, dataUrl: string | undefined) => void;
@@ -48,7 +48,7 @@ interface CLStoreValue {
     id: string,
     patch: Partial<
       Pick<
-        ConfinementLady,
+        Therapist,
         | 'phone'
         | 'email'
         | 'address'
@@ -77,7 +77,7 @@ interface CLStoreValue {
 const CLStoreContext = createContext<CLStoreValue | null>(null);
 
 export function CLStoreProvider({ children }: { children: ReactNode }) {
-  const [cls, setCLs] = useState<ConfinementLady[]>(loadInitial);
+  const [cls, setCLs] = useState<Therapist[]>(loadInitial);
 
   useEffect(() => {
     try {
@@ -92,7 +92,7 @@ export function CLStoreProvider({ children }: { children: ReactNode }) {
       cls,
       clById: (id) => cls.find((c) => c.id === id),
       addCL: (input) => {
-        const newCL: ConfinementLady = {
+        const newCL: Therapist = {
           id: `cl-${Date.now()}`,
           name: input.name,
           avatarColor: avatarPalette[cls.length % avatarPalette.length],

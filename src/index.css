@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: 'Jost', system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* NR Mothercare brand palette, sampled directly from the logo: pink wordmark + green silhouette */
-  --color-brand-pink: #d94f8c;
-  --color-brand-pink-dark: #b13570;
+  /* Honey Spa Bangi brand palette, sampled from the logo + price list: magenta (price-list panel),
+     lavender/periwinkle (the five-petal flower), honey gold (the bee) on a soft blush ground. */
+  --color-brand-pink: #c42474;
+  --color-brand-pink-dark: #9c1a5b;
   --color-brand-pink-light: #fbe3ef;
-  --color-brand-green: #3c6f57;
-  --color-brand-green-dark: #21493a;
-  --color-brand-green-light: #e3f0e8;
-  --color-brand-cream: #faf6f0;
-  --color-brand-amber: #c98a3b;
-  --color-brand-amber-light: #f6e9d4;
-  --color-brand-ink: #26202a;
-  --color-brand-muted: #8b7d87;
+  --color-brand-lavender: #6f76b0;
+  --color-brand-lavender-dark: #2f2b55;
+  --color-brand-lavender-light: #e8e9f6;
+  --color-brand-cream: #fdf6f9;
+  --color-brand-amber: #d9921f;
+  --color-brand-amber-light: #fcefd6;
+  --color-brand-ink: #1f1a24;
+  --color-brand-muted: #8a7f8c;
 }
 
 @layer base {

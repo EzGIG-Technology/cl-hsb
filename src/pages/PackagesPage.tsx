@@ -21,7 +21,7 @@ export default function PackagesPage() {
         <button
           onClick={() => {
             addPackage();
-            logAction('Admin Amy', 'Added a new package');
+            logAction('Front Desk', 'Added a new package');
           }}
           className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark"
         >
@@ -46,7 +46,7 @@ export default function PackagesPage() {
             <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3 text-sm">
               <span className="text-brand-muted">{pkg.tiers.length > 0 ? `${pkg.tiers.length} tiers` : 'Per session'}</span>
               <span className="font-semibold text-brand-ink">
-                {pkg.tiers[0] ? formatRM(pkg.tiers[0].price) : pkg.sessionPrice ? formatRM(pkg.sessionPrice.perSession) : '—'}
+                {pkg.tiers[0] ? formatRM(pkg.tiers[0].price) : '—'}
                 {pkg.tiers[0] ? <span className="font-normal text-brand-muted"> from</span> : null}
               </span>
             </div>

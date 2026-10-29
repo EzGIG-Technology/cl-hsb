@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { disputes as seedDisputes } from '../data/disputes';
 import type { Dispute } from '../types';
 
-const STORAGE_KEY = 'nrmc-disputes-v1';
+const STORAGE_KEY = 'honeyspa-disputes-v1';
 
 function loadInitial(): Dispute[] {
   if (typeof window !== 'undefined') {

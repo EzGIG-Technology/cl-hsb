@@ -22,7 +22,7 @@ export interface ClientMonthSummary {
 
 function priceOf(pkg: Package | undefined) {
   if (!pkg) return 0;
-  return pkg.tiers[0]?.price ?? pkg.sessionPrice?.perSession ?? 0;
+  return pkg.tiers[0]?.price ?? 0;
 }
 
 /**

@@ -39,7 +39,7 @@ const paymentStatusBadge: Record<string, 'completed' | 'pending' | 'confirmed'> 
 export default function ClientProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { clients, updateAddress, addPackageToClient, removePackageFromClient, updatePackageDays } = useClientStore();
+  const { clients, updateAddress, addPackageToClient, removePackageFromClient, updatePackageMinutes } = useClientStore();
   const { clById } = useCLStore();
   const { packages, packageById } = useSettings();
   const { logAction } = useActivityLog();
@@ -66,7 +66,7 @@ export default function ClientProfilePage() {
   const total = client.packageIds.reduce((sum, pid) => {
     const pkg = packageById(pid);
     if (!pkg) return sum;
-    return sum + (pkg.sessionPrice?.perSession ?? pkg.tiers[0]?.price ?? 0);
+    return sum + (pkg.tiers[0]?.price ?? 0);
   }, 0);
   const returning = client.packageIds.length > 1 || bookings.length > 1;
   const sessionsPlanned = bookings.filter((a) => a.status !== 'cancelled').length;
@@ -78,7 +78,7 @@ export default function ClientProfilePage() {
 
   function saveAddress() {
     updateAddress(client!.id, addressDraft, locationDraft);
-    logAction('Admin Amy', 'Updated client address', `${client!.name} → ${locationDraft}`);
+    logAction('Front Desk', 'Updated client address', `${client!.name} → ${locationDraft}`);
     setEditingAddress(false);
   }
 
@@ -168,7 +168,7 @@ export default function ClientProfilePage() {
               <p className="mb-1 flex items-center gap-1.5 text-xs text-brand-muted">
                 <Calendar size={14} /> Due / birth date
               </p>
-              <p className="text-brand-ink">{formatDateLabel(client.dueOrBirthDate)}</p>
+              <p className="text-brand-ink">{formatDateLabel(client.preferredDate)}</p>
             </div>
             <div className="sm:col-span-2">
               <p className="mb-1 flex items-center gap-1.5 text-xs text-brand-muted">
@@ -244,7 +244,7 @@ export default function ClientProfilePage() {
               {billableBookings.length === 0 && <p className="text-sm text-brand-muted">No billable sessions yet.</p>}
               {billableBookings.map((a) => {
                 const pkg = packageById(a.packageId);
-                const amount = pkg?.tiers[0]?.price ?? pkg?.sessionPrice?.perSession ?? 0;
+                const amount = pkg?.tiers[0]?.price ?? 0;
                 const status = a.paymentStatus ?? (a.status === 'completed' ? 'released' : 'pending');
                 return (
                   <div key={a.id} className="flex items-center justify-between rounded-xl border border-black/5 px-3 py-2 text-sm">
@@ -274,9 +274,9 @@ export default function ClientProfilePage() {
             {client.packageIds.map((pid) => {
               const pkg = packageById(pid);
               if (!pkg) return null;
-              const selectedDays = client.packageDays?.[pid] ?? pkg.tiers[0]?.days;
-              const tier = pkg.tiers.find((t) => t.days === selectedDays) ?? pkg.tiers[0];
-              const price = tier?.price ?? pkg.sessionPrice?.perSession ?? 0;
+              const selectedMinutes = client.packageMinutes?.[pid] ?? pkg.tiers[0]?.minutes;
+              const tier = pkg.tiers.find((t) => t.minutes === selectedMinutes) ?? pkg.tiers[0];
+              const price = tier?.price ?? 0;
               return (
                 <div key={pid} className="flex items-center gap-2.5 rounded-xl border border-black/5 p-2.5">
                   <PackageArt pkg={pkg} size={36} rounded="rounded-lg" />
@@ -284,17 +284,17 @@ export default function ClientProfilePage() {
                     <p className="truncate text-sm font-medium text-brand-ink">{pkg.shortName}</p>
                     {pkg.tiers.length > 0 ? (
                       <select
-                        value={selectedDays}
+                        value={selectedMinutes}
                         onChange={(e) => {
                           const days = Number(e.target.value);
-                          updatePackageDays(client.id, pid, days);
-                          logAction('Admin Amy', 'Updated package duration', `${pkg.shortName} → ${days} days for ${client.name}`);
+                          updatePackageMinutes(client.id, pid, days);
+                          logAction('Front Desk', 'Updated package duration', `${pkg.shortName} → ${days} days for ${client.name}`);
                         }}
                         className="mt-0.5 rounded-md border border-black/10 bg-white px-1.5 py-0.5 text-[11px] text-brand-ink"
                       >
                         {pkg.tiers.map((t) => (
-                          <option key={t.days} value={t.days}>
-                            {t.days} days · {formatRM(t.price)}
+                          <option key={t.minutes} value={t.minutes}>
+                            {t.minutes} min · {formatRM(t.price)}
                           </option>
                         ))}
                       </select>
@@ -305,7 +305,7 @@ export default function ClientProfilePage() {
                   <button
                     onClick={() => {
                       removePackageFromClient(client.id, pid);
-                      logAction('Admin Amy', 'Removed package from client', `${pkg.shortName} from ${client.name}`);
+                      logAction('Front Desk', 'Removed package from client', `${pkg.shortName} from ${client.name}`);
                     }}
                     className="shrink-0 text-brand-muted hover:text-red-500"
                   >
@@ -325,8 +325,8 @@ export default function ClientProfilePage() {
                   <button
                     key={p.id}
                     onClick={() => {
-                      addPackageToClient(client.id, p.id, p.tiers[0]?.days);
-                      logAction('Admin Amy', 'Added package to client', `${p.shortName} for ${client.name}`);
+                      addPackageToClient(client.id, p.id, p.tiers[0]?.minutes);
+                      logAction('Front Desk', 'Added package to client', `${p.shortName} for ${client.name}`);
                       setShowPicker(false);
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-brand-ink hover:bg-white"
@@ -354,13 +354,13 @@ function EditClientModal({ client, onClose }: { client: Client; onClose: () => v
   const { logAction } = useActivityLog();
   const [phone, setPhone] = useState(client.phone);
   const [email, setEmail] = useState(client.email);
-  const [dueOrBirthDate, setDueOrBirthDate] = useState(client.dueOrBirthDate);
+  const [preferredDate, setPreferredDate] = useState(client.preferredDate);
   const [notes, setNotes] = useState(client.notes ?? '');
   const [status, setStatus] = useState<Client['status']>(client.status);
 
   function save() {
-    updateDetails(client.id, { phone: phone.trim(), email: email.trim(), dueOrBirthDate, notes: notes.trim() || undefined, status });
-    logAction('Admin Amy', 'Edited client profile', client.name);
+    updateDetails(client.id, { phone: phone.trim(), email: email.trim(), preferredDate, notes: notes.trim() || undefined, status });
+    logAction('Front Desk', 'Edited client profile', client.name);
     onClose();
   }
 
@@ -384,7 +384,7 @@ function EditClientModal({ client, onClose }: { client: Client; onClose: () => v
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-brand-muted">Due / birth date</label>
-            <input type="date" value={dueOrBirthDate} onChange={(e) => setDueOrBirthDate(e.target.value)} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+            <input type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-brand-muted">Status</label>

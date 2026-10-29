@@ -51,15 +51,15 @@ export default function PayrollPage() {
 
   function markAllPaid() {
     unreviewed.forEach((a) => markPaymentStatus(a.id, 'released'));
-    logAction('Admin Amy', 'Marked Aug 2026 payroll as paid', `${unreviewed.length} sessions released for payment`);
+    logAction('Front Desk', 'Marked Aug 2026 payroll as paid', `${unreviewed.length} sessions released for payment`);
   }
 
   function exportCSV(kind: 'CSV' | 'Excel') {
-    downloadCSV(`nrmc-payroll-aug-2026.csv`, [
+    downloadCSV(`honeyspa-payroll-aug-2026.csv`, [
       ['Caregiver', 'Sessions', 'Hours', 'Pay (RM)', 'Status'],
       ...rows.map((r) => [r.cl!.name, r.sessions, r.hours, r.pay, r.status]),
     ]);
-    logAction('Admin Amy', `Exported payroll ${kind}`, 'Aug 2026');
+    logAction('Front Desk', `Exported payroll ${kind}`, 'Aug 2026');
   }
 
   return (
@@ -67,7 +67,7 @@ export default function PayrollPage() {
       title="Hourly Payroll"
       subtitle="Aug 2026 — approved hours, disputed hours, and total pay by caregiver."
       icon={Clock}
-      accentColor="#c98a3b"
+      accentColor="#d9921f"
       headerAction={
         <div className="flex gap-2">
           <button
@@ -99,7 +99,7 @@ export default function PayrollPage() {
         </Card>
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Paid hours</p>
-          <p className="mt-1 text-3xl font-semibold text-brand-green">{approvedHours}h</p>
+          <p className="mt-1 text-3xl font-semibold text-brand-lavender">{approvedHours}h</p>
         </Card>
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Awaiting review / pending hours</p>

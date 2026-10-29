@@ -20,7 +20,7 @@ export default function DisputesPage() {
   function resolve(id: string) {
     const dispute = disputes.find((d) => d.id === id);
     resolveDispute(id);
-    logAction('Admin Amy', 'Resolved dispute', `${id} — ${dispute?.issue}`);
+    logAction('Front Desk', 'Resolved dispute', `${id} — ${dispute?.issue}`);
   }
 
   return (
@@ -28,7 +28,7 @@ export default function DisputesPage() {
       title="Disputes & Exceptions Center"
       subtitle="Missed visit-flow steps, flagged for review before payroll release."
       icon={AlertTriangle}
-      accentColor="#c98a3b"
+      accentColor="#d9921f"
     >
       <div className="mb-4 flex gap-2">
         {(['Open', 'Resolved'] as const).map((f) => (

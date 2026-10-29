@@ -1,4 +1,4 @@
-import type { ConfinementLady, Assignment } from '../types';
+import type { Therapist, Assignment } from '../types';
 
 export const HOURLY_RATE = 22;
 export const HOURS_PER_SESSION = 4;
@@ -29,7 +29,7 @@ export interface CLMonthSummary {
  * is computed from real seeded/store assignment + approval data; earlier months are seeded mock
  * history since the dataset only spans a few days — deterministic per CL id so numbers don't jitter.
  */
-export function monthlyFinancialsForCL(cl: ConfinementLady, assignmentsForCL: Assignment[]): CLMonthSummary[] {
+export function monthlyFinancialsForCL(cl: Therapist, assignmentsForCL: Assignment[]): CLMonthSummary[] {
   const rand = seededRandom(cl.id);
   return MONTH_LABELS.map((label) => {
     const isCurrent = label === 'Aug';
@@ -64,7 +64,7 @@ export function monthlyFinancialsForCL(cl: ConfinementLady, assignmentsForCL: As
  * `reviewCount` predates the `reviews[]` array, so any count beyond what's in `reviews[]` is
  * assumed to follow the original 91% positive baseline; real reviews always count exactly.
  */
-function reviewSplit(cl: ConfinementLady) {
+function reviewSplit(cl: Therapist) {
   const detailedGood = cl.reviews.filter((r) => r.rating >= 4).length;
   const detailedPoor = cl.reviews.length - detailedGood;
   const legacyCount = Math.max(0, cl.reviewCount - cl.reviews.length);
@@ -72,7 +72,7 @@ function reviewSplit(cl: ConfinementLady) {
   return { goodReviews: detailedGood + legacyGood, poorReviews: detailedPoor + (legacyCount - legacyGood) };
 }
 
-export function computeCLMetrics(cl: ConfinementLady, assignmentsForCL: Assignment[]) {
+export function computeCLMetrics(cl: Therapist, assignmentsForCL: Assignment[]) {
   const leaderboardPoints = cl.completedAssignments * 12 + Math.round(cl.rating * 40);
   const verifiedHours = cl.completedAssignments * HOURS_PER_SESSION;
   const lifetimeEarnings = verifiedHours * HOURLY_RATE;
@@ -88,6 +88,6 @@ export function computeCLMetrics(cl: ConfinementLady, assignmentsForCL: Assignme
   };
 }
 
-export function leaderboardRank(cls: ConfinementLady[]) {
+export function leaderboardRank(cls: Therapist[]) {
   return [...cls].sort((a, b) => b.completedAssignments * 12 + b.rating * 40 - (a.completedAssignments * 12 + a.rating * 40));
 }

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { clients as seedClients } from '../data/clients';
 import type { Client } from '../types';
 
-const STORAGE_KEY = 'nrmc-clients-v1';
+const STORAGE_KEY = 'honeyspa-clients-v1';
 
 function loadInitial(): Client[] {
   if (typeof window !== 'undefined') {
@@ -25,7 +25,7 @@ export interface NewClientInput {
   location: string;
   email?: string;
   address?: string;
-  dueOrBirthDate?: string;
+  preferredDate?: string;
   notes?: string;
 }
 
@@ -34,10 +34,10 @@ interface ClientStoreValue {
   clientById: (id: string) => Client | undefined;
   addClient: (input: NewClientInput) => Client;
   updateAddress: (id: string, address: string, location: string) => void;
-  updateDetails: (id: string, patch: Partial<Pick<Client, 'phone' | 'email' | 'dueOrBirthDate' | 'notes' | 'status'>>) => void;
-  addPackageToClient: (id: string, packageId: string, days?: number) => void;
+  updateDetails: (id: string, patch: Partial<Pick<Client, 'phone' | 'email' | 'preferredDate' | 'notes' | 'status'>>) => void;
+  addPackageToClient: (id: string, packageId: string, minutes?: number) => void;
   removePackageFromClient: (id: string, packageId: string) => void;
-  updatePackageDays: (id: string, packageId: string, days: number) => void;
+  updatePackageMinutes: (id: string, packageId: string, minutes: number) => void;
   resetToDefaults: () => void;
 }
 
@@ -67,7 +67,7 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
           address: input.address ?? '',
           location: input.location,
           packageIds: [],
-          dueOrBirthDate: input.dueOrBirthDate ?? '',
+          preferredDate: input.preferredDate ?? '',
           status: 'upcoming',
           notes: input.notes,
         };
@@ -77,14 +77,14 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
       updateAddress: (id, address, location) =>
         setClients((prev) => prev.map((c) => (c.id === id ? { ...c, address, location } : c))),
       updateDetails: (id, patch) => setClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c))),
-      addPackageToClient: (id, packageId, days) =>
+      addPackageToClient: (id, packageId, minutes) =>
         setClients((prev) =>
           prev.map((c) =>
             c.id === id && !c.packageIds.includes(packageId)
               ? {
                   ...c,
                   packageIds: [...c.packageIds, packageId],
-                  packageDays: days ? { ...c.packageDays, [packageId]: days } : c.packageDays,
+                  packageMinutes: minutes ? { ...c.packageMinutes, [packageId]: minutes } : c.packageMinutes,
                 }
               : c,
           ),
@@ -93,9 +93,9 @@ export function ClientStoreProvider({ children }: { children: ReactNode }) {
         setClients((prev) =>
           prev.map((c) => (c.id === id ? { ...c, packageIds: c.packageIds.filter((p) => p !== packageId) } : c)),
         ),
-      updatePackageDays: (id, packageId, days) =>
+      updatePackageMinutes: (id, packageId, minutes) =>
         setClients((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, packageDays: { ...c.packageDays, [packageId]: days } } : c)),
+          prev.map((c) => (c.id === id ? { ...c, packageMinutes: { ...c.packageMinutes, [packageId]: minutes } } : c)),
         ),
       resetToDefaults: () => setClients(seedClients),
     }),

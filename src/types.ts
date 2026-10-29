@@ -1,13 +1,9 @@
-export type PackageCategory = 'postnatal' | 'prenatal';
+export type PackageCategory = 'massage' | 'prenatal' | 'treatment' | 'promo';
 
+/** One bookable length of a treatment, e.g. 60 min for RM 80. */
 export interface PackageTier {
-  days: number;
+  minutes: number;
   price: number;
-}
-
-export interface ScheduledTreatment {
-  label: string;
-  count: number;
 }
 
 export interface Package {
@@ -18,16 +14,16 @@ export interface Package {
   theme: 'pink' | 'purple' | 'teal' | 'red' | 'brown' | 'blue' | 'green';
   durationEstimate: string;
   summary: string;
-  dailyMotherCare: string[];
-  scheduledMotherCare: ScheduledTreatment[];
-  babyCare: string[];
+  /** What the therapist does in a session, in order. Doubles as the in-app session checklist. */
+  treatmentSteps: string[];
   extras: string[];
   notes: string[];
   tiers: PackageTier[];
-  sessionPrice?: { perSession: number; bundle: { sessions: number; price: number } };
-  transportIncluded: boolean;
   bookingDepositPct: number;
+  /** True when the price is not on Honey Spa's published price list and still needs confirming. */
   estimated?: boolean;
+  /** Where the listing and price were sourced from, for the audit trail. */
+  source?: string;
 }
 
 export type CLStatus = 'on-duty' | 'available' | 'on-leave' | 'off-duty';
@@ -63,7 +59,7 @@ export interface FlagHistoryEntry {
   note?: string;
 }
 
-export interface ConfinementLady {
+export interface Therapist {
   id: string;
   name: string;
   avatarColor: string;
@@ -116,9 +112,10 @@ export interface Client {
   address: string;
   location: string;
   packageIds: string[];
-  /** Selected day-tier per package id, for tiered packages (e.g. { melur: 14 }). Absent = package's default/first tier. */
-  packageDays?: Record<string, number>;
-  dueOrBirthDate: string;
+  /** Selected session length (minutes) per package id (e.g. { traditional: 90 }). Absent = the package's first tier. */
+  packageMinutes?: Record<string, number>;
+  /** The date the client asked to be seen (yyyy-mm-dd); drives the "needs a therapist" urgency on Bookings/Schedule. */
+  preferredDate: string;
   status: 'active' | 'upcoming' | 'completed';
   notes?: string;
 }

@@ -57,7 +57,7 @@ export default function ReportsPage() {
     .map((p) => ({ name: packageById(p.packageId)?.shortName ?? p.packageId, bookings: p.bookings }))
     .sort((a, b) => b.bookings - a.bookings);
 
-  const ratingColors: Record<number, string> = { 5: '#21493a', 4: '#3c6f57', 3: '#c98a3b', 2: '#b45f3b', 1: '#b23b3b' };
+  const ratingColors: Record<number, string> = { 5: '#2f2b55', 4: '#6f76b0', 3: '#d9921f', 2: '#b45f3b', 1: '#b23b3b' };
 
   return (
     <PageShell
@@ -81,7 +81,7 @@ export default function ReportsPage() {
       }
     >
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="YTD revenue" value={formatRM(ytdRevenue)} icon={<TrendingUp size={16} className="text-brand-green" />} />
+        <StatCard label="YTD revenue" value={formatRM(ytdRevenue)} icon={<TrendingUp size={16} className="text-brand-lavender" />} />
         <StatCard label="YTD completed assignments" value={ytdCompleted} />
         <StatCard
           label={isCurrentMonth ? "This month's revenue" : `${selectedMonth} 2026 revenue`}
@@ -100,7 +100,7 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl bg-brand-cream p-3">
             <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-              <TrendingUp size={11} className="text-brand-green" /> Revenue collected
+              <TrendingUp size={11} className="text-brand-lavender" /> Revenue collected
             </p>
             <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthRevenue)}</p>
             <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdRevenue)}</p>
@@ -122,7 +122,7 @@ export default function ReportsPage() {
           <div className="rounded-xl bg-brand-cream p-3">
             <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
               {selectedMonthMarginPct >= 0 ? (
-                <TrendingUp size={11} className="text-brand-green" />
+                <TrendingUp size={11} className="text-brand-lavender" />
               ) : (
                 <TrendingDown size={11} className="text-red-500" />
               )}
@@ -137,12 +137,12 @@ export default function ReportsPage() {
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={financeChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
               <YAxis hide />
               <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="revenue" name="Revenue" fill="#d94f8c" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="payroll" name="Paid to CLs" fill="#c98a3b" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="revenue" name="Revenue" fill="#c42474" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="payroll" name="Paid to CLs" fill="#d9921f" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -154,10 +154,10 @@ export default function ReportsPage() {
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={monthlyRevenue}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
               <YAxis hide />
               <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Line type="monotone" dataKey="revenue" stroke="#d94f8c" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="revenue" stroke="#c42474" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -166,11 +166,11 @@ export default function ReportsPage() {
           <SectionTitle>Completed assignments</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={monthlyCompletedAssignments}>
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
               <Bar dataKey="completed" radius={[8, 8, 8, 8]}>
                 {monthlyCompletedAssignments.map((m) => (
-                  <Cell key={m.month} fill={m.month === selectedMonth ? '#d94f8c' : '#4f8a6d'} />
+                  <Cell key={m.month} fill={m.month === selectedMonth ? '#c42474' : '#8c94c4'} />
                 ))}
               </Bar>
             </BarChart>
@@ -182,9 +182,9 @@ export default function ReportsPage() {
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={packageChartData} layout="vertical" margin={{ left: 10 }}>
               <XAxis type="number" hide />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={80} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={80} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Bar dataKey="bookings" radius={[0, 8, 8, 0]} fill="#c98a3b" />
+              <Bar dataKey="bookings" radius={[0, 8, 8, 0]} fill="#d9921f" />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -194,7 +194,7 @@ export default function ReportsPage() {
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={ratingDistribution} layout="vertical" margin={{ left: 10 }}>
               <XAxis type="number" hide />
-              <YAxis dataKey="stars" type="category" axisLine={false} tickLine={false} width={50} tick={{ fill: '#8b7d87', fontSize: 12 }} tickFormatter={(v) => `${v}★`} />
+              <YAxis dataKey="stars" type="category" axisLine={false} tickLine={false} width={50} tick={{ fill: '#8a7f8c', fontSize: 12 }} tickFormatter={(v) => `${v}★`} />
               <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
               <Bar dataKey="count" radius={[0, 8, 8, 0]}>
                 {ratingDistribution.map((r) => (

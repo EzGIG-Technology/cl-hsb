@@ -14,27 +14,27 @@ interface ActivityLogContextValue {
   clear: () => void;
 }
 
-const STORAGE_KEY = 'nrmc-activity-log-v1';
+const STORAGE_KEY = 'honeyspa-activity-log-v1';
 
 const seedEntries: ActivityLogEntry[] = [
   {
     id: 'log-seed-1',
     time: new Date(2026, 7, 13, 9, 12).toISOString(),
-    adminName: 'Admin Amy',
+    adminName: 'Front Desk',
     action: 'Reassigned CL',
     details: 'Moved Puan Nadia Ismail’s Pakej Mawar booking to Siti Rahayu',
   },
   {
     id: 'log-seed-2',
     time: new Date(2026, 7, 13, 8, 40).toISOString(),
-    adminName: 'Admin Akma',
+    adminName: 'Spa Manager',
     action: 'Updated client address',
     details: 'Puan Elina Zulkifli changed to Setia Alam, Selangor',
   },
   {
     id: 'log-seed-3',
     time: new Date(2026, 7, 12, 17, 5).toISOString(),
-    adminName: 'Admin Amy',
+    adminName: 'Front Desk',
     action: 'Flagged CL profile',
     details: 'Husna Nadia marked as complained — late arrival',
   },

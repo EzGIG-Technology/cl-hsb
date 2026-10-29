@@ -9,7 +9,7 @@ import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { TODAY, toDateStr, formatTime12 } from '../lib/date';
-import type { Assignment, ConfinementLady } from '../types';
+import type { Assignment, Therapist } from '../types';
 
 const DAY_START_MIN = 7 * 60;
 const DAY_END_MIN = 20 * 60;
@@ -32,9 +32,9 @@ function mondayOf(date: Date) {
 type ScheduleCategory = 'assigned' | 'active' | 'upcoming' | 'completed' | 'cancelled' | 'unassigned';
 
 const legend: { label: string; category: ScheduleCategory; color: string; swatch: string }[] = [
-  { label: 'Assigned', category: 'assigned', color: '#3c6f57', swatch: 'bg-brand-green-light border-brand-green/40' },
-  { label: 'Active today', category: 'active', color: '#d94f8c', swatch: 'bg-brand-pink-light border-brand-pink/40' },
-  { label: 'Upcoming (pending)', category: 'upcoming', color: '#c98a3b', swatch: 'bg-brand-amber-light border-brand-amber/50' },
+  { label: 'Assigned', category: 'assigned', color: '#6f76b0', swatch: 'bg-brand-lavender-light border-brand-lavender/40' },
+  { label: 'Active today', category: 'active', color: '#c42474', swatch: 'bg-brand-pink-light border-brand-pink/40' },
+  { label: 'Upcoming (pending)', category: 'upcoming', color: '#d9921f', swatch: 'bg-brand-amber-light border-brand-amber/50' },
   { label: 'Completed', category: 'completed', color: '#2563eb', swatch: 'bg-blue-50 border-blue-300' },
   { label: 'Cancelled', category: 'cancelled', color: '#ef4444', swatch: 'bg-red-50 border-red-300' },
   { label: 'Unassigned', category: 'unassigned', color: '#ea580c', swatch: 'bg-orange-50 border-orange-300' },
@@ -53,7 +53,7 @@ function blockStyle(a: Assignment, isToday: boolean) {
   if (a.status === 'completed') return 'bg-blue-50 border-blue-300';
   if (a.status === 'pending') return 'bg-brand-amber-light border-brand-amber/50';
   if (isToday) return 'bg-brand-pink-light border-brand-pink/50';
-  return 'bg-brand-green-light border-brand-green/40';
+  return 'bg-brand-lavender-light border-brand-lavender/40';
 }
 
 export default function SchedulePage() {
@@ -103,7 +103,7 @@ export default function SchedulePage() {
     });
     setPickerFor(null);
     const cl = clById(clId);
-    logAction('Admin Amy', 'Assigned CL', `${cl?.name ?? clId} → ${client.name}`);
+    logAction('Front Desk', 'Assigned CL', `${cl?.name ?? clId} → ${client.name}`);
   }
 
   function reassignCL(assignmentId: string, newClId: string) {
@@ -111,14 +111,14 @@ export default function SchedulePage() {
     const oldCl = a ? clById(a.clId) : undefined;
     const newCl = clById(newClId);
     storeReassign(assignmentId, newClId);
-    logAction('Admin Amy', 'Reassigned CL', `${oldCl?.name ?? 'Unknown'} → ${newCl?.name ?? newClId}`);
+    logAction('Front Desk', 'Reassigned CL', `${oldCl?.name ?? 'Unknown'} → ${newCl?.name ?? newClId}`);
   }
 
   function rescheduleAssignment(assignmentId: string, date: string, startTime: string, endTime: string) {
     const a = allAssignments.find((x) => x.id === assignmentId);
     const client = a ? clientById(a.clientId) : undefined;
     storeReschedule(assignmentId, date, startTime, endTime);
-    logAction('Admin Amy', 'Rescheduled booking', `${client?.name ?? 'Client'} → ${date} ${startTime}-${endTime}`);
+    logAction('Front Desk', 'Rescheduled booking', `${client?.name ?? 'Client'} → ${date} ${startTime}-${endTime}`);
   }
 
   return (
@@ -126,7 +126,7 @@ export default function SchedulePage() {
       title="Schedule & Roster"
       subtitle="Plan CL assignments, availability, and replacements."
       icon={CalendarDays}
-      accentColor="#d94f8c"
+      accentColor="#c42474"
       searchPlaceholder="Search CL or client"
     >
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -317,7 +317,7 @@ export default function SchedulePage() {
                         <p className="text-xs text-brand-muted">{pkg?.shortName}</p>
                       </div>
                       <Badge status={client.status === 'upcoming' ? 'urgent' : 'upcoming'}>
-                        {client.dueOrBirthDate <= toDateStr(TODAY) ? 'Urgent' : 'Upcoming'}
+                        {client.preferredDate <= toDateStr(TODAY) ? 'Urgent' : 'Upcoming'}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-brand-muted">{client.location}</p>
@@ -352,7 +352,7 @@ export default function SchedulePage() {
         </div>
 
         <div>
-          <Card className="border-l-4 !border-l-brand-green">
+          <Card className="border-l-4 !border-l-brand-lavender">
             <SectionTitle>Available now</SectionTitle>
             <p className="mb-3 -mt-2 text-xs text-brand-muted">CLs without conflicts this week</p>
             <div className="space-y-3">
@@ -386,7 +386,7 @@ function SelectedDetail({
 }: {
   assignment: Assignment;
   onClose: () => void;
-  availableCLs: ConfinementLady[];
+  availableCLs: Therapist[];
   onReassign: (newClId: string) => void;
   onReschedule: (date: string, startTime: string, endTime: string) => void;
 }) {

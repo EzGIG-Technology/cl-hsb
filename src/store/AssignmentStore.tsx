@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { assignments as seedAssignments, unassignedClientIds as seedUnassigned } from '../data/assignments';
 import type { Assignment, AssignmentStatus, ApprovalStatus, PaymentStatus } from '../types';
 
-const STORAGE_KEY = 'nrmc-assignments-v1';
-const UNASSIGNED_KEY = 'nrmc-unassigned-v1';
+const STORAGE_KEY = 'honeyspa-assignments-v1';
+const UNASSIGNED_KEY = 'honeyspa-unassigned-v1';
 
 function loadAssignments(): Assignment[] {
   if (typeof window !== 'undefined') {

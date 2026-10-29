@@ -11,9 +11,12 @@ function defaultPackageAvailability(): PackageLocationSlot[] {
 interface CompanyProfile {
   name: string;
   tagline: string;
-  adminAkmaPhone: string;
-  adminAmyPhone: string;
+  phone: string;
+  whatsapp: string;
   address: string;
+  hours: string;
+  instagram: string;
+  facebook: string;
   email: string;
   logoDataUrl?: string;
 }
@@ -37,9 +40,9 @@ interface SettingsState {
 interface SettingsContextValue extends SettingsState {
   packageById: (id: string) => Package | undefined;
   updatePackage: (id: string, patch: Partial<Package>) => void;
-  updateTier: (pkgId: string, days: number, price: number) => void;
+  updateTier: (pkgId: string, minutes: number, price: number) => void;
   addTier: (pkgId: string) => void;
-  removeTier: (pkgId: string, days: number) => void;
+  removeTier: (pkgId: string, minutes: number) => void;
   addPackage: () => void;
   deletePackage: (id: string) => void;
   updateCompany: (patch: Partial<CompanyProfile>) => void;
@@ -52,23 +55,28 @@ interface SettingsContextValue extends SettingsState {
   resetToDefaults: () => void;
 }
 
-const STORAGE_KEY = 'nrmc-settings-v1';
+const STORAGE_KEY = 'honeyspa-settings-v1';
 
+// Public listing details for Honey Spa Bangi, gathered from its social profiles and directory
+// listings (see docs/honey-spa-audit.md). The email address is a placeholder: none is published.
 const defaultCompany: CompanyProfile = {
-  name: 'NR Mothercare Confinement',
-  tagline: 'Sentuhan Tradisional Untuk Para Ibu',
-  adminAkmaPhone: '010-249 7650',
-  adminAmyPhone: '010-229 7650',
-  address: 'Selangor & Kuala Lumpur, Malaysia',
-  email: 'hello@nrmothercare.my',
+  name: 'Honey Spa Bangi',
+  tagline: 'Relax | Rejuvenate | Rejoice',
+  phone: '012-244 5415',
+  whatsapp: '012-244 5415',
+  address: '7-53-3, Jalan Medan Pusat Bandar 8A, Seksyen 9, Bangi Sentral, 43650 Bandar Baru Bangi, Selangor',
+  hours: 'Daily, 10.30am – 7.30pm',
+  instagram: '@honeyspabangi',
+  facebook: 'facebook.com/honeyspabangi',
+  email: 'hello@honeyspabangi.my',
 };
 
 export const ADMIN_ROLES = ['Admin', 'Finance', 'Operations'] as const;
 
 const defaultAdmins: AdminUser[] = [
-  { id: 'admin-akma', name: 'Admin Akma', role: 'Admin', phone: '010-249 7650', email: 'akma@nrmothercare.my' },
-  { id: 'admin-amy', name: 'Admin Amy', role: 'Operations', phone: '010-229 7650', email: 'amy@nrmothercare.my' },
-  { id: 'admin-finance', name: 'Finance Team', role: 'Finance', phone: '010-339 7650', email: 'finance@nrmothercare.my' },
+  { id: 'admin-manager', name: 'Spa Manager', role: 'Admin', phone: '012-244 5415', email: 'manager@honeyspabangi.my' },
+  { id: 'admin-frontdesk', name: 'Front Desk', role: 'Operations', phone: '012-244 5415', email: 'frontdesk@honeyspabangi.my' },
+  { id: 'admin-finance', name: 'Finance', role: 'Finance', phone: '012-244 5415', email: 'finance@honeyspabangi.my' },
 ];
 
 function loadInitial(): SettingsState {
@@ -111,11 +119,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       packageById: (id) => state.packages.find((p) => p.id === id),
       updatePackage: (id, patch) =>
         setState((s) => ({ ...s, packages: s.packages.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
-      updateTier: (pkgId, days, price) =>
+      updateTier: (pkgId, minutes, price) =>
         setState((s) => ({
           ...s,
           packages: s.packages.map((p) =>
-            p.id === pkgId ? { ...p, tiers: p.tiers.map((t) => (t.days === days ? { ...t, price } : t)) } : p,
+            p.id === pkgId ? { ...p, tiers: p.tiers.map((t) => (t.minutes === minutes ? { ...t, price } : t)) } : p,
           ),
         })),
       addTier: (pkgId) =>
@@ -124,34 +132,31 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           packages: s.packages.map((p) => {
             if (p.id !== pkgId) return p;
             const last = p.tiers[p.tiers.length - 1];
-            const newTier: PackageTier = { days: (last?.days ?? 0) + 7, price: (last?.price ?? 0) + 500 };
+            const newTier: PackageTier = { minutes: (last?.minutes ?? 0) + 30, price: (last?.price ?? 0) + 40 };
             return { ...p, tiers: [...p.tiers, newTier] };
           }),
         })),
-      removeTier: (pkgId, days) =>
+      removeTier: (pkgId, minutes) =>
         setState((s) => ({
           ...s,
-          packages: s.packages.map((p) => (p.id === pkgId ? { ...p, tiers: p.tiers.filter((t) => t.days !== days) } : p)),
+          packages: s.packages.map((p) => (p.id === pkgId ? { ...p, tiers: p.tiers.filter((t) => t.minutes !== minutes) } : p)),
         })),
       addPackage: () =>
         setState((s) => {
           const id = `custom-${Date.now()}`;
           const newPkg: Package = {
             id,
-            name: 'New Package',
+            name: 'New Treatment',
             shortName: 'New',
-            category: 'postnatal',
+            category: 'massage',
             theme: 'pink',
-            durationEstimate: '3 jam',
-            summary: 'Describe this package…',
-            dailyMotherCare: [],
-            scheduledMotherCare: [],
-            babyCare: [],
+            durationEstimate: '60 min',
+            summary: 'Describe this treatment…',
+            treatmentSteps: [],
             extras: [],
             notes: [],
-            tiers: [{ days: 7, price: 1000 }],
-            transportIncluded: true,
-            bookingDepositPct: 30,
+            tiers: [{ minutes: 60, price: 80 }],
+            bookingDepositPct: 0,
           };
           return { ...s, packages: [...s.packages, newPkg] };
         }),

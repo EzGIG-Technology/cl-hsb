@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const STORAGE_KEY = 'nrmc-avatars-v1';
+const STORAGE_KEY = 'honeyspa-avatars-v1';
 
 function loadAll(): Record<string, string> {
   if (typeof window === 'undefined') return {};

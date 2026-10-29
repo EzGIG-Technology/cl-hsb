@@ -81,7 +81,7 @@ function CompanySettings() {
     const reader = new FileReader();
     reader.onload = () => {
       updateCompany({ logoDataUrl: reader.result as string });
-      logAction('Admin Amy', 'Updated company logo', file.name);
+      logAction('Front Desk', 'Updated company logo', file.name);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -111,7 +111,7 @@ function CompanySettings() {
               <button
                 onClick={() => {
                   updateCompany({ logoDataUrl: undefined });
-                  logAction('Admin Amy', 'Removed company logo');
+                  logAction('Front Desk', 'Removed company logo');
                 }}
                 className="rounded-full border border-black/10 px-3 py-1.5 text-xs text-brand-ink hover:bg-brand-cream"
               >
@@ -132,12 +132,24 @@ function CompanySettings() {
           <input className={inputClass} value={company.tagline} onChange={(e) => updateCompany({ tagline: e.target.value })} />
         </div>
         <div>
-          <label className={labelClass}>Admin Akma — phone</label>
-          <input className={inputClass} value={company.adminAkmaPhone} onChange={(e) => updateCompany({ adminAkmaPhone: e.target.value })} />
+          <label className={labelClass}>Phone</label>
+          <input className={inputClass} value={company.phone} onChange={(e) => updateCompany({ phone: e.target.value })} />
         </div>
         <div>
-          <label className={labelClass}>Admin Amy — phone</label>
-          <input className={inputClass} value={company.adminAmyPhone} onChange={(e) => updateCompany({ adminAmyPhone: e.target.value })} />
+          <label className={labelClass}>WhatsApp bookings</label>
+          <input className={inputClass} value={company.whatsapp} onChange={(e) => updateCompany({ whatsapp: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Opening hours</label>
+          <input className={inputClass} value={company.hours} onChange={(e) => updateCompany({ hours: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Instagram</label>
+          <input className={inputClass} value={company.instagram} onChange={(e) => updateCompany({ instagram: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Facebook</label>
+          <input className={inputClass} value={company.facebook} onChange={(e) => updateCompany({ facebook: e.target.value })} />
         </div>
         <div>
           <label className={labelClass}>Email</label>
@@ -163,7 +175,7 @@ function TeamSettings() {
         <button
           onClick={() => {
             addAdmin();
-            logAction('Admin Amy', 'Added a new admin user');
+            logAction('Front Desk', 'Added a new admin user');
           }}
           className="flex items-center gap-1.5 rounded-full bg-brand-pink px-3 py-1.5 text-sm text-white hover:bg-brand-pink-dark"
         >
@@ -216,7 +228,7 @@ function TeamSettings() {
                 <button
                   onClick={() => {
                     removeAdmin(admin.id);
-                    logAction('Admin Amy', 'Removed admin user', admin.name);
+                    logAction('Front Desk', 'Removed admin user', admin.name);
                   }}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50"
                 >

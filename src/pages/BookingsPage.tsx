@@ -10,7 +10,7 @@ import { useCLStore } from '../store/CLStore';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatDateLabel, formatTime12, TODAY, toDateStr } from '../lib/date';
-import type { Client, Package, ConfinementLady } from '../types';
+import type { Client, Package, Therapist } from '../types';
 
 type Tab = 'unassigned' | 'active' | 'completed' | 'cancelled';
 
@@ -47,7 +47,7 @@ export default function BookingsPage() {
       title="Bookings & Assignment"
       subtitle="Manage every booking from request to payroll."
       icon={ClipboardList}
-      accentColor="#d94f8c"
+      accentColor="#c42474"
       headerAction={
         <button
           onClick={() => setWizardOpen(true)}
@@ -106,7 +106,7 @@ export default function BookingsPage() {
                     </td>
                     <td className="px-5 py-3 text-brand-muted">{packageById(c.packageIds[0])?.shortName}</td>
                     <td className="px-5 py-3 text-brand-muted">{c.location}</td>
-                    <td className="px-5 py-3 text-brand-muted">{formatDateLabel(c.dueOrBirthDate)}</td>
+                    <td className="px-5 py-3 text-brand-muted">{formatDateLabel(c.preferredDate)}</td>
                     <td className="px-5 py-3 text-right">
                       <button onClick={() => setWizardOpen(true)} className="text-xs font-medium text-brand-pink hover:underline">
                         Assign
@@ -188,7 +188,7 @@ export default function BookingsPage() {
   );
 }
 
-function specialtyMatchBonus(cl: ConfinementLady, pkg: Package | null): number {
+function specialtyMatchBonus(cl: Therapist, pkg: Package | null): number {
   if (!pkg) return 0;
   const pkgText = `${pkg.name} ${pkg.summary} ${pkg.category}`.toLowerCase();
   const overlaps = cl.specialties.some((s) =>
@@ -214,14 +214,14 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [newCustomerLocation, setNewCustomerLocation] = useState('');
   const [packageId, setPackageId] = useState<string | null>(null);
-  const [tierDays, setTierDays] = useState<number | null>(null);
+  const [tierMinutes, setTierMinutes] = useState<number | null>(null);
   const [clId, setClId] = useState<string | null>(null);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
   const [confirmedCustomer, setConfirmedCustomer] = useState<Client | null>(null);
 
   const selectedPackage = packages.find((p) => p.id === packageId) ?? null;
-  const selectedTier = selectedPackage?.tiers.find((t) => t.days === tierDays) ?? null;
-  const quoted = selectedTier?.price ?? selectedPackage?.sessionPrice?.perSession ?? 0;
+  const selectedTier = selectedPackage?.tiers.find((t) => t.minutes === tierMinutes) ?? null;
+  const quoted = selectedTier?.price ?? 0;
   const customer = customerId ? clients.find((c) => c.id === customerId) : null;
   const customerLocation = customer?.location ?? newCustomerLocation;
   const bookingDate = toDateStr(TODAY);
@@ -261,7 +261,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
       endTime: '13:00',
       location: finalCustomer.location,
     });
-    logAction('Admin Amy', 'Created new booking', `#${booking.id.toUpperCase()} — ${finalCustomer.name}`);
+    logAction('Front Desk', 'Created new booking', `#${booking.id.toUpperCase()} — ${finalCustomer.name}`);
     setConfirmedCustomer(finalCustomer);
     setConfirmedBookingId(booking.id);
   }
@@ -282,7 +282,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
         <div className="max-h-[60vh] overflow-y-auto p-5">
           {confirmedBookingId ? (
             <div className="flex flex-col items-center py-6 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-green-light text-brand-green">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-lavender-light text-brand-lavender">
                 <Check size={28} />
               </div>
               <p className="mt-3 text-lg font-semibold text-brand-ink">Booking confirmed</p>
@@ -346,7 +346,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                         key={p.id}
                         onClick={() => {
                           setPackageId(p.id);
-                          setTierDays(p.tiers[0]?.days ?? null);
+                          setTierMinutes(p.tiers[0]?.minutes ?? null);
                         }}
                         className={`flex items-center gap-2 rounded-lg border p-2.5 text-left text-sm ${
                           packageId === p.id ? 'border-brand-pink bg-brand-pink-light text-brand-pink-dark' : 'border-black/10 hover:bg-brand-cream'
@@ -363,13 +363,13 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                       <div className="flex flex-wrap gap-1.5">
                         {selectedPackage.tiers.map((t) => (
                           <button
-                            key={t.days}
-                            onClick={() => setTierDays(t.days)}
+                            key={t.minutes}
+                            onClick={() => setTierMinutes(t.minutes)}
                             className={`rounded-full border px-3 py-1 text-xs ${
-                              tierDays === t.days ? 'border-brand-pink bg-brand-pink text-white' : 'border-black/10 text-brand-ink hover:bg-brand-cream'
+                              tierMinutes === t.minutes ? 'border-brand-pink bg-brand-pink text-white' : 'border-black/10 text-brand-ink hover:bg-brand-cream'
                             }`}
                           >
-                            {t.days} Hari / {formatRM(t.price)}
+                            {t.minutes} min · {formatRM(t.price)}
                           </button>
                         ))}
                       </div>
@@ -397,7 +397,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                             <div className="flex items-center gap-2">
                               <p className="truncate text-sm font-medium text-brand-ink">{c.name}</p>
                               {i === 0 && (
-                                <span className="flex items-center gap-0.5 rounded-full bg-brand-green-light px-2 py-0.5 text-[10px] font-semibold text-brand-green">
+                                <span className="flex items-center gap-0.5 rounded-full bg-brand-lavender-light px-2 py-0.5 text-[10px] font-semibold text-brand-lavender">
                                   <Sparkles size={10} /> Best Match
                                 </span>
                               )}
@@ -427,7 +427,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                     <div className="flex justify-between">
                       <span className="text-brand-muted">Package</span>
                       <span className="text-brand-ink">
-                        {selectedPackage?.shortName} — {tierDays} Hari
+                        {selectedPackage?.shortName} — {tierMinutes} Hari
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -464,7 +464,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                   onClick={() => setStep((s) => s + 1)}
                   disabled={
                     (step === 1 && !customerId && !(newCustomerName.trim() && newCustomerPhone.trim() && newCustomerLocation.trim())) ||
-                    (step === 2 && (!packageId || !tierDays)) ||
+                    (step === 2 && (!packageId || !tierMinutes)) ||
                     (step === 3 && !clId)
                   }
                   className="flex items-center gap-1 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white disabled:opacity-30"

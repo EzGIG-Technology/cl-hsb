@@ -19,7 +19,7 @@ export default function PackageDetailPage() {
   const { logAction } = useActivityLog();
 
   const pkg = packages.find((p) => p.id === id);
-  const [dailyText, setDailyText] = useState(pkg?.dailyMotherCare.join('\n') ?? '');
+  const [dailyText, setDailyText] = useState(pkg?.treatmentSteps.join('\n') ?? '');
   const [extrasText, setExtrasText] = useState(pkg?.extras.join('\n') ?? '');
 
   if (!pkg) {
@@ -95,15 +95,15 @@ export default function PackageDetailPage() {
               ) : (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {pkg.tiers.map((tier) => (
-                    <div key={tier.days} className="flex items-center gap-1 rounded-lg border border-black/10 px-2 py-1.5">
-                      <span className="text-xs text-brand-muted">{tier.days}d</span>
+                    <div key={tier.minutes} className="flex items-center gap-1 rounded-lg border border-black/10 px-2 py-1.5">
+                      <span className="text-xs text-brand-muted">{tier.minutes} min</span>
                       <input
                         type="number"
                         value={tier.price}
-                        onChange={(e) => updateTier(pkg.id, tier.days, Number(e.target.value))}
+                        onChange={(e) => updateTier(pkg.id, tier.minutes, Number(e.target.value))}
                         className="w-full min-w-0 flex-1 text-sm focus:outline-none"
                       />
-                      <button onClick={() => removeTier(pkg.id, tier.days)} className="text-brand-muted hover:text-red-500">
+                      <button onClick={() => removeTier(pkg.id, tier.minutes)} className="text-brand-muted hover:text-red-500">
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -120,7 +120,7 @@ export default function PackageDetailPage() {
                   rows={4}
                   value={dailyText}
                   onChange={(e) => setDailyText(e.target.value)}
-                  onBlur={() => updatePackage(pkg.id, { dailyMotherCare: dailyText.split('\n').map((s) => s.trim()).filter(Boolean) })}
+                  onBlur={() => updatePackage(pkg.id, { treatmentSteps: dailyText.split('\n').map((s) => s.trim()).filter(Boolean) })}
                 />
               </div>
               <div>
@@ -139,7 +139,7 @@ export default function PackageDetailPage() {
               <button
                 onClick={() => {
                   deletePackage(pkg.id);
-                  logAction('Admin Amy', 'Deleted package', pkg.name);
+                  logAction('Front Desk', 'Deleted package', pkg.name);
                   navigate('/packages');
                 }}
                 className="flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
@@ -166,7 +166,7 @@ export default function PackageDetailPage() {
                     value={slot.cadence}
                     onChange={(e) => {
                       updatePackageSlot(pkg.id, slot.location, { cadence: e.target.value as SlotCadence });
-                      logAction('Admin Amy', 'Updated package availability cadence', `${pkg.shortName} @ ${slot.location} → ${e.target.value}`);
+                      logAction('Front Desk', 'Updated package availability cadence', `${pkg.shortName} @ ${slot.location} → ${e.target.value}`);
                     }}
                     className="w-1/2 rounded-md border border-black/10 px-2 py-1.5 text-xs text-brand-ink"
                   >
@@ -180,7 +180,7 @@ export default function PackageDetailPage() {
                     type="number"
                     value={slot.slots}
                     onChange={(e) => updatePackageSlot(pkg.id, slot.location, { slots: Number(e.target.value) })}
-                    onBlur={() => logAction('Admin Amy', 'Updated package slot cap', `${pkg.shortName} @ ${slot.location} → ${slot.slots} slots`)}
+                    onBlur={() => logAction('Front Desk', 'Updated package slot cap', `${pkg.shortName} @ ${slot.location} → ${slot.slots} slots`)}
                     className="w-1/2 rounded-md border border-black/10 px-2 py-1.5 text-xs text-brand-ink"
                   />
                 </div>

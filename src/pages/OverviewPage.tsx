@@ -45,7 +45,7 @@ const activityFilters: { id: 'all' | ActivityCategory; label: string }[] = [
 
 function classifyActivity(action: string): { category: ActivityCategory; icon: typeof Activity; color: string } {
   if (/booking|reassign|reschedul|approved|rejected/i.test(action)) return { category: 'booking', icon: ClipboardCheck, color: 'bg-brand-pink-light text-brand-pink' };
-  if (/cl flag|cl status|passport|treatment|caregiver/i.test(action)) return { category: 'cl', icon: Users, color: 'bg-brand-green-light text-brand-green' };
+  if (/cl flag|cl status|passport|treatment|caregiver/i.test(action)) return { category: 'cl', icon: Users, color: 'bg-brand-lavender-light text-brand-lavender' };
   if (/client|address|package/i.test(action)) return { category: 'client', icon: Contact, color: 'bg-blue-100 text-blue-700' };
   if (/paid|payroll|report/i.test(action)) return { category: 'payroll', icon: Wallet, color: 'bg-brand-amber-light text-brand-amber' };
   return { category: 'other', icon: Activity, color: 'bg-gray-100 text-gray-600' };
@@ -90,8 +90,7 @@ export default function OverviewPage() {
         .filter((a) => a.status === 'confirmed' || a.status === 'completed')
         .reduce((sum, a) => {
           const pkg = packageById(a.packageId);
-          const tier = pkg?.tiers[0];
-          return sum + (tier?.price ?? pkg?.sessionPrice?.perSession ?? 0) / (pkg?.tiers.length || 1);
+          return sum + (pkg?.tiers[0]?.price ?? 0);
         }, 0),
     [packageById],
   );
@@ -181,7 +180,7 @@ export default function OverviewPage() {
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Total Bookings — Aug 2026</p>
           <p className="mt-1 text-3xl font-semibold text-brand-ink">{thisMonthAssignments.length}</p>
-          <p className="text-xs text-brand-green">{completionRate}% completion rate</p>
+          <p className="text-xs text-brand-lavender">{completionRate}% completion rate</p>
         </Card>
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Completed — Aug 2026</p>
@@ -237,10 +236,10 @@ export default function OverviewPage() {
           total={todaysAssignments.length}
           totalLabel="total sessions"
           segments={[
-            { label: 'Assigned CLs', count: dailyAssigned, color: '#3c6f57' },
-            { label: 'Unassigned', count: unassignedForEngagement.length, color: '#c98a3b', arc: false },
+            { label: 'Assigned CLs', count: dailyAssigned, color: '#6f76b0' },
+            { label: 'Unassigned', count: unassignedForEngagement.length, color: '#d9921f', arc: false },
             { label: 'Cancelled', count: dailyCancelled_, color: '#ef4444' },
-            { label: 'Rescheduled', count: dailyRescheduled, color: '#d94f8c' },
+            { label: 'Rescheduled', count: dailyRescheduled, color: '#c42474' },
           ]}
         />
         <EngagementDonut
@@ -249,10 +248,10 @@ export default function OverviewPage() {
           total={weekAssignments.length}
           totalLabel="total sessions"
           segments={[
-            { label: 'Assigned CLs', count: weeklyAssigned, color: '#3c6f57' },
-            { label: 'Unassigned', count: unassignedForEngagement.length, color: '#c98a3b', arc: false },
+            { label: 'Assigned CLs', count: weeklyAssigned, color: '#6f76b0' },
+            { label: 'Unassigned', count: unassignedForEngagement.length, color: '#d9921f', arc: false },
             { label: 'Cancelled', count: weeklyCancelled, color: '#ef4444' },
-            { label: 'Rescheduled', count: weeklyRescheduled, color: '#d94f8c' },
+            { label: 'Rescheduled', count: weeklyRescheduled, color: '#c42474' },
           ]}
         />
       </div>
@@ -293,8 +292,8 @@ export default function OverviewPage() {
           <div className="border-b border-black/5 p-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-brand-ink">Live Activity Stream</h3>
-              <span className="flex items-center gap-1.5 text-xs text-brand-green">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-green" /> Updating
+              <span className="flex items-center gap-1.5 text-xs text-brand-lavender">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-lavender" /> Updating
               </span>
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -352,11 +351,11 @@ export default function OverviewPage() {
           <SectionTitle>Bookings — Month on Month</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData}>
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8b7d87', fontSize: 12 }} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="completed" name="Completed" fill="#3c6f57" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="cancelled" name="Cancelled" fill="#d94f8c" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="completed" name="Completed" fill="#6f76b0" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="cancelled" name="Cancelled" fill="#c42474" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

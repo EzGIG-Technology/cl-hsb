@@ -1,7 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#f3d3e0" stroke-width="1.5" />
-  <path d="M62 22c9 4 15 13 15 24 0 12-8 21-18 25l3 8-10-5c-12-1-21-11-21-24 0-14 11-25 25-25 2 0 4 .3 6 1z" fill="#4f8a6d" />
-  <circle cx="60" cy="66" r="9" fill="#ffffff" />
-  <path d="M52 70c2-4 6-6 9-6 4 0 8 3 9 7-3 3-6 5-9 5s-7-2-9-6z" fill="#4f8a6d" />
-  <text x="50" y="52" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="26" fill="#d94f8c">NR</text>
+  <g transform="translate(46 58)">
+    <path d="M0 -5 C 15 -13, 19 -30, 0 -42 C -19 -30, -15 -13, 0 -5 Z" fill="#7d84bd"/>
+    <path d="M0 -5 C 15 -13, 19 -30, 0 -42 C -19 -30, -15 -13, 0 -5 Z" fill="#959cce" transform="rotate(72)"/>
+    <path d="M0 -5 C 15 -13, 19 -30, 0 -42 C -19 -30, -15 -13, 0 -5 Z" fill="#7d84bd" transform="rotate(144)"/>
+    <path d="M0 -5 C 15 -13, 19 -30, 0 -42 C -19 -30, -15 -13, 0 -5 Z" fill="#959cce" transform="rotate(216)"/>
+    <path d="M0 -5 C 15 -13, 19 -30, 0 -42 C -19 -30, -15 -13, 0 -5 Z" fill="#7d84bd" transform="rotate(288)"/>
+    <circle r="5" fill="#5f66a3"/>
+    <circle r="2.2" fill="#c5c9ea"/>
+  </g>
+  <g transform="translate(76 22) rotate(-18)">
+    <ellipse cx="-3" cy="-9" rx="6" ry="4.5" fill="#c9ccd6"/>
+    <ellipse cx="5" cy="-10" rx="6" ry="4.5" fill="#dcdfe6"/>
+    <ellipse cx="0" cy="0" rx="11" ry="8" fill="#f2a92c"/>
+    <clipPath id="b"><ellipse rx="11" ry="8"/></clipPath>
+    <g clip-path="url(#b)" fill="#1f1a24"><rect x="-5.5" y="-9" width="3.2" height="18"/><rect x="1.5" y="-9" width="3.2" height="18"/></g>
+    <circle cx="-9.5" cy="0" r="4.5" fill="#1f1a24"/>
+  </g>
 </svg>
