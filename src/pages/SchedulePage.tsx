@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, Users, Palmtree, AlertTriangle, X, Repeat, CalendarCog, Filter, CalendarDays } from 'lucide-react';
+import { X, Repeat, CalendarCog, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { MiniCalendar } from '../components/MiniCalendar';
-import { Card, StatCard, Badge, Avatar, SectionTitle } from '../components/ui';
+import { Card, Badge, Avatar, SectionTitle } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
 import { useClientStore } from '../store/ClientStore';
 import { useSettings } from '../store/SettingsContext';
@@ -56,7 +56,7 @@ function addMinutes(time: string, minutes: number) {
 }
 
 export default function SchedulePage() {
-  const { cls: confinementLadies, clById } = useCLStore();
+  const { cls: therapists, clById } = useCLStore();
   const { packageById } = useSettings();
   const { clientById } = useClientStore();
   const { logAction } = useActivityLog();
@@ -82,35 +82,38 @@ export default function SchedulePage() {
         ? []
         : weekAssignments.filter((a) => categoryOf(a, a.date === todayStr) === categoryFilter);
   const scheduledCount = weekAssignments.filter((a) => a.status !== 'cancelled').length;
-  const availableCLs = confinementLadies.filter((c) => c.status === 'available');
-  const onLeave = confinementLadies.filter((c) => c.status === 'on-leave');
+  const availableTherapists = therapists.filter((c) => c.status === 'available');
+  const onLeave = therapists.filter((c) => c.status === 'on-leave');
   const conflicts = weekAssignments.filter((a) => a.status === 'cancelled' || a.urgent).length;
 
   const hours = Array.from({ length: (DAY_END_MIN - DAY_START_MIN) / 60 + 1 }, (_, i) => DAY_START_MIN / 60 + i);
 
-  function assignCL(clientId: string, clId: string) {
+  function assignTherapist(clientId: string, clId: string) {
     const client = clientById(clientId);
     if (!client) return;
+    const packageId = client.packageIds[0];
+    // First slot after the spa opens (10.30am), as long as the client's chosen session.
+    const minutes = client.packageMinutes?.[packageId] ?? packageById(packageId)?.tiers[0]?.minutes ?? 60;
     addBooking({
       clientId,
       clId,
-      packageId: client.packageIds[0],
+      packageId,
       date: toDateStr(TODAY),
-      startTime: '09:00',
-      endTime: '13:00',
+      startTime: '10:30',
+      endTime: addMinutes('10:30', minutes),
       location: client.location,
     });
     setPickerFor(null);
-    const cl = clById(clId);
-    logAction('Front Desk', 'Assigned CL', `${cl?.name ?? clId} → ${client.name}`);
+    const therapist = clById(clId);
+    logAction('Front Desk', 'Assigned therapist', `${therapist?.name ?? clId} → ${client.name}`);
   }
 
-  function reassignCL(assignmentId: string, newClId: string) {
+  function reassignTherapist(assignmentId: string, newClId: string) {
     const a = allAssignments.find((x) => x.id === assignmentId);
-    const oldCl = a ? clById(a.clId) : undefined;
-    const newCl = clById(newClId);
+    const oldTherapist = a ? clById(a.clId) : undefined;
+    const newTherapist = clById(newClId);
     storeReassign(assignmentId, newClId);
-    logAction('Front Desk', 'Reassigned CL', `${oldCl?.name ?? 'Unknown'} → ${newCl?.name ?? newClId}`);
+    logAction('Front Desk', 'Reassigned therapist', `${oldTherapist?.name ?? 'Unknown'} → ${newTherapist?.name ?? newClId}`);
   }
 
   function rescheduleAssignment(assignmentId: string, date: string, startTime: string, endTime: string) {
@@ -120,65 +123,71 @@ export default function SchedulePage() {
     logAction('Front Desk', 'Rescheduled booking', `${client?.name ?? 'Client'} → ${date} ${startTime}-${endTime}`);
   }
 
+  const toggleCategory = (category: ScheduleCategory) => setCategoryFilter((f) => (f === category ? 'all' : category));
+
   return (
     <PageShell
-      title="Schedule & Roster"
-      subtitle="Plan CL assignments, availability, and replacements."
-      icon={CalendarDays}
-      accentColor="#c42474"
-      searchPlaceholder="Search CL or client"
+      title="Schedule & roster"
+      subtitle="Plan therapist sessions, availability and cover for the week."
+      searchPlaceholder="Search therapist or client"
     >
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Scheduled" value={scheduledCount} icon={<CalendarClock size={16} className="text-brand-pink" />} />
-        <StatCard label="Available CLs" value={availableCLs.length} icon={<Users size={16} className="text-blue-600" />} />
-        <StatCard label="On leave" value={onLeave.length} icon={<Palmtree size={16} className="text-brand-amber" />} />
-        <StatCard label="Conflicts" value={conflicts} icon={<AlertTriangle size={16} className="text-red-500" />} />
-      </div>
+      <Card className="p-6 sm:p-8">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4">
+          <Figure label="Sessions this week" value={scheduledCount} note="Not counting cancellations" />
+          <Figure label="Therapists available" value={availableTherapists.length} note="Free to take a booking" />
+          <Figure label="On leave" value={onLeave.length} note="Away this week" />
+          <Figure label="Conflicts" value={conflicts} note="Cancelled or marked urgent" warn={conflicts > 0} />
+        </div>
+      </Card>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-          <Filter size={13} /> Show only
+      <div className="mt-8 flex flex-wrap items-center gap-2">
+        <span className="mr-1 flex items-center gap-1.5 text-sm text-brand-muted">
+          <Filter size={14} /> Show only
         </span>
         <button
           onClick={() => setCategoryFilter('all')}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-            categoryFilter === 'all' ? 'bg-brand-pink text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
+            categoryFilter === 'all' ? 'bg-brand-ink text-white' : 'bg-white text-brand-ink hover:bg-brand-pink-light'
           }`}
         >
-          All categories
+          All
         </button>
-        {legend.map((l) => (
-          <button
-            key={l.category}
-            onClick={() => setCategoryFilter((f) => (f === l.category ? 'all' : l.category))}
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-              categoryFilter === l.category ? 'text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
-            }`}
-            style={categoryFilter === l.category ? { backgroundColor: l.color } : undefined}
-          >
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: categoryFilter === l.category ? 'white' : l.color }} />
-            {l.label}
-          </button>
-        ))}
+        {legend.map((l) => {
+          const active = categoryFilter === l.category;
+          return (
+            <button
+              key={l.category}
+              onClick={() => toggleCategory(l.category)}
+              aria-pressed={active}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
+                active ? 'text-white' : 'bg-white text-brand-ink hover:bg-brand-pink-light'
+              }`}
+              style={active ? { backgroundColor: l.color } : undefined}
+            >
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: active ? 'white' : l.color }} />
+              {l.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-6 xl:grid-cols-[280px_1fr]">
-        <div className="flex flex-col gap-5">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[300px_1fr]">
+        <div className="flex flex-col gap-6">
           <Card>
             <MiniCalendar selectedDate={weekStart} onSelect={(d) => setWeekStart(mondayOf(d))} />
           </Card>
           <Card>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-brand-muted">Legend</p>
-            <div className="space-y-2">
+            <h3 className="mb-3 text-base font-semibold text-brand-ink">Legend</h3>
+            <div className="space-y-1">
               {legend.map((l) => (
                 <button
                   key={l.label}
-                  onClick={() => setCategoryFilter((f) => (f === l.category ? 'all' : l.category))}
-                  className={`flex w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left text-sm transition-colors hover:bg-brand-cream ${
+                  onClick={() => toggleCategory(l.category)}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-brand-ink transition-colors hover:bg-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
                     categoryFilter === l.category ? 'bg-brand-cream font-medium' : ''
-                  } text-brand-ink`}
+                  }`}
                 >
-                  <span className={`h-3 w-3 shrink-0 rounded-full border ${l.swatch}`} style={{ backgroundColor: l.color + '33', borderColor: l.color }} />
+                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: l.color }} />
                   {l.label}
                 </button>
               ))}
@@ -188,187 +197,212 @@ export default function SchedulePage() {
             <SelectedDetail
               assignment={selectedAssignment}
               onClose={() => setSelectedId(null)}
-              availableCLs={availableCLs}
-              onReassign={(newClId) => reassignCL(selectedAssignment.id, newClId)}
+              availableTherapists={availableTherapists}
+              onReassign={(newClId) => reassignTherapist(selectedAssignment.id, newClId)}
               onReschedule={(date, start, end) => rescheduleAssignment(selectedAssignment.id, date, start, end)}
             />
           ) : (
-            <Card className="text-sm text-brand-muted">Click any assignment block to see full details here.</Card>
+            <Card className="text-sm text-brand-muted">Click any session on the calendar to see its details here.</Card>
           )}
         </div>
 
         <Card className="!p-0 overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/5 p-5">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setWeekStart(mondayOf(TODAY))}
-                className="rounded-full border border-black/10 px-3 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-cream"
+                className="rounded-full bg-brand-pink-light px-4 py-2 text-sm font-medium text-brand-pink transition-colors hover:bg-brand-pink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink"
               >
-                Today
+                This week
               </button>
               <button
                 onClick={() => setWeekStart(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() - 7))}
-                className="rounded-full border border-black/10 px-2.5 py-1.5 text-sm text-brand-ink hover:bg-brand-cream"
+                aria-label="Previous week"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-cream text-brand-ink transition-colors hover:bg-brand-pink-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink"
               >
-                ‹
+                <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() => setWeekStart(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7))}
-                className="rounded-full border border-black/10 px-2.5 py-1.5 text-sm text-brand-ink hover:bg-brand-cream"
+                aria-label="Next week"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-cream text-brand-ink transition-colors hover:bg-brand-pink-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink"
               >
-                ›
+                <ChevronRight size={16} />
               </button>
-              <span className="ml-2 text-base font-semibold text-brand-ink">
-                Week of {days[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} –{' '}
+              <span className="ml-2 text-lg font-semibold text-brand-ink">
+                {days[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} to{' '}
                 {days[6].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
               </span>
             </div>
-            <span className="text-xs text-brand-muted">
+            <span className="text-sm text-brand-muted">
               {categoryFilter === 'all' ? weekAssignments.length : visibleWeekAssignments.length} sessions this week
-              {categoryFilter !== 'all' && ` · filtered to ${legend.find((l) => l.category === categoryFilter)?.label}`}
+              {categoryFilter !== 'all' && ` · ${legend.find((l) => l.category === categoryFilter)?.label}`}
             </span>
           </div>
 
           {categoryFilter === 'unassigned' && (
-            <div className="flex items-center gap-2 border-b border-black/5 bg-orange-50 px-5 py-2.5 text-xs text-orange-700">
-              <Filter size={13} className="shrink-0" /> Unassigned bookings have no date/time yet, so they don't appear on the calendar — see
-              "Unassigned requests" below.
+            <div className="mx-5 mb-4 flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3 text-sm text-orange-800">
+              <Filter size={14} className="shrink-0" /> Unassigned requests have no date or time yet, so they are not on the calendar. See
+              &ldquo;Unassigned requests&rdquo; below.
             </div>
           )}
 
-          <div className="scrollbar-thin overflow-x-auto">
-            <div className="flex min-w-[900px]">
-              <div className="w-16 shrink-0 border-r border-black/5">
-                <div className="h-14 border-b border-black/5" />
-                {hours.map((h) => (
-                  <div key={h} style={{ height: HOUR_HEIGHT }} className="relative border-b border-black/5 text-right text-xs text-brand-muted">
-                    <span className="absolute -top-2 right-2">{h % 12 === 0 ? 12 : h % 12}{h >= 12 ? 'PM' : 'AM'}</span>
-                  </div>
-                ))}
+          <div className="scrollbar-thin overflow-x-auto px-3 pb-3">
+            <div className="flex min-w-[900px] gap-1.5">
+              <div className="w-14 shrink-0">
+                <div className="h-16" />
+                <div className="relative" style={{ height: GRID_HEIGHT }}>
+                  {hours.map((h) => (
+                    <span
+                      key={h}
+                      className="absolute right-2 -translate-y-1/2 text-xs text-brand-muted"
+                      style={{ top: (h - DAY_START_MIN / 60) * HOUR_HEIGHT }}
+                    >
+                      {h % 12 === 0 ? 12 : h % 12}
+                      {h >= 12 ? 'pm' : 'am'}
+                    </span>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex flex-1">
-                {days.map((day) => {
-                  const dateStr = toDateStr(day);
-                  const isToday = dateStr === toDateStr(TODAY);
-                  const dayAssignments = visibleWeekAssignments.filter((a) => a.date === dateStr);
-                  return (
-                    <div key={dateStr} className="min-w-[126px] flex-1 border-r border-black/5 last:border-r-0">
-                      <div className={`flex h-14 flex-col items-center justify-center border-b border-black/5 ${isToday ? 'bg-brand-pink-light' : ''}`}>
-                        <span className="text-[11px] uppercase tracking-wide text-brand-muted">{day.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                        <span className={`text-base font-semibold ${isToday ? 'text-brand-pink' : 'text-brand-ink'}`}>{day.getDate()}</span>
-                      </div>
-                      <div className="relative" style={{ height: GRID_HEIGHT }}>
-                        {hours.map((h) => (
-                          <div key={h} className="absolute left-0 right-0 border-b border-black/5" style={{ top: (h - DAY_START_MIN / 60) * HOUR_HEIGHT }} />
-                        ))}
-                        {dayAssignments.map((a) => {
-                          const cl = clById(a.clId);
-                          const client = clientById(a.clientId);
-                          const pkg = packageById(a.packageId);
-                          if (!cl || !client || !pkg) return null;
-                          const top = ((toMinutes(a.startTime) - DAY_START_MIN) / 60) * HOUR_HEIGHT;
-                          const height = Math.max(36, ((toMinutes(a.endTime) - toMinutes(a.startTime)) / 60) * HOUR_HEIGHT);
-                          return (
-                            <button
-                              key={a.id}
-                              onClick={() => setSelectedId(a.id)}
-                              className={`absolute left-1.5 right-1.5 overflow-hidden rounded-lg border px-2.5 py-1.5 text-left text-xs shadow-sm transition-transform hover:scale-[1.02] ${blockStyle(a, isToday)}`}
-                              style={{ top, height }}
-                            >
-                              <p className="truncate font-semibold text-brand-ink">{client.name}</p>
-                              <p className="truncate text-brand-muted">{formatTime12(a.startTime)} – {formatTime12(a.endTime)}</p>
-                              <div className="mt-1 flex items-center gap-1">
-                                <Avatar name={cl.name} color={cl.avatarColor} size={16} />
-                                <span className="truncate text-brand-muted">{cl.name}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+              {days.map((day) => {
+                const dateStr = toDateStr(day);
+                const isToday = dateStr === todayStr;
+                const dayAssignments = visibleWeekAssignments.filter((a) => a.date === dateStr);
+                return (
+                  <div key={dateStr} className={`min-w-[120px] flex-1 overflow-hidden rounded-xl ${isToday ? 'bg-brand-pink-light/60' : 'bg-brand-cream'}`}>
+                    <div className={`flex h-16 flex-col items-center justify-center ${isToday ? 'bg-brand-pink text-white' : ''}`}>
+                      <span className={`text-xs ${isToday ? 'text-white/85' : 'text-brand-muted'}`}>{day.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
+                      <span className={`text-lg font-semibold ${isToday ? 'text-white' : 'text-brand-ink'}`}>{day.getDate()}</span>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="relative" style={{ height: GRID_HEIGHT }}>
+                      {hours.map((h) => (
+                        <div
+                          key={h}
+                          className="absolute left-0 right-0 border-t border-white" // taste-skill-ignore: calendar hour grid
+                          style={{ top: (h - DAY_START_MIN / 60) * HOUR_HEIGHT }}
+                        />
+                      ))}
+                      {dayAssignments.map((a) => {
+                        const therapist = clById(a.clId);
+                        const client = clientById(a.clientId);
+                        const pkg = packageById(a.packageId);
+                        if (!therapist || !client || !pkg) return null;
+                        const color = colorOf(categoryOf(a, isToday));
+                        const top = ((toMinutes(a.startTime) - DAY_START_MIN) / 60) * HOUR_HEIGHT;
+                        const height = Math.max(40, ((toMinutes(a.endTime) - toMinutes(a.startTime)) / 60) * HOUR_HEIGHT);
+                        const selected = a.id === selectedId;
+                        return (
+                          <button
+                            key={a.id}
+                            onClick={() => setSelectedId(a.id)}
+                            className={`absolute left-1 right-1 overflow-hidden rounded-lg bg-white px-2.5 py-2 text-left text-xs transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
+                              a.status === 'cancelled' ? 'opacity-70' : ''
+                            }`}
+                            style={{ top, height }}
+                          >
+                            <span className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: color }} />
+                            <span className="absolute inset-0" style={{ backgroundColor: color, opacity: selected ? 0.22 : 0.12 }} />
+                            <span className="relative block">
+                              <span className={`block truncate text-sm font-semibold text-brand-ink ${a.status === 'cancelled' ? 'line-through' : ''}`}>{client.name}</span>
+                              <span className="block truncate text-brand-muted">
+                                {formatTime12(a.startTime)} to {formatTime12(a.endTime)}
+                              </span>
+                              <span className="mt-1 flex items-center gap-1.5">
+                                <Avatar name={therapist.name} color={therapist.avatarColor} size={16} />
+                                <span className="truncate text-brand-ink">{therapist.name}</span>
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div>
-          <Card className="border-l-4 !border-l-orange-400">
-            <SectionTitle>
+      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Card className="p-6">
+          <SectionTitle>
+            <span className="flex items-center gap-2">
               Unassigned requests
-              <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-600">{unassigned.length}</span>
-            </SectionTitle>
-            <p className="mb-3 -mt-2 text-xs text-brand-muted">Clients still requiring a CL</p>
-            <div className="space-y-3">
-              {unassigned.map((clientId) => {
-                const client = clientById(clientId);
-                if (!client) return null;
-                const pkg = packageById(client.packageIds[0]);
-                return (
-                  <div key={clientId} className="rounded-xl border border-black/5 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium text-brand-ink">{client.name}</p>
-                        <p className="text-xs text-brand-muted">{pkg?.shortName}</p>
-                      </div>
-                      <Badge status={client.status === 'upcoming' ? 'urgent' : 'upcoming'}>
-                        {client.preferredDate <= toDateStr(TODAY) ? 'Urgent' : 'Upcoming'}
-                      </Badge>
+              <span className="rounded-full bg-orange-50 px-2.5 py-0.5 text-sm font-semibold text-orange-700">{unassigned.length}</span>
+            </span>
+          </SectionTitle>
+          <p className="-mt-2 mb-4 text-sm text-brand-muted">Clients still waiting for a therapist.</p>
+          <div className="space-y-3">
+            {unassigned.map((clientId) => {
+              const client = clientById(clientId);
+              if (!client) return null;
+              const pkg = packageById(client.packageIds[0]);
+              return (
+                <div key={clientId} className="rounded-xl bg-brand-cream p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-brand-ink">{client.name}</p>
+                      <p className="text-sm text-brand-muted">
+                        {pkg?.shortName} · {client.location}
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-brand-muted">{client.location}</p>
+                    <Badge status={client.status === 'upcoming' ? 'urgent' : 'upcoming'}>
+                      {client.preferredDate <= toDateStr(TODAY) ? 'Urgent' : 'Upcoming'}
+                    </Badge>
+                  </div>
 
-                    {pickerFor === clientId ? (
-                      <div className="mt-2 space-y-1 rounded-lg bg-brand-cream p-2">
-                        {availableCLs.map((cl) => (
-                          <button
-                            key={cl.id}
-                            onClick={() => assignCL(clientId, cl.id)}
-                            className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs hover:bg-white"
-                          >
-                            <Avatar name={cl.name} color={cl.avatarColor} size={20} />
-                            {cl.name}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setPickerFor(clientId)}
-                        className="mt-2 rounded-full bg-brand-pink px-3 py-1 text-xs font-medium text-white hover:bg-brand-pink-dark"
-                      >
-                        Schedule
+                  {pickerFor === clientId ? (
+                    <div className="mt-3 space-y-1 rounded-xl bg-white p-2">
+                      <p className="px-2 pb-1 text-sm text-brand-muted">Choose a therapist</p>
+                      {availableTherapists.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => assignTherapist(clientId, t.id)}
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-brand-ink transition-colors hover:bg-brand-cream"
+                        >
+                          <Avatar name={t.name} color={t.avatarColor} size={22} />
+                          {t.name}
+                        </button>
+                      ))}
+                      {availableTherapists.length === 0 && <p className="px-2 text-sm text-brand-muted">No therapists available right now.</p>}
+                      <button onClick={() => setPickerFor(null)} className="px-2 pt-1 text-sm text-brand-muted hover:text-brand-ink">
+                        Cancel
                       </button>
-                    )}
-                  </div>
-                );
-              })}
-              {unassigned.length === 0 && <p className="text-sm text-brand-muted">All caught up — no pending requests.</p>}
-            </div>
-          </Card>
-        </div>
-
-        <div>
-          <Card className="border-l-4 !border-l-brand-lavender">
-            <SectionTitle>Available now</SectionTitle>
-            <p className="mb-3 -mt-2 text-xs text-brand-muted">CLs without conflicts this week</p>
-            <div className="space-y-3">
-              {availableCLs.map((cl) => (
-                <div key={cl.id} className="flex items-center gap-3">
-                  <Avatar name={cl.name} color={cl.avatarColor} size={32} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-brand-ink">{cl.name}</p>
-                    <p className="truncate text-xs text-brand-muted">{cl.location}</p>
-                  </div>
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setPickerFor(clientId)}
+                      className="mt-3 rounded-full bg-brand-pink px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2"
+                    >
+                      Schedule
+                    </button>
+                  )}
                 </div>
-              ))}
-              {availableCLs.length === 0 && <p className="text-sm text-brand-muted">No CLs currently available.</p>}
-            </div>
-          </Card>
-        </div>
+              );
+            })}
+            {unassigned.length === 0 && <p className="text-sm text-brand-muted">All caught up. No pending requests.</p>}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <SectionTitle>Available now</SectionTitle>
+          <p className="-mt-2 mb-4 text-sm text-brand-muted">Therapists with no clashes this week.</p>
+          <div className="space-y-2">
+            {availableTherapists.map((t) => (
+              <div key={t.id} className="flex items-center gap-3 rounded-xl bg-brand-cream p-3">
+                <Avatar name={t.name} color={t.avatarColor} size={34} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-brand-ink">{t.name}</p>
+                  <p className="truncate text-sm text-brand-muted">{t.location}</p>
+                </div>
+                <Badge status="available">Available</Badge>
+              </div>
+            ))}
+            {availableTherapists.length === 0 && <p className="text-sm text-brand-muted">No therapists available right now.</p>}
+          </div>
+        </Card>
       </div>
 
       <div className="h-6" />
@@ -376,16 +410,26 @@ export default function SchedulePage() {
   );
 }
 
+function Figure({ label, value, note, warn = false }: { label: string; value: number; note: string; warn?: boolean }) {
+  return (
+    <div>
+      <p className="text-sm text-brand-muted">{label}</p>
+      <p className={`mt-2 text-4xl font-semibold tracking-tight ${warn ? 'text-brand-amber' : 'text-brand-ink'}`}>{value}</p>
+      <p className="mt-1 text-sm text-brand-muted">{note}</p>
+    </div>
+  );
+}
+
 function SelectedDetail({
   assignment,
   onClose,
-  availableCLs,
+  availableTherapists,
   onReassign,
   onReschedule,
 }: {
   assignment: Assignment;
   onClose: () => void;
-  availableCLs: Therapist[];
+  availableTherapists: Therapist[];
   onReassign: (newClId: string) => void;
   onReschedule: (date: string, startTime: string, endTime: string) => void;
 }) {
@@ -397,61 +441,69 @@ function SelectedDetail({
   const [startDraft, setStartDraft] = useState(assignment.startTime);
   const [endDraft, setEndDraft] = useState(assignment.endTime);
 
-  const cl = clById(assignment.clId);
+  const therapist = clById(assignment.clId);
   const client = clientById(assignment.clientId);
   const pkg = packageById(assignment.packageId);
-  if (!cl || !client || !pkg) return null;
+  if (!therapist || !client || !pkg) return null;
+
+  const fieldClass = 'w-full rounded-lg bg-white px-3 py-2 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink';
 
   return (
     <Card>
-      <div className="mb-2 flex items-start justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-brand-ink">{client.name}</p>
-          <p className="text-xs text-brand-muted">{pkg.name}</p>
+          <p className="text-lg font-semibold text-brand-ink">{client.name}</p>
+          <p className="text-sm text-brand-muted">{pkg.name}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge status={assignment.status}>{assignment.status}</Badge>
-          <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
+          <Badge status={assignment.status}>
+            <span className="capitalize">{assignment.status}</span>
+          </Badge>
+          <button
+            onClick={onClose}
+            aria-label="Close details"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-brand-muted transition-colors hover:bg-brand-cream hover:text-brand-ink"
+          >
             <X size={14} />
           </button>
         </div>
       </div>
-      <div className="mt-3 space-y-2 text-sm text-brand-ink">
+      <div className="mt-4 space-y-2 text-sm text-brand-ink">
         <div className="flex items-center gap-2">
-          <Avatar name={cl.name} color={cl.avatarColor} size={22} />
-          {cl.name}
+          <Avatar name={therapist.name} color={therapist.avatarColor} size={24} />
+          {therapist.name}
         </div>
         <p>
-          {new Date(`${assignment.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {new Date(`${assignment.date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
         <p>
-          {formatTime12(assignment.startTime)} – {formatTime12(assignment.endTime)}
+          {formatTime12(assignment.startTime)} to {formatTime12(assignment.endTime)}
         </p>
         <p className="text-brand-muted">{assignment.location}</p>
       </div>
 
       {mode === 'view' && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-4 flex gap-2">
           <button
             onClick={() => setMode('reassign')}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-cream py-1.5 text-xs font-medium text-brand-ink hover:bg-black/5"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-cream py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-pink-light hover:text-brand-pink"
           >
-            <Repeat size={12} /> Reassign CL
+            <Repeat size={13} /> Reassign
           </button>
           <button
             onClick={() => setMode('reschedule')}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-cream py-1.5 text-xs font-medium text-brand-ink hover:bg-black/5"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-cream py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-pink-light hover:text-brand-pink"
           >
-            <CalendarCog size={12} /> Reschedule
+            <CalendarCog size={13} /> Reschedule
           </button>
         </div>
       )}
 
       {mode === 'reassign' && (
-        <div className="mt-3 space-y-1 rounded-lg bg-brand-cream p-2">
-          <p className="mb-1 text-xs text-brand-muted">Choose a replacement CL:</p>
-          {availableCLs
-            .filter((c) => c.id !== cl.id)
+        <div className="mt-4 space-y-1 rounded-xl bg-brand-cream p-2">
+          <p className="px-2 pb-1 text-sm text-brand-muted">Choose another therapist</p>
+          {availableTherapists
+            .filter((c) => c.id !== therapist.id)
             .map((c) => (
               <button
                 key={c.id}
@@ -459,51 +511,45 @@ function SelectedDetail({
                   onReassign(c.id);
                   setMode('view');
                 }}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs text-brand-ink hover:bg-white"
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-brand-ink transition-colors hover:bg-white"
               >
-                <Avatar name={c.name} color={c.avatarColor} size={20} />
+                <Avatar name={c.name} color={c.avatarColor} size={22} />
                 {c.name}
               </button>
             ))}
-          <button onClick={() => setMode('view')} className="mt-1 text-xs text-brand-muted hover:text-brand-ink">
+          <button onClick={() => setMode('view')} className="px-2 pt-1 text-sm text-brand-muted hover:text-brand-ink">
             Cancel
           </button>
         </div>
       )}
 
       {mode === 'reschedule' && (
-        <div className="mt-3 space-y-2 rounded-lg bg-brand-cream p-2">
-          <input
-            type="date"
-            value={dateDraft}
-            onChange={(e) => setDateDraft(e.target.value)}
-            className="w-full rounded-md border border-black/10 bg-white px-2 py-1.5 text-xs text-brand-ink"
-          />
+        <div className="mt-4 space-y-2 rounded-xl bg-brand-cream p-3">
+          <label className="block text-sm text-brand-muted">
+            Date
+            <input type="date" value={dateDraft} onChange={(e) => setDateDraft(e.target.value)} className={`mt-1 ${fieldClass}`} />
+          </label>
           <div className="flex gap-2">
-            <input
-              type="time"
-              value={startDraft}
-              onChange={(e) => setStartDraft(e.target.value)}
-              className="w-full rounded-md border border-black/10 bg-white px-2 py-1.5 text-xs text-brand-ink"
-            />
-            <input
-              type="time"
-              value={endDraft}
-              onChange={(e) => setEndDraft(e.target.value)}
-              className="w-full rounded-md border border-black/10 bg-white px-2 py-1.5 text-xs text-brand-ink"
-            />
+            <label className="block flex-1 text-sm text-brand-muted">
+              Start
+              <input type="time" value={startDraft} onChange={(e) => setStartDraft(e.target.value)} className={`mt-1 ${fieldClass}`} />
+            </label>
+            <label className="block flex-1 text-sm text-brand-muted">
+              End
+              <input type="time" value={endDraft} onChange={(e) => setEndDraft(e.target.value)} className={`mt-1 ${fieldClass}`} />
+            </label>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-1">
             <button
               onClick={() => {
                 onReschedule(dateDraft, startDraft, endDraft);
                 setMode('view');
               }}
-              className="rounded-full bg-brand-pink px-3 py-1 text-xs font-medium text-white hover:bg-brand-pink-dark"
+              className="rounded-full bg-brand-pink px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark"
             >
               Save
             </button>
-            <button onClick={() => setMode('view')} className="rounded-full px-3 py-1 text-xs text-brand-muted hover:bg-black/5">
+            <button onClick={() => setMode('view')} className="rounded-full px-4 py-1.5 text-sm text-brand-muted transition-colors hover:bg-white">
               Cancel
             </button>
           </div>

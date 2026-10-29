@@ -19,11 +19,6 @@ import {
   UserX,
   Wallet,
   Clock,
-  Award,
-  ThumbsUp,
-  ThumbsDown,
-  Hash,
-  ClipboardCheck,
   Pencil,
   X,
   Globe,
@@ -49,16 +44,20 @@ const shiftLabels: Record<string, string> = {
   morning: 'Morning only',
   afternoon: 'Afternoon only',
   both: 'Morning & afternoon',
-  'stay-in': 'Stay-in placements',
+  'stay-in': 'Full day',
   flexible: 'Flexible',
 };
 
 const tierStyles: Record<string, string> = {
-  Bronze: 'bg-amber-100 text-amber-800',
-  Silver: 'bg-gray-200 text-gray-700',
-  Gold: 'bg-brand-amber-light text-brand-amber',
+  Bronze: 'bg-brand-amber-light text-brand-amber',
+  Silver: 'bg-brand-lavender-light text-brand-lavender',
+  Gold: 'bg-brand-amber text-white',
   Platinum: 'bg-brand-pink-light text-brand-pink',
 };
+
+const pillBase =
+  'flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2';
+const pillSecondary = `${pillBase} bg-brand-cream text-brand-ink hover:bg-brand-pink-light`;
 
 const flagOptions: { value: CLFlag; label: string }[] = [
   { value: 'none', label: 'No issues' },
@@ -93,9 +92,9 @@ export default function CLProfilePage() {
 
   if (!cl) {
     return (
-      <PageShell title="CL not found">
+      <PageShell title="Therapist not found">
         <Link to="/cls" className="text-brand-pink underline">
-          Back to Confinement Ladies
+          Back to therapists
         </Link>
       </PageShell>
     );
@@ -115,13 +114,13 @@ export default function CLProfilePage() {
   function saveFlag() {
     if (!cl) return;
     updateFlag(cl.id, flagDraft, noteDraft);
-    logAction('Front Desk', 'Updated CL flag', `${cl.name} → ${flagDraft === 'none' ? 'no issues' : flagDraft}`);
+    logAction('Front Desk', 'Updated therapist flag', `${cl.name} → ${flagDraft === 'none' ? 'no issues' : flagDraft}`);
   }
 
   function handleStatusChange(status: CLStatus) {
     if (!cl) return;
     updateStatus(cl.id, status);
-    logAction('Front Desk', 'Updated CL status', `${cl.name} → ${status.replace('-', ' ')}`);
+    logAction('Front Desk', 'Updated therapist status', `${cl.name} → ${status.replace('-', ' ')}`);
   }
 
   function markInactive() {
@@ -130,15 +129,15 @@ export default function CLProfilePage() {
 
   function printAs(mode: 'customer' | 'company') {
     if (!cl) return;
-    // Force the Internal tab synchronously first — the buttons are reachable from either tab,
+    // Force the Internal tab synchronously first: the buttons are reachable from either tab,
     // but the hidden printable card below only mounts under view === 'internal', so without this
-    // a click while on the Customer tab would print that tab's own (differently-scoped) card instead.
+    // a click while on the Client tab would print that tab's own (differently-scoped) card instead.
     flushSync(() => {
       setView('internal');
       setPrintTarget(mode);
     });
     window.print();
-    logAction('Front Desk', mode === 'company' ? 'Generated company report' : 'Generated customer report', cl.name);
+    logAction('Front Desk', mode === 'company' ? 'Generated company report' : 'Generated client report', cl.name);
     setPrintTarget(null);
   }
 
@@ -148,24 +147,27 @@ export default function CLProfilePage() {
         <ArrowLeft size={15} /> Back to directory
       </button>
 
-      <Card className="mb-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <Card className="p-6">
+        <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            <Avatar name={cl.name} color={cl.avatarColor} size={64} />
+            <Avatar name={cl.name} color={cl.avatarColor} size={72} />
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <p className="text-lg font-semibold text-brand-ink">{cl.name}</p>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tierStyles[tier]}`}>{tier}</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${tierStyles[tier]}`}>{tier}</span>
+                {cl.flag === 'complained' && <Badge status="complained">Complaint on file</Badge>}
+                {cl.flag === 'banned' && <Badge status="banned">Banned</Badge>}
               </div>
-              <p className="text-sm text-brand-muted">CL {cl.name.split(' ')[0]} · {cl.location}</p>
-              <div className="mt-1 flex items-center gap-3 text-sm">
+              <p className="text-sm text-brand-muted">Therapist · {cl.location}</p>
+              <div className="mt-2 flex items-center gap-3 text-sm">
                 <span className="flex items-center gap-1 text-brand-ink">
-                  <Star size={13} className="fill-brand-amber text-brand-amber" /> {cl.rating}
+                  <Star size={14} className="fill-brand-amber text-brand-amber" /> {cl.rating}
                 </span>
                 <select
                   value={cl.status}
                   onChange={(e) => handleStatusChange(e.target.value as CLStatus)}
-                  className="rounded-full border border-black/10 bg-brand-cream px-2.5 py-1 text-xs text-brand-ink"
+                  aria-label="Status"
+                  className="rounded-full bg-brand-cream px-3 py-1 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink"
                 >
                   {statusOptions.map((s) => (
                     <option key={s} value={s}>
@@ -182,33 +184,21 @@ export default function CLProfilePage() {
               href={`https://wa.me/${cl.phone.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-brand-lavender px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+              className={`${pillBase} bg-brand-pink text-white hover:bg-brand-pink-dark`}
             >
-              <MessageCircle size={13} /> WhatsApp
+              <MessageCircle size={14} /> WhatsApp
             </a>
-            <button
-              onClick={() => setEditingProfile(true)}
-              className="flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-brand-ink hover:bg-brand-cream"
-            >
-              <Pencil size={13} /> Edit Profile
+            <button onClick={() => setEditingProfile(true)} className={pillSecondary}>
+              <Pencil size={14} /> Edit profile
             </button>
-            <button
-              onClick={() => printAs('company')}
-              className="flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-brand-ink hover:bg-brand-cream"
-            >
-              <FileText size={13} /> Company Report
+            <button onClick={() => printAs('company')} className={pillSecondary}>
+              <FileText size={14} /> Company report
             </button>
-            <button
-              onClick={() => printAs('customer')}
-              className="flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-brand-ink hover:bg-brand-cream"
-            >
-              <FileText size={13} /> Customer Report
+            <button onClick={() => printAs('customer')} className={pillSecondary}>
+              <FileText size={14} /> Client report
             </button>
-            <button
-              onClick={markInactive}
-              className="flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-            >
-              <UserX size={13} /> Mark Inactive
+            <button onClick={markInactive} className={`${pillBase} bg-red-50 text-red-600 hover:bg-red-100`}>
+              <UserX size={14} /> Mark inactive
             </button>
           </div>
         </div>
@@ -219,68 +209,70 @@ export default function CLProfilePage() {
           </div>
         )}
 
-        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-black/5 pt-4 sm:grid-cols-4 lg:grid-cols-8">
-          <Stat icon={<Hash size={12} />} label="Total Sessions" value={cl.completedAssignments} />
-          <Stat icon={<ClipboardCheck size={12} />} label="Sessions Planned" value={scheduleRows.length} />
-          <Stat icon={<Clock size={12} />} label="Verified Hours" value={metrics.verifiedHours} />
-          <Stat icon={<Wallet size={12} />} label="Lifetime Earnings" value={`RM ${metrics.lifetimeEarnings.toLocaleString()}`} />
-          <Stat icon={<Hash size={12} />} label="Current Job ID" value={metrics.currentJobId} />
-          <Stat icon={<Award size={12} />} label="Leaderboard Pts" value={metrics.leaderboardPoints.toLocaleString()} />
-          <Stat icon={<ThumbsUp size={12} />} label="Good Reviews" value={metrics.goodReviews} />
-          <Stat icon={<ThumbsDown size={12} />} label="Poor Reviews" value={metrics.poorReviews} />
+        <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3 xl:grid-cols-6">
+          <BigStat label="Sessions" value={cl.completedAssignments.toLocaleString()} />
+          <BigStat label="Verified hours" value={metrics.verifiedHours.toLocaleString()} />
+          <BigStat label="Lifetime earnings" value={metrics.lifetimeEarnings.toLocaleString()} prefix="RM" />
+          <BigStat label="Points" value={metrics.leaderboardPoints.toLocaleString()} />
+          <BigStat label="Good reviews" value={metrics.goodReviews} />
+          <BigStat label="Poor reviews" value={metrics.poorReviews} tone={metrics.poorReviews > 0 ? 'text-red-600' : undefined} />
         </div>
+        <p className="mt-5 text-sm text-brand-muted">
+          {scheduleRows.length} {scheduleRows.length === 1 ? 'session' : 'sessions'} planned
+          {metrics.currentJobId && metrics.currentJobId !== '\u2014' ? ` · current session ${metrics.currentJobId}` : ''}
+        </p>
       </Card>
 
-      <div className="flex items-center gap-2 rounded-full bg-white p-1 text-sm shadow-sm w-fit">
+      <div className="mt-8 flex w-fit items-center gap-1 rounded-full bg-white p-1 text-sm">
         <button
           onClick={() => setView('internal')}
-          className={`rounded-full px-4 py-1.5 font-medium transition-colors ${view === 'internal' ? 'bg-brand-pink text-white' : 'text-brand-muted'}`}
+          className={`rounded-full px-4 py-1.5 font-medium transition-colors ${view === 'internal' ? 'bg-brand-pink text-white' : 'text-brand-ink hover:bg-brand-cream'}`}
         >
           Internal (company use)
         </button>
         <button
           onClick={() => setView('customer')}
-          className={`rounded-full px-4 py-1.5 font-medium transition-colors ${view === 'customer' ? 'bg-brand-pink text-white' : 'text-brand-muted'}`}
+          className={`rounded-full px-4 py-1.5 font-medium transition-colors ${view === 'customer' ? 'bg-brand-pink text-white' : 'text-brand-ink hover:bg-brand-cream'}`}
         >
-          Customer profile
+          Client profile
         </button>
       </div>
 
       {view === 'internal' ? (
-        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-5">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
             <Card className="!p-0 overflow-hidden">
-              <div className="flex flex-wrap gap-1 border-b border-black/5 p-2">
+              <div className="flex flex-wrap gap-1 px-4 pt-4">
                 {(
                   [
-                    { id: 'schedule', label: 'Current Schedule' },
-                    { id: 'active', label: 'Active Sessions' },
-                    { id: 'completed', label: 'Completed Jobs' },
-                    { id: 'monthly', label: 'Monthly Output' },
+                    { id: 'schedule', label: 'Current schedule' },
+                    { id: 'active', label: 'Active' },
+                    { id: 'completed', label: 'Completed' },
+                    { id: 'monthly', label: 'Monthly' },
                   ] as { id: DetailTab; label: string }[]
                 ).map((t) => (
                   <button
                     key={t.id}
                     onClick={() => setTab(t.id)}
-                    className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                      tab === t.id ? 'bg-brand-pink-light text-brand-pink-dark' : 'text-brand-muted hover:bg-brand-cream'
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
+                      tab === t.id ? 'bg-brand-pink-light text-brand-pink' : 'text-brand-ink hover:bg-brand-cream'
                     }`}
                   >
                     {t.label}
                   </button>
                 ))}
               </div>
-              <div className="p-4">
+              <div className="p-5">
                 {tab === 'monthly' ? (
                   <div>
-                    <p className="mb-3 text-xs text-brand-muted">
-                      Approved sessions are paid at RM {HOURS_PER_SESSION * HOURLY_RATE}/session ({HOURS_PER_SESSION}h @ RM{HOURLY_RATE}/hr). Disapproved sessions were completed but rejected at
-                      approval review — no pay released.
+                    <p className="mb-4 text-sm text-brand-muted">
+                      Approved sessions are paid at RM {HOURS_PER_SESSION * HOURLY_RATE} a session ({HOURS_PER_SESSION}h at RM {HOURLY_RATE}/hr). Disapproved sessions were completed but
+                      rejected at approval review, so no pay was released.
                     </p>
-                    <div className="overflow-x-auto rounded-xl border border-black/5">
+                    <div className="overflow-x-auto rounded-xl">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-black/5 bg-brand-cream text-left text-xs text-brand-muted">
+                          <tr className="bg-brand-cream text-left text-sm text-brand-muted">
                             <th className="px-3 py-2 font-medium">Month</th>
                             <th className="px-3 py-2 font-medium">Approved</th>
                             <th className="px-3 py-2 font-medium">Disapproved</th>
@@ -290,10 +282,10 @@ export default function CLProfilePage() {
                         </thead>
                         <tbody>
                           {monthlyFinancials.map((m) => (
-                            <tr key={m.month} className={`border-b border-black/5 last:border-b-0 ${m.isCurrent ? 'bg-brand-pink-light/40' : ''}`}>
+                            <tr key={m.month} className={`border-b border-black/5 last:border-b-0 ${m.isCurrent ? 'bg-brand-pink-light/40' : ''}`}>{/* taste-skill-ignore: table row */}
                               <td className="px-3 py-2 font-medium text-brand-ink">
                                 {m.month}
-                                {m.isCurrent && <span className="ml-1.5 rounded-full bg-brand-pink px-1.5 py-0.5 text-[9px] font-semibold text-white">Current</span>}
+                                {m.isCurrent && <span className="ml-2 rounded-full bg-brand-pink px-2 py-0.5 text-xs font-medium text-white">Current</span>}
                               </td>
                               <td className="px-3 py-2 text-brand-lavender">{m.approvedSessions}</td>
                               <td className="px-3 py-2 text-red-600">{m.disapprovedSessions}</td>
@@ -314,15 +306,15 @@ export default function CLProfilePage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {tabRows.length === 0 && <p className="text-sm text-brand-muted">Nothing here yet.</p>}
+                    {tabRows.length === 0 && <p className="text-sm text-brand-muted">No sessions here yet.</p>}
                     {tabRows.map((a) => {
                       const pkg = packageById(a.packageId);
                       const client = clientById(a.clientId);
                       return (
-                        <div key={a.id} className="flex items-center justify-between rounded-xl border border-black/5 px-3 py-2 text-sm">
+                        <div key={a.id} className="flex items-center justify-between gap-3 rounded-xl bg-brand-cream px-4 py-3 text-sm">
                           <div>
                             <p className="font-medium text-brand-ink">{client?.name}</p>
-                            <p className="text-xs text-brand-muted">
+                            <p className="text-sm text-brand-muted">
                               {pkg?.shortName} · {formatDateLabel(a.date)} · {formatTime12(a.startTime)}
                             </p>
                           </div>
@@ -344,7 +336,7 @@ export default function CLProfilePage() {
 
             <Card>
               <SectionTitle>Contact & identity</SectionTitle>
-              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
                 <InfoRow icon={<Phone size={14} />} label="Phone" value={cl.phone} />
                 <InfoRow icon={<Mail size={14} />} label="Email" value={cl.email} />
                 <InfoRow icon={<MapPin size={14} />} label="Address" value={cl.address} />
@@ -357,13 +349,13 @@ export default function CLProfilePage() {
                 <ExpiryInfoRow icon={<BadgeCheck size={14} />} label="Passport expiry" date={cl.passportExpiry} />
               </div>
 
-              <div className="mt-5 border-t border-black/5 pt-4">
+              <div className="mt-8">
                 <SectionTitle>Sample treatment photo</SectionTitle>
-                <p className="mb-2 -mt-1 text-xs text-brand-muted">Company use only — verifies this CL's technique for onboarding records.</p>
+                <p className="-mt-2 mb-3 text-sm text-brand-muted">Company use only. Verifies this therapist's technique for onboarding records.</p>
                 <TreatmentPhotoUpload cl={cl} />
               </div>
 
-              <div className="mt-5 border-t border-black/5 pt-4">
+              <div className="mt-8">
                 <SectionTitle>Bio & specialties</SectionTitle>
                 <p className="text-sm text-brand-ink">{cl.bio}</p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -373,7 +365,7 @@ export default function CLProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-5 border-t border-black/5 pt-4">
+              <div className="mt-8">
                 <SectionTitle>Certifications & compliance</SectionTitle>
                 <CertificationList cl={cl} />
               </div>
@@ -381,28 +373,28 @@ export default function CLProfilePage() {
 
             <Card>
               <SectionTitle>Recent reviews</SectionTitle>
-              {cl.reviews.length === 0 && <p className="text-sm text-brand-muted">No individual reviews recorded yet — aggregate rating shown above reflects earlier history.</p>}
+              {cl.reviews.length === 0 && <p className="text-sm text-brand-muted">No individual reviews recorded yet. The rating above reflects earlier history.</p>}
               <div className="space-y-3">
                 {cl.reviews.slice(0, 5).map((r) => (
-                  <div key={r.id} className="rounded-xl border border-black/5 p-3">
+                  <div key={r.id} className="rounded-xl bg-brand-cream p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-brand-ink">{r.clientName}</p>
-                      <span className="flex items-center gap-1 text-xs text-brand-ink">
-                        <Star size={12} className="fill-brand-amber text-brand-amber" /> {r.rating}
+                      <span className="flex items-center gap-1 text-sm text-brand-ink">
+                        <Star size={13} className="fill-brand-amber text-brand-amber" /> {r.rating}
                       </span>
                     </div>
-                    {r.text && <p className="mt-1 text-sm text-brand-muted">{r.text}</p>}
-                    <p className="mt-1 text-[10px] text-brand-muted">{formatDateLabel(r.date)}</p>
+                    {r.text && <p className="mt-1 text-sm text-brand-ink">{r.text}</p>}
+                    <p className="mt-2 text-xs text-brand-muted">{formatDateLabel(r.date)}</p>
                   </div>
                 ))}
               </div>
             </Card>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-6">
             <Card className="h-fit">
               <SectionTitle>Profile flag</SectionTitle>
-              <p className="mb-3 text-xs text-brand-muted">Tag this CL if a client complaint was filed, or suspend them from new bookings.</p>
+              <p className="-mt-2 mb-4 text-sm text-brand-muted">Tag this therapist if a client complaint was filed, or suspend them from new bookings.</p>
 
               <div className="mb-3 flex items-center gap-2">
                 {cl.flag === 'none' && <ShieldCheck size={16} className="text-brand-lavender" />}
@@ -413,8 +405,8 @@ export default function CLProfilePage() {
 
               <div className="space-y-2">
                 {flagOptions.map((opt) => (
-                  <label key={opt.value} className="flex items-center gap-2 text-sm">
-                    <input type="radio" name="flag" checked={flagDraft === opt.value} onChange={() => setFlagDraft(opt.value)} />
+                  <label key={opt.value} className="flex items-center gap-2 text-sm text-brand-ink">
+                    <input type="radio" name="flag" checked={flagDraft === opt.value} onChange={() => setFlagDraft(opt.value)} className="accent-brand-pink" />
                     {opt.label}
                   </label>
                 ))}
@@ -426,29 +418,29 @@ export default function CLProfilePage() {
                   onChange={(e) => setNoteDraft(e.target.value)}
                   placeholder="Add a note about this flag…"
                   rows={3}
-                  className="mt-3 w-full rounded-lg border border-black/10 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+                  className="mt-3 w-full rounded-lg bg-brand-cream p-3 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink"
                 />
               )}
 
-              <button onClick={saveFlag} className="mt-3 w-full rounded-full bg-brand-pink py-2 text-sm font-medium text-white hover:bg-brand-pink-dark">
+              <button onClick={saveFlag} className="mt-4 w-full rounded-full bg-brand-pink py-2 text-sm font-medium text-white hover:bg-brand-pink-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2">
                 Save flag
               </button>
 
               {cl.flag !== 'none' && cl.flagNote && (
-                <p className="mt-3 rounded-lg bg-brand-cream p-2 text-xs text-brand-muted">Current note: {cl.flagNote}</p>
+                <p className="mt-4 rounded-xl bg-brand-cream p-3 text-sm text-brand-ink">Current note: {cl.flagNote}</p>
               )}
 
               {cl.flagHistory.length > 0 && (
-                <div className="mt-4 border-t border-black/5 pt-3">
-                  <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-brand-muted">
-                    <History size={12} /> Flag history
+                <div className="mt-6">
+                  <p className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
+                    <History size={14} /> Flag history
                   </p>
                   <div className="space-y-2">
                     {cl.flagHistory.map((h, i) => (
-                      <div key={i} className="flex items-start gap-2 text-xs">
+                      <div key={i} className="flex items-start gap-2 text-sm">
                         <Badge status={h.flag}>{h.flag === 'none' ? 'Cleared' : h.flag}</Badge>
                         <div className="min-w-0 flex-1">
-                          <p className="text-brand-muted">{formatDateLabel(h.date)}{h.note ? ` — ${h.note}` : ''}</p>
+                          <p className="text-brand-muted">{formatDateLabel(h.date)}{h.note ? `: ${h.note}` : ''}</p>
                         </div>
                       </div>
                     ))}
@@ -464,7 +456,7 @@ export default function CLProfilePage() {
 
             <Card className="h-fit">
               <SectionTitle>Payroll info</SectionTitle>
-              <div className="space-y-3 text-sm">
+              <div className="space-y-4 text-sm">
                 <InfoRow icon={<Landmark size={14} />} label="Bank" value={cl.bankName || 'Not on file'} />
                 <InfoRow icon={<Wallet size={14} />} label="Account" value={cl.bankAccountMasked || 'Not on file'} />
                 <InfoRow
@@ -473,7 +465,7 @@ export default function CLProfilePage() {
                   value={cl.paymentMethod ? paymentMethodLabels[cl.paymentMethod] : 'Not on file'}
                 />
               </div>
-              <p className="mt-3 text-xs text-brand-muted">Edit via "Edit Profile" above.</p>
+              <p className="mt-4 text-sm text-brand-muted">Edit via "Edit profile" above.</p>
             </Card>
           </div>
         </div>
@@ -488,13 +480,14 @@ export default function CLProfilePage() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
+function BigStat({ label, value, prefix, tone }: { label: string; value: ReactNode; prefix?: string; tone?: string }) {
   return (
-    <div>
-      <p className="flex items-center gap-1 text-[10px] text-brand-muted">
-        {icon} {label}
+    <div className="min-w-0">
+      <p className="text-sm text-brand-muted">{label}</p>
+      <p className={`mt-1 truncate text-4xl font-semibold tracking-tight ${tone ?? 'text-brand-ink'}`}>
+        {prefix && <span className="mr-1 text-lg font-medium tracking-normal">{prefix}</span>}
+        {value}
       </p>
-      <p className="mt-0.5 truncate text-sm font-semibold text-brand-ink">{value}</p>
     </div>
   );
 }
@@ -502,7 +495,7 @@ function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: R
 function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div>
-      <p className="mb-1 flex items-center gap-1.5 text-xs text-brand-muted">
+      <p className="mb-1 flex items-center gap-1.5 text-sm text-brand-muted">
         {icon}
         {label}
       </p>
@@ -520,23 +513,23 @@ function PassportRow({ cl }: { cl: import('../types').Therapist }) {
   if (editing) {
     return (
       <div>
-        <p className="mb-1 flex items-center gap-1.5 text-xs text-brand-muted">
-          <Briefcase size={14} /> Passport (company use)
+        <p className="mb-1 flex items-center gap-1.5 text-sm text-brand-muted">
+          <Briefcase size={14} /> Passport number
         </p>
         <div className="flex gap-1.5">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Passport number"
-            className="w-full rounded-md border border-black/10 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+            className="w-full rounded-lg bg-brand-cream px-3 py-1.5 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink"
           />
           <button
             onClick={() => {
               updatePassport(cl.id, draft);
-              logAction('Front Desk', 'Updated CL passport number', cl.name);
+              logAction('Front Desk', 'Updated therapist passport number', cl.name);
               setEditing(false);
             }}
-            className="rounded-md bg-brand-pink px-2 text-xs font-medium text-white"
+            className="rounded-full bg-brand-pink px-4 text-sm font-medium text-white hover:bg-brand-pink-dark"
           >
             Save
           </button>
@@ -546,11 +539,11 @@ function PassportRow({ cl }: { cl: import('../types').Therapist }) {
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="text-left hover:opacity-80">
-      <p className="mb-1 flex items-center gap-1.5 text-xs text-brand-muted">
-        <Briefcase size={14} /> Passport (company use)
+    <button onClick={() => setEditing(true)} className="text-left transition-colors hover:text-brand-pink">
+      <p className="mb-1 flex items-center gap-1.5 text-sm text-brand-muted">
+        <Briefcase size={14} /> Passport number
       </p>
-      <p className="text-brand-ink">{cl.passportNumber || 'Not on file — click to add'}</p>
+      <p className="text-brand-ink">{cl.passportNumber || 'Not on file. Click to add'}</p>
     </button>
   );
 }
@@ -565,7 +558,7 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
     const reader = new FileReader();
     reader.onload = () => {
       updateTreatmentPhoto(cl.id, reader.result as string);
-      logAction('Front Desk', 'Uploaded CL treatment photo', cl.name);
+      logAction('Front Desk', 'Uploaded therapist treatment photo', cl.name);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -581,7 +574,7 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
         )}
       </div>
       <div>
-        <label className="cursor-pointer rounded-full bg-brand-pink px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-pink-dark">
+        <label className="cursor-pointer rounded-full bg-brand-pink-light px-4 py-2 text-sm font-medium text-brand-pink hover:bg-brand-pink hover:text-white">
           {cl.treatmentPhotoUrl ? 'Replace photo' : 'Upload photo'}
           <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
         </label>
@@ -592,51 +585,51 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
 
 function CustomerProfileView({ cl }: { cl: Therapist }) {
   return (
-    <div className="mt-5">
-      <div className="mb-3 flex justify-end">
+    <div className="mt-6">
+      <div className="mb-4 flex justify-end">
         <button
           onClick={() => window.print()}
           className="flex items-center gap-2 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark"
         >
-          <Printer size={16} /> Generate customer PDF
+          <Printer size={16} /> Generate client PDF
         </button>
       </div>
 
       <div id="printable-cl" className="mx-auto max-w-xl">
         <PrintableCLCard cl={cl} mode="customer" />
       </div>
-      <p className="mt-2 text-center text-xs text-brand-muted">
-        This view hides phone, IC, address, and internal flag notes — safe to share with clients.
+      <p className="mt-3 text-center text-sm text-brand-muted">
+        This view hides phone, IC, address and internal flag notes, so it is safe to share with clients.
       </p>
     </div>
   );
 }
 
-/** Shared print/PDF card, used by the Customer tab's "Generate customer PDF" and, in `mode="company"`, the Internal tab's report buttons. */
+/** Shared print/PDF card, used by the Client tab's "Generate client PDF" and, in `mode="company"`, the Internal tab's report buttons. */
 function PrintableCLCard({ cl, mode }: { cl: Therapist; mode: 'customer' | 'company' }) {
   const tier = tierForCL(cl.completedAssignments);
   return (
-    <Card className="text-center">
+    <Card className="p-6 text-center">
       <div className="mx-auto mb-3 flex justify-center">
         <Avatar name={cl.name} color={cl.avatarColor} size={88} />
       </div>
-      <h2 className="text-xl font-semibold text-brand-ink">CL {cl.name.split(' ')[0]}</h2>
-      <p className="text-sm text-brand-muted">{cl.name}</p>
-      <span className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${tierStyles[tier]}`}>{tier} tier</span>
+      <h2 className="text-lg font-semibold text-brand-ink">{cl.name}</h2>
+      <p className="text-sm text-brand-muted">Therapist at Honey Spa Bangi</p>
+      <span className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${tierStyles[tier]}`}>{tier} tier</span>
       <div className="mt-2 flex items-center justify-center gap-1">
         <Star size={16} className="fill-brand-amber text-brand-amber" />
         <span className="font-medium text-brand-ink">{cl.rating}</span>
         <span className="text-sm text-brand-muted">({cl.reviewCount} reviews)</span>
       </div>
 
-      <div className="mx-auto mt-4 grid max-w-sm grid-cols-2 gap-3 text-sm">
-        <div className="rounded-xl bg-brand-cream p-3">
-          <p className="text-lg font-semibold text-brand-ink">{cl.yearsExperience}</p>
-          <p className="text-xs text-brand-muted">Years experience</p>
+      <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3 text-sm">
+        <div className="rounded-xl bg-brand-cream p-4">
+          <p className="text-4xl font-semibold tracking-tight text-brand-ink">{cl.yearsExperience}</p>
+          <p className="text-sm text-brand-muted">Years experience</p>
         </div>
-        <div className="rounded-xl bg-brand-cream p-3">
-          <p className="text-lg font-semibold text-brand-ink">{cl.completedAssignments}</p>
-          <p className="text-xs text-brand-muted">Placements completed</p>
+        <div className="rounded-xl bg-brand-cream p-4">
+          <p className="text-4xl font-semibold tracking-tight text-brand-ink">{cl.completedAssignments}</p>
+          <p className="text-sm text-brand-muted">Sessions completed</p>
         </div>
       </div>
 
@@ -650,41 +643,41 @@ function PrintableCLCard({ cl, mode }: { cl: Therapist; mode: 'customer' | 'comp
 
       <div className="mt-3 flex flex-wrap justify-center gap-1.5">
         {cl.languages.map((l) => (
-          <span key={l} className="rounded-full border border-black/10 px-2.5 py-1 text-xs text-brand-muted">
+          <span key={l} className="rounded-full bg-brand-cream px-2.5 py-1 text-xs text-brand-ink">
             {l}
           </span>
         ))}
       </div>
 
       {mode === 'company' && (
-        <div className="mt-5 border-t border-black/5 pt-4 text-left">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">Internal only</p>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="mt-8 rounded-xl bg-brand-cream p-5 text-left">
+          <p className="mb-3 text-sm font-semibold text-brand-ink">Internal only</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <InfoRow icon={<Phone size={13} />} label="Phone" value={cl.phone} />
             <InfoRow icon={<Briefcase size={13} />} label="IC number" value={cl.icNumber} />
             <InfoRow icon={<MapPin size={13} />} label="Address" value={cl.address} />
             <InfoRow icon={<ShieldAlert size={13} />} label="Flag status" value={cl.flag === 'none' ? 'No issues' : cl.flag} />
           </div>
           {cl.certifications.length > 0 && (
-            <div className="mt-3">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-muted">Certifications</p>
-              <ul className="text-xs text-brand-muted">
+            <div className="mt-5">
+              <p className="mb-1 text-sm font-semibold text-brand-ink">Certifications</p>
+              <ul className="space-y-0.5 text-sm text-brand-ink">
                 {cl.certifications.map((c) => (
                   <li key={c.id}>
-                    {c.name} — {c.issuer} (expires {formatDateLabel(c.expiryDate)})
+                    {c.name}, {c.issuer} (expires {formatDateLabel(c.expiryDate)})
                   </li>
                 ))}
               </ul>
             </div>
           )}
           {cl.flagHistory.length > 0 && (
-            <div className="mt-3">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-muted">Flag history</p>
-              <ul className="text-xs text-brand-muted">
+            <div className="mt-5">
+              <p className="mb-1 text-sm font-semibold text-brand-ink">Flag history</p>
+              <ul className="space-y-0.5 text-sm text-brand-ink">
                 {cl.flagHistory.map((h, i) => (
                   <li key={i}>
-                    {formatDateLabel(h.date)} — {h.flag === 'none' ? 'Cleared' : h.flag}
-                    {h.note ? `: ${h.note}` : ''}
+                    {formatDateLabel(h.date)}: {h.flag === 'none' ? 'Cleared' : h.flag}
+                    {h.note ? ` · ${h.note}` : ''}
                   </li>
                 ))}
               </ul>
@@ -693,7 +686,7 @@ function PrintableCLCard({ cl, mode }: { cl: Therapist; mode: 'customer' | 'comp
         </div>
       )}
 
-      <p className="mt-5 text-xs italic text-brand-muted">NR Mothercare Confinement — Sentuhan Tradisional Untuk Para Ibu</p>
+      <p className="mt-6 text-sm text-brand-muted">Honey Spa Bangi · Relax | Rejuvenate | Rejoice</p>
     </Card>
   );
 }
@@ -703,13 +696,13 @@ function ExpiryInfoRow({ icon, label, date }: { icon: ReactNode; label: string; 
   const urgency = expiryUrgency(date);
   return (
     <div>
-      <p className="mb-1 flex items-center gap-1.5 text-xs text-brand-muted">
+      <p className="mb-1 flex items-center gap-1.5 text-sm text-brand-muted">
         {icon}
         {label}
       </p>
       <p className="flex items-center gap-1.5 text-brand-ink">
         {formatDateLabel(date)}
-        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${expiryUrgencyStyles[urgency]}`}>{expiryUrgencyLabels[urgency]}</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${expiryUrgencyStyles[urgency]}`}>{expiryUrgencyLabels[urgency]}</span>
       </p>
     </div>
   );
@@ -726,7 +719,7 @@ function CertificationList({ cl }: { cl: Therapist }) {
   function submit() {
     if (!name.trim() || !issuer.trim() || !expiryDate) return;
     addCertification(cl.id, { name: name.trim(), issuer: issuer.trim(), expiryDate });
-    logAction('Front Desk', 'Added CL certification', `${cl.name} — ${name.trim()}`);
+    logAction('Front Desk', 'Added therapist certification', `${cl.name} · ${name.trim()}`);
     setName('');
     setIssuer('');
     setExpiryDate('');
@@ -740,21 +733,22 @@ function CertificationList({ cl }: { cl: Therapist }) {
         {cl.certifications.map((c) => {
           const urgency = expiryUrgency(c.expiryDate);
           return (
-            <div key={c.id} className="flex items-center justify-between gap-2 rounded-xl border border-black/5 px-3 py-2 text-sm">
+            <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl bg-brand-cream px-4 py-3 text-sm">
               <div className="min-w-0">
                 <p className="truncate font-medium text-brand-ink">{c.name}</p>
-                <p className="truncate text-xs text-brand-muted">{c.issuer} · expires {formatDateLabel(c.expiryDate)}</p>
+                <p className="truncate text-sm text-brand-muted">{c.issuer} · expires {formatDateLabel(c.expiryDate)}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${expiryUrgencyStyles[urgency]}`}>{expiryUrgencyLabels[urgency]}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${expiryUrgencyStyles[urgency]}`}>{expiryUrgencyLabels[urgency]}</span>
                 <button
                   onClick={() => {
                     removeCertification(cl.id, c.id);
-                    logAction('Front Desk', 'Removed CL certification', `${cl.name} — ${c.name}`);
+                    logAction('Front Desk', 'Removed therapist certification', `${cl.name} · ${c.name}`);
                   }}
+                  aria-label={`Remove ${c.name}`}
                   className="text-brand-muted hover:text-red-600"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={14} />
                 </button>
               </div>
             </div>
@@ -763,30 +757,30 @@ function CertificationList({ cl }: { cl: Therapist }) {
       </div>
 
       {adding ? (
-        <div className="mt-3 space-y-2 rounded-xl border border-black/10 p-3">
+        <div className="mt-3 space-y-2 rounded-xl bg-brand-cream p-4">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Certification name"
-            className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+            className={subInputCls}
           />
           <input
             value={issuer}
             onChange={(e) => setIssuer(e.target.value)}
             placeholder="Issuer"
-            className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+            className={subInputCls}
           />
           <input
             type="date"
             value={expiryDate}
             onChange={(e) => setExpiryDate(e.target.value)}
-            className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+            className={subInputCls}
           />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setAdding(false)} className="rounded-full px-3 py-1.5 text-xs text-brand-muted hover:bg-brand-cream">
+            <button onClick={() => setAdding(false)} className="rounded-full bg-white px-4 py-1.5 text-sm text-brand-ink hover:bg-brand-pink-light">
               Cancel
             </button>
-            <button onClick={submit} className="rounded-full bg-brand-pink px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-pink-dark">
+            <button onClick={submit} className="rounded-full bg-brand-pink px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-pink-dark">
               Add
             </button>
           </div>
@@ -794,9 +788,9 @@ function CertificationList({ cl }: { cl: Therapist }) {
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-brand-pink hover:underline"
+          className="mt-4 flex items-center gap-1.5 text-sm font-medium text-brand-pink hover:underline"
         >
-          <Plus size={13} /> Add certification
+          <Plus size={14} /> Add certification
         </button>
       )}
     </div>
@@ -814,7 +808,7 @@ function LeaveList({ cl }: { cl: Therapist }) {
   function submit() {
     if (!start || !end) return;
     addLeavePeriod(cl.id, { start, end, reason: reason.trim() || undefined });
-    logAction('Front Desk', 'Added CL leave period', `${cl.name} — ${start} to ${end}`);
+    logAction('Front Desk', 'Added therapist leave period', `${cl.name} · ${start} to ${end}`);
     setStart('');
     setEnd('');
     setReason('');
@@ -828,14 +822,14 @@ function LeaveList({ cl }: { cl: Therapist }) {
       {cl.leavePeriods.length === 0 && <p className="mb-3 text-sm text-brand-muted">No leave periods on file.</p>}
       <div className="space-y-2">
         {cl.leavePeriods.map((p, i) => (
-          <div key={i} className="flex items-center justify-between gap-2 rounded-xl border border-black/5 px-3 py-2 text-sm">
+          <div key={i} className="flex items-center justify-between gap-3 rounded-xl bg-brand-cream px-4 py-3 text-sm">
             <div className="flex min-w-0 items-center gap-2">
               <CalendarOff size={14} className="shrink-0 text-brand-muted" />
               <div className="min-w-0">
                 <p className="truncate text-brand-ink">
                   {formatDateLabel(p.start)} – {formatDateLabel(p.end)}
                 </p>
-                {p.reason && <p className="truncate text-xs text-brand-muted">{p.reason}</p>}
+                {p.reason && <p className="truncate text-sm text-brand-muted">{p.reason}</p>}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -843,11 +837,12 @@ function LeaveList({ cl }: { cl: Therapist }) {
               <button
                 onClick={() => {
                   removeLeavePeriod(cl.id, i);
-                  logAction('Front Desk', 'Removed CL leave period', `${cl.name} — ${p.start} to ${p.end}`);
+                  logAction('Front Desk', 'Removed therapist leave period', `${cl.name} · ${p.start} to ${p.end}`);
                 }}
+                aria-label="Remove leave period"
                 className="text-brand-muted hover:text-red-600"
               >
-                <Trash2 size={13} />
+                <Trash2 size={14} />
               </button>
             </div>
           </div>
@@ -855,29 +850,29 @@ function LeaveList({ cl }: { cl: Therapist }) {
       </div>
 
       {adding ? (
-        <div className="mt-3 space-y-2 rounded-xl border border-black/10 p-3">
+        <div className="mt-3 space-y-2 rounded-xl bg-brand-cream p-4">
           <div className="grid grid-cols-2 gap-2">
-            <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
-            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+            <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className={subInputCls} />
+            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className={subInputCls} />
           </div>
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Reason (optional)"
-            className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+            className={subInputCls}
           />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setAdding(false)} className="rounded-full px-3 py-1.5 text-xs text-brand-muted hover:bg-brand-cream">
+            <button onClick={() => setAdding(false)} className="rounded-full bg-white px-4 py-1.5 text-sm text-brand-ink hover:bg-brand-pink-light">
               Cancel
             </button>
-            <button onClick={submit} className="rounded-full bg-brand-pink px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-pink-dark">
+            <button onClick={submit} className="rounded-full bg-brand-pink px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-pink-dark">
               Add leave
             </button>
           </div>
         </div>
       ) : (
-        <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-xs font-medium text-brand-pink hover:underline">
-          <Plus size={13} /> Add leave period
+        <button onClick={() => setAdding(true)} className="mt-4 flex items-center gap-1.5 text-sm font-medium text-brand-pink hover:underline">
+          <Plus size={14} /> Add leave period
         </button>
       )}
     </div>
@@ -919,20 +914,20 @@ function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
       bankAccountMasked: bankAccountMasked.trim() || undefined,
       paymentMethod: paymentMethod || undefined,
     });
-    logAction('Front Desk', 'Edited CL profile', cl.name);
+    logAction('Front Desk', 'Edited therapist profile', cl.name);
     onClose();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-black/5 p-4">
-          <p className="text-sm font-semibold text-brand-ink">Edit profile — {cl.name}</p>
-          <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl">{/* taste-skill-ignore: overlay */}
+        <div className="flex items-center justify-between px-6 pt-6">
+          <h2 className="text-lg font-semibold text-brand-ink">Edit profile · {cl.name}</h2>
+          <button onClick={onClose} aria-label="Close" className="rounded-full p-1 text-brand-muted hover:bg-brand-cream hover:text-brand-ink">
             <X size={18} />
           </button>
         </div>
-        <div className="space-y-3 p-5">
+        <div className="space-y-4 px-6 pt-5">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Phone"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} /></Field>
             <Field label="Email"><input value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} /></Field>
@@ -946,8 +941,8 @@ function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
           <Field label="Specialties (comma-separated)"><input value={specialties} onChange={(e) => setSpecialties(e.target.value)} className={inputCls} /></Field>
           <Field label="Bio"><textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={2} className={inputCls} /></Field>
 
-          <div className="border-t border-black/5 pt-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">Compliance</p>
+          <div className="pt-4">
+            <p className="mb-3 text-sm font-semibold text-brand-ink">Compliance</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Nationality"><input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputCls} /></Field>
               <Field label="Work permit expiry"><input type="date" value={workPermitExpiry} onChange={(e) => setWorkPermitExpiry(e.target.value)} className={inputCls} /></Field>
@@ -955,8 +950,8 @@ function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
             </div>
           </div>
 
-          <div className="border-t border-black/5 pt-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">Payroll info</p>
+          <div className="pt-4">
+            <p className="mb-3 text-sm font-semibold text-brand-ink">Payroll info</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Bank name"><input value={bankName} onChange={(e) => setBankName(e.target.value)} className={inputCls} /></Field>
               <Field label="Account (masked)"><input value={bankAccountMasked} onChange={(e) => setBankAccountMasked(e.target.value)} placeholder="•••• 1234" className={inputCls} /></Field>
@@ -971,8 +966,8 @@ function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-black/5 p-4">
-          <button onClick={onClose} className="rounded-full px-4 py-2 text-sm text-brand-muted hover:bg-brand-cream">
+        <div className="flex items-center justify-end gap-2 p-6">
+          <button onClick={onClose} className="rounded-full bg-brand-cream px-4 py-2 text-sm text-brand-ink hover:bg-brand-pink-light">
             Cancel
           </button>
           <button onClick={save} className="rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark">
@@ -984,12 +979,14 @@ function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
   );
 }
 
-const inputCls = 'w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink';
+const inputCls = 'w-full rounded-lg bg-brand-cream px-3 py-2 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink';
+/** Inputs that sit inside a cream add-row panel, so they take a white fill instead. */
+const subInputCls = 'w-full rounded-lg bg-white px-3 py-2 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink';
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-brand-muted">{label}</label>
+      <label className="mb-1 block text-sm text-brand-muted">{label}</label>
       {children}
     </div>
   );

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, X, MapPin, Phone, CalendarClock, Contact } from 'lucide-react';
+import { UserPlus, X, MapPin, Phone, CalendarClock, CalendarHeart } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar } from '../components/ui';
 import { useSettings } from '../store/SettingsContext';
-import { useClientStore } from '../store/ClientStore';
+import { useClientStore, type NewClientInput } from '../store/ClientStore';
 import { useCLStore } from '../store/CLStore';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useActivityLog } from '../store/ActivityLogContext';
@@ -44,47 +44,45 @@ export default function ClientsPage() {
     return !query || client?.name.toLowerCase().includes(query.toLowerCase()) || a.location.toLowerCase().includes(query.toLowerCase());
   });
 
-  function handleAdd(input: { name: string; phone: string; location: string }) {
+  function handleAdd(input: NewClientInput) {
     const client = addClient(input);
-    logAction('Front Desk', 'Added new customer', client.name);
+    logAction('Front Desk', 'Added new client', client.name);
     setShowAdd(false);
     navigate(`/clients/${client.id}`);
   }
 
   return (
     <PageShell
-      title="Customer Directory"
-      subtitle={`${clients.length} customers on file — ${activeCustomers.length} active with packages`}
-      icon={Contact}
-      accentColor="#c42474"
-      searchPlaceholder="Search customer by name or area"
+      title="Clients"
+      subtitle={`${clients.length} clients on file · ${activeCustomers.length} with a treatment booked`}
+      searchPlaceholder="Search clients by name or area"
       onSearch={setQuery}
       headerAction={
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark"
+          className="flex items-center gap-1.5 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2"
         >
-          <UserPlus size={15} /> Add Customer
+          <UserPlus size={16} /> Add client
         </button>
       }
     >
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         <button
           onClick={() => setTab('active')}
           className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            tab === 'active' ? 'bg-brand-pink text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+            tab === 'active' ? 'bg-brand-pink text-white' : 'bg-white text-brand-ink hover:bg-brand-pink-light'
           }`}
         >
-          Active Customers
+          With treatments
           <span className={`rounded-full px-1.5 text-xs ${tab === 'active' ? 'bg-white/20' : 'bg-brand-cream'}`}>{activeCustomers.length}</span>
         </button>
         <button
           onClick={() => setTab('upcoming')}
           className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            tab === 'upcoming' ? 'bg-brand-pink text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+            tab === 'upcoming' ? 'bg-brand-pink text-white' : 'bg-white text-brand-ink hover:bg-brand-pink-light'
           }`}
         >
-          Upcoming Sessions
+          Upcoming sessions
           <span className={`rounded-full px-1.5 text-xs ${tab === 'upcoming' ? 'bg-white/20' : 'bg-brand-cream'}`}>{upcomingSessions.length}</span>
         </button>
       </div>
@@ -95,11 +93,12 @@ export default function ClientsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Customer</th>
+                  <th className="px-5 py-3 font-medium">Client</th>
                   <th className="px-5 py-3 font-medium">Phone</th>
-                  <th className="px-5 py-3 font-medium">Base area</th>
-                  <th className="px-5 py-3 font-medium">Packages</th>
-                  <th className="px-5 py-3 font-medium">Total bookings</th>
+                  <th className="px-5 py-3 font-medium">Area</th>
+                  <th className="px-5 py-3 font-medium">Treatments</th>
+                  <th className="px-5 py-3 font-medium">Preferred date</th>
+                  <th className="px-5 py-3 font-medium">Bookings</th>
                   <th className="px-5 py-3 font-medium">Type</th>
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
@@ -109,30 +108,36 @@ export default function ClientsPage() {
                   const bookings = bookingCounts[c.id] ?? 0;
                   const returning = c.packageIds.length > 1 || bookings > 1;
                   return (
-                    <tr key={c.id} className="border-t border-black/5 hover:bg-brand-cream/60">
+                    <tr key={c.id} /* taste-skill-ignore: table row */ className="border-t border-black/5 transition-colors hover:bg-brand-cream/60">
                       <td className="px-5 py-3">
                         <button onClick={() => navigate(`/clients/${c.id}`)} className="flex items-center gap-2 hover:underline">
                           <Avatar name={c.name} size={28} />
                           <span className="text-brand-ink">{c.name}</span>
                         </button>
                       </td>
-                      <td className="px-5 py-3 text-brand-muted">{c.phone}</td>
-                      <td className="px-5 py-3 text-brand-muted">{c.location}</td>
+                      <td className="px-5 py-3 text-brand-ink">{c.phone}</td>
+                      <td className="px-5 py-3 text-brand-ink">{c.location}</td>
                       <td className="px-5 py-3">
                         <div className="flex flex-wrap gap-1">
-                          {c.packageIds.map((pid) => (
-                            <span key={pid} className="rounded-full bg-brand-pink-light px-2 py-0.5 text-[11px] font-medium text-brand-pink">
-                              {packageById(pid)?.shortName ?? pid}
-                            </span>
-                          ))}
+                          {c.packageIds.map((pid) => {
+                            const pkg = packageById(pid);
+                            const minutes = c.packageMinutes?.[pid] ?? pkg?.tiers[0]?.minutes;
+                            return (
+                              <span key={pid} className="rounded-full bg-brand-pink-light px-2.5 py-1 text-xs font-medium text-brand-pink">
+                                {pkg?.shortName ?? pid}
+                                {minutes ? ` · ${minutes} min` : ''}
+                              </span>
+                            );
+                          })}
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-brand-muted">{bookings}</td>
+                      <td className="px-5 py-3 text-brand-ink">{c.preferredDate ? formatDateLabel(c.preferredDate) : <span className="text-brand-muted">Not set</span>}</td>
+                      <td className="px-5 py-3 text-brand-ink">{bookings}</td>
                       <td className="px-5 py-3">
                         <Badge status={returning ? 'completed' : 'upcoming'}>{returning ? 'Returning' : 'New'}</Badge>
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <button onClick={() => navigate(`/clients/${c.id}`)} className="text-xs font-medium text-brand-pink hover:underline">
+                        <button onClick={() => navigate(`/clients/${c.id}`)} className="text-sm font-medium text-brand-pink hover:underline">
                           View
                         </button>
                       </td>
@@ -141,8 +146,8 @@ export default function ClientsPage() {
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-5 py-6 text-center text-sm text-brand-muted">
-                      No active customers match your search.
+                    <td colSpan={8} className="px-5 py-8 text-center text-sm text-brand-muted">
+                      No clients match your search.
                     </td>
                   </tr>
                 )}
@@ -157,9 +162,10 @@ export default function ClientsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Customer</th>
-                  <th className="px-5 py-3 font-medium">Assigned CL</th>
-                  <th className="px-5 py-3 font-medium">Location</th>
+                  <th className="px-5 py-3 font-medium">Client</th>
+                  <th className="px-5 py-3 font-medium">Therapist</th>
+                  <th className="px-5 py-3 font-medium">Treatment</th>
+                  <th className="px-5 py-3 font-medium">Area</th>
                   <th className="px-5 py-3 font-medium">Date &amp; time</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                 </tr>
@@ -168,8 +174,9 @@ export default function ClientsPage() {
                 {filteredUpcoming.map((a) => {
                   const client = clients.find((c) => c.id === a.clientId);
                   const cl = clById(a.clId);
+                  const pkg = packageById(a.packageId);
                   return (
-                    <tr key={a.id} className="border-t border-black/5 hover:bg-brand-cream/60">
+                    <tr key={a.id} /* taste-skill-ignore: table row */ className="border-t border-black/5 transition-colors hover:bg-brand-cream/60">
                       <td className="px-5 py-3">
                         {client && (
                           <button onClick={() => navigate(`/clients/${client.id}`)} className="flex items-center gap-2 hover:underline">
@@ -180,30 +187,32 @@ export default function ClientsPage() {
                       </td>
                       <td className="px-5 py-3">
                         {cl && (
-                          <button onClick={() => navigate(`/cls/${cl.id}`)} className="flex items-center gap-2 text-brand-muted hover:underline">
+                          <button onClick={() => navigate(`/cls/${cl.id}`)} className="flex items-center gap-2 text-brand-ink hover:underline">
                             <Avatar name={cl.name} color={cl.avatarColor} size={22} /> {cl.name}
                           </button>
                         )}
+                        {!cl && <span className="text-brand-muted">Not assigned</span>}
                       </td>
-                      <td className="px-5 py-3 text-brand-muted">
+                      <td className="px-5 py-3 text-brand-ink">{pkg?.shortName ?? a.packageId}</td>
+                      <td className="px-5 py-3 text-brand-ink">
                         <span className="flex items-center gap-1">
-                          <MapPin size={12} /> {a.location}
+                          <MapPin size={13} className="text-brand-muted" /> {a.location}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-brand-muted">
+                      <td className="px-5 py-3 text-brand-ink">
                         <span className="flex items-center gap-1">
-                          <CalendarClock size={12} /> {formatDateLabel(a.date)} · {formatTime12(a.startTime)}
+                          <CalendarClock size={13} className="text-brand-muted" /> {formatDateLabel(a.date)} · {formatTime12(a.startTime)}
                         </span>
                       </td>
                       <td className="px-5 py-3">
-                        <Badge status={a.status}>{a.status}</Badge>
+                        <Badge status={a.status}>{a.status[0].toUpperCase() + a.status.slice(1)}</Badge>
                       </td>
                     </tr>
                   );
                 })}
                 {filteredUpcoming.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-6 text-center text-sm text-brand-muted">
+                    <td colSpan={6} className="px-5 py-8 text-center text-sm text-brand-muted">
                       No upcoming sessions match your search.
                     </td>
                   </tr>
@@ -221,57 +230,68 @@ export default function ClientsPage() {
   );
 }
 
-function AddCustomerModal({
-  onClose,
-  onSubmit,
-}: {
-  onClose: () => void;
-  onSubmit: (input: { name: string; phone: string; location: string }) => void;
-}) {
+const modalInput =
+  'w-full rounded-xl bg-brand-cream px-3 py-2.5 text-sm text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-pink';
+const modalLabel = 'mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brand-ink';
+
+function AddCustomerModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (input: NewClientInput) => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
+  const [preferredDate, setPreferredDate] = useState('');
 
   const canSubmit = name.trim() && phone.trim() && location.trim();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-black/5 p-4">
-          <p className="text-sm font-semibold text-brand-ink">Add new customer</p>
-          <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="add-client-title">
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">{/* taste-skill-ignore: overlay */}
+        <div className="flex items-center justify-between px-6 pt-6">
+          <p id="add-client-title" className="text-lg font-semibold text-brand-ink">
+            Add a client
+          </p>
+          <button onClick={onClose} aria-label="Close" className="rounded-full p-1 text-brand-muted transition-colors hover:bg-brand-cream hover:text-brand-ink">
             <X size={18} />
           </button>
         </div>
-        <div className="space-y-3 p-5">
+        <div className="space-y-4 px-6 py-5">
           <div>
-            <label className="mb-1 block text-xs font-medium text-brand-muted">Full name *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Puan Aisyah Rahman" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
-          </div>
-          <div>
-            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
-              <Phone size={11} /> Phone number *
+            <label htmlFor="new-client-name" className={modalLabel}>
+              Full name
             </label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+60 12-345 6789" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+            <input id="new-client-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Puan Aisyah Rahman" className={modalInput} />
           </div>
           <div>
-            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
-              <MapPin size={11} /> Location *
+            <label htmlFor="new-client-phone" className={modalLabel}>
+              <Phone size={14} className="text-brand-muted" /> Phone number
             </label>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Shah Alam, Selangor" className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink" />
+            <input id="new-client-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="012-345 6789" className={modalInput} />
           </div>
-          <p className="text-xs text-brand-muted">Email, address, due date, notes, and packages can be filled in on the customer's profile next.</p>
+          <div>
+            <label htmlFor="new-client-area" className={modalLabel}>
+              <MapPin size={14} className="text-brand-muted" /> Area
+            </label>
+            <input id="new-client-area" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Kajang" className={modalInput} />
+          </div>
+          <div>
+            <label htmlFor="new-client-date" className={modalLabel}>
+              <CalendarHeart size={14} className="text-brand-muted" /> Preferred date <span className="font-normal text-brand-muted">(optional)</span>
+            </label>
+            <input id="new-client-date" type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} className={modalInput} />
+          </div>
+          <p className="text-sm text-brand-muted">Email, address, notes and treatments can be added on the client's profile next.</p>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-black/5 p-4">
-          <button onClick={onClose} className="rounded-full px-4 py-2 text-sm text-brand-muted hover:bg-brand-cream">
+        <div className="flex items-center justify-end gap-2 px-6 pb-6">
+          <button onClick={onClose} className="rounded-full bg-brand-cream px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-pink-light">
             Cancel
           </button>
           <button
             disabled={!canSubmit}
-            onClick={() => onSubmit({ name: name.trim(), phone: phone.trim(), location: location.trim() })}
-            className="rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white disabled:opacity-30"
+            onClick={() =>
+              onSubmit({ name: name.trim(), phone: phone.trim(), location: location.trim(), preferredDate: preferredDate || undefined })
+            }
+            className="rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-30"
           >
-            Add &amp; complete profile
+            Add and open profile
           </button>
         </div>
       </div>

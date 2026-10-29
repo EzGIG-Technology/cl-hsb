@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from 'react';
-import { X, MapPin, Camera, ClipboardCheck, ShieldCheck, ShieldX, ShieldQuestion, FileSignature, Clock } from 'lucide-react';
+import { X, MapPin, Camera, ClipboardCheck, ShieldCheck, ShieldX, FileSignature, Clock } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Avatar, Badge, formatRM } from '../components/ui';
 import { useAssignmentStore } from '../store/AssignmentStore';
@@ -22,10 +22,10 @@ function verificationFor(a: Assignment): VerificationStatus {
   return 'Verified';
 }
 
-function hoursFor(a: Assignment) {
+function minutesFor(a: Assignment) {
   const [sh, sm] = a.startTime.split(':').map(Number);
   const [eh, em] = a.endTime.split(':').map(Number);
-  return Math.round(((eh * 60 + em - (sh * 60 + sm)) / 60) * 10) / 10;
+  return eh * 60 + em - (sh * 60 + sm);
 }
 
 const approvalNoticeStyles: Record<'Approved' | 'Rejected', string> = {
@@ -39,11 +39,22 @@ function approvalLabel(a: Assignment): 'Pending Approval' | 'Approved' | 'Reject
   return 'Pending Approval';
 }
 
-/** Deterministic mock checklist for the package tied to this visit, so the approval panel has something concrete to review. */
-function checklistFor(a: Assignment, pkgTasks: string[]) {
+/** Deterministic mock checklist built from the treatment's own steps, so the approval panel has something concrete to review. */
+function checklistFor(a: Assignment, treatmentSteps: string[]) {
   const hash = a.id.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  return pkgTasks.slice(0, 5).map((task, i) => ({ task, done: (hash + i) % 9 !== 0 }));
+  return treatmentSteps.map((task, i) => ({ task, done: (hash + i) % 9 !== 0 }));
 }
+
+type Filter = 'all' | VerificationStatus | 'Pending Approval';
+
+const filterLabels: Record<Filter, string> = {
+  all: 'All',
+  'Pending Approval': 'Awaiting approval',
+  Verified: 'Verified',
+  'In Progress': 'In progress',
+  'Missing Check-Out Selfie': 'Missing check-out selfie',
+  'GPS Mismatch': 'GPS mismatch',
+};
 
 export default function VisitsPage() {
   const { assignments, setApproval } = useAssignmentStore();
@@ -52,10 +63,14 @@ export default function VisitsPage() {
   const { packageById } = useSettings();
   const { logAction } = useActivityLog();
   const [inspecting, setInspecting] = useState<Assignment | null>(null);
-  const [filter, setFilter] = useState<'all' | VerificationStatus | 'Pending Approval'>('all');
+  const [filter, setFilter] = useState<Filter>('all');
   const [rejectNote, setRejectNote] = useState('');
 
   const pendingApprovalCount = assignments.filter((a) => a.status === 'completed' && !a.approvalStatus).length;
+  const tracked = assignments.filter((a) => a.status !== 'cancelled').map(verificationFor);
+  const verifiedCount = tracked.filter((s) => s === 'Verified').length;
+  const inProgressCount = tracked.filter((s) => s === 'In Progress').length;
+  const flaggedCount = tracked.filter((s) => s === 'Missing Check-Out Selfie' || s === 'GPS Mismatch').length;
 
   const rows = [...assignments]
     .filter((a) => a.status !== 'cancelled')
@@ -76,7 +91,7 @@ export default function VisitsPage() {
   function approve() {
     if (!inspecting || !cl) return;
     setApproval(inspecting.id, 'approved');
-    logAction('Superadmin', 'Approved completed session', `#${inspecting.id.toUpperCase()} — ${cl.name}`);
+    logAction('Spa Manager', 'Approved completed session', `#${inspecting.id.toUpperCase()} · ${cl.name}`);
     setInspecting(null);
     setRejectNote('');
   }
@@ -84,36 +99,45 @@ export default function VisitsPage() {
   function reject() {
     if (!inspecting || !cl) return;
     setApproval(inspecting.id, 'rejected', rejectNote || undefined);
-    logAction('Superadmin', 'Rejected completed session', `#${inspecting.id.toUpperCase()} — ${cl.name}${rejectNote ? ` (${rejectNote})` : ''}`);
+    logAction('Spa Manager', 'Rejected completed session', `#${inspecting.id.toUpperCase()} · ${cl.name}${rejectNote ? ` (${rejectNote})` : ''}`);
     setInspecting(null);
     setRejectNote('');
   }
 
   return (
     <PageShell
-      title="Visit Records & Audit"
-      subtitle="Every check-in, checklist, and check-out — logged for dispute resolution and session approval."
+      title="Session records"
+      subtitle="Every check-in, treatment checklist and check-out, kept for complaints and session approval."
     >
-      {pendingApprovalCount > 0 && (
-        <button
+      <Card className="grid grid-cols-2 gap-6 !p-6 lg:grid-cols-4">
+        <HeadlineFigure
+          label="Awaiting approval"
+          value={pendingApprovalCount}
+          tone="text-brand-amber"
+          active={filter === 'Pending Approval'}
           onClick={() => setFilter('Pending Approval')}
-          className="mb-4 flex w-full items-center gap-2 rounded-xl border border-brand-amber/30 bg-brand-amber-light px-4 py-2.5 text-sm text-brand-amber hover:bg-brand-amber-light/70"
-        >
-          <ShieldQuestion size={15} className="shrink-0" />
-          {pendingApprovalCount} completed session{pendingApprovalCount === 1 ? '' : 's'} awaiting Superadmin approval — review selfies & checklist below.
-        </button>
-      )}
+        />
+        <HeadlineFigure label="Verified" value={verifiedCount} tone="text-brand-lavender" active={filter === 'Verified'} onClick={() => setFilter('Verified')} />
+        <HeadlineFigure label="In progress" value={inProgressCount} tone="text-brand-ink" active={filter === 'In Progress'} onClick={() => setFilter('In Progress')} />
+        <HeadlineFigure
+          label="Missing selfie or GPS mismatch"
+          value={flaggedCount}
+          tone={flaggedCount > 0 ? 'text-red-600' : 'text-brand-ink'}
+          active={filter === 'Missing Check-Out Selfie' || filter === 'GPS Mismatch'}
+          onClick={() => setFilter('GPS Mismatch')}
+        />
+      </Card>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-5 mt-8 flex flex-wrap gap-2">
         {(['all', 'Pending Approval', 'Verified', 'In Progress', 'Missing Check-Out Selfie', 'GPS Mismatch'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-              filter === f ? 'bg-brand-pink text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
+              filter === f ? 'bg-brand-pink text-white' : 'bg-white text-brand-ink hover:bg-brand-pink-light'
             }`}
           >
-            {f === 'all' ? 'All' : f}
+            {filterLabels[f]}
           </button>
         ))}
       </div>
@@ -122,15 +146,17 @@ export default function VisitsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-brand-muted">
-                <th className="px-5 py-3 font-medium">Date / clock-in</th>
-                <th className="px-5 py-3 font-medium">Caregiver</th>
-                <th className="px-5 py-3 font-medium">Customer</th>
-                <th className="px-5 py-3 font-medium">Job amount</th>
-                <th className="px-5 py-3 font-medium">Actual hours</th>
-                <th className="px-5 py-3 font-medium">Verification</th>
-                <th className="px-5 py-3 font-medium">Approval</th>
-                <th className="px-5 py-3 font-medium"></th>
+              <tr className="text-left text-sm text-brand-muted">
+                <th className="px-6 py-4 font-medium">Date & check-in</th>
+                <th className="px-6 py-4 font-medium">Therapist</th>
+                <th className="px-6 py-4 font-medium">Client</th>
+                <th className="px-6 py-4 font-medium">Treatment</th>
+                <th className="px-6 py-4 font-medium">Session time</th>
+                <th className="px-6 py-4 font-medium">Verification</th>
+                <th className="px-6 py-4 font-medium">Approval</th>
+                <th className="px-6 py-4 font-medium">
+                  <span className="sr-only">Action</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -138,32 +164,44 @@ export default function VisitsPage() {
                 const rowCl = cls.find((c) => c.id === a.clId);
                 const rowClient = clients.find((c) => c.id === a.clientId);
                 const rowPkg = packageById(a.packageId);
-                const amount = rowPkg?.tiers[0]?.price ?? 0;
+                const amount = (rowPkg?.tiers.find((t) => t.minutes === minutesFor(a)) ?? rowPkg?.tiers[0])?.price ?? 0;
                 return (
-                  <tr key={a.id} className="border-t border-black/5">
-                    <td className="px-5 py-3 text-brand-muted">
+                  <tr key={a.id} className="border-t border-brand-cream">{/* taste-skill-ignore: table row */}
+                    <td className="px-6 py-3.5 tabular-nums text-brand-ink">
                       {formatDateLabel(a.date)} · {formatTime12(a.startTime)}
                     </td>
-                    <td className="flex items-center gap-2 px-5 py-3">
-                      {rowCl && <Avatar name={rowCl.name} color={rowCl.avatarColor} size={24} />}
-                      <span className="text-brand-ink">{rowCl?.name}</span>
+                    <td className="px-6 py-3.5">
+                      <span className="flex items-center gap-2.5">
+                        {rowCl && <Avatar name={rowCl.name} color={rowCl.avatarColor} size={28} />}
+                        <span className="font-medium text-brand-ink">{rowCl?.name}</span>
+                      </span>
                     </td>
-                    <td className="px-5 py-3 text-brand-muted">{rowClient?.name}</td>
-                    <td className="px-5 py-3 text-brand-muted">{formatRM(amount)}</td>
-                    <td className="px-5 py-3 text-brand-muted">{hoursFor(a)}h</td>
-                    <td className="px-5 py-3">
-                      <Badge status={status}>{status}</Badge>
+                    <td className="px-6 py-3.5 text-brand-ink">{rowClient?.name}</td>
+                    <td className="px-6 py-3.5 text-brand-ink">
+                      {rowPkg?.shortName}
+                      <span className="block text-xs tabular-nums text-brand-muted">{formatRM(amount)}</span>
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-6 py-3.5 tabular-nums text-brand-ink">{minutesFor(a)} min</td>
+                    <td className="px-6 py-3.5">
+                      <Badge status={status}>{statusLabel(status)}</Badge>
+                    </td>
+                    <td className="px-6 py-3.5">
                       {a.status === 'completed' ? (
-                        <Badge status={approvalLabel(a)}>{approvalLabel(a)}</Badge>
+                        <Badge status={approvalLabel(a)}>{approvalText(a)}</Badge>
                       ) : (
-                        <span className="text-xs text-brand-muted">—</span>
+                        <span className="text-xs text-brand-muted">Not due</span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-right">
-                      <button onClick={() => setInspecting(a)} className="text-xs font-medium text-brand-pink hover:underline">
-                        {a.status === 'completed' && !a.approvalStatus ? 'Review & Approve' : 'Inspect'}
+                    <td className="px-6 py-3.5 text-right">
+                      <button
+                        onClick={() => setInspecting(a)}
+                        className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                          a.status === 'completed' && !a.approvalStatus
+                            ? 'bg-brand-pink text-white hover:bg-brand-pink-dark'
+                            : 'bg-brand-cream text-brand-ink hover:bg-brand-pink-light'
+                        }`}
+                      >
+                        {a.status === 'completed' && !a.approvalStatus ? 'Review' : 'Inspect'}
                       </button>
                     </td>
                   </tr>
@@ -171,8 +209,8 @@ export default function VisitsPage() {
               })}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-6 text-center text-sm text-brand-muted">
-                    No visits match this filter.
+                  <td colSpan={8} className="px-6 py-10 text-center text-sm text-brand-muted">
+                    No sessions match this filter.
                   </td>
                 </tr>
               )}
@@ -183,120 +221,139 @@ export default function VisitsPage() {
       </Card>
 
       {inspecting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-black/5 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="session-approval-title">
+          <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-3xl bg-white shadow-xl">{/* taste-skill-ignore: overlay */}
+            <div className="flex items-start justify-between gap-4 px-6 pt-6">
               <div>
-                <p className="text-sm font-semibold text-brand-ink">Session approval</p>
-                <p className="text-xs text-brand-muted">
-                  #{inspecting.id.toUpperCase()} — {cl?.name} for {client?.name}
+                <h2 id="session-approval-title" className="text-lg font-semibold text-brand-ink">
+                  Session approval
+                </h2>
+                <p className="mt-1 text-sm text-brand-muted">
+                  <span className="tabular-nums">#{inspecting.id.toUpperCase()}</span> · {cl?.name} with {client?.name}
                 </p>
               </div>
-              <button onClick={() => setInspecting(null)} className="text-brand-muted hover:text-brand-ink">
+              <button
+                onClick={() => setInspecting(null)}
+                aria-label="Close"
+                className="rounded-full p-1.5 text-brand-muted transition-colors hover:bg-brand-cream hover:text-brand-ink"
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="max-h-[65vh] space-y-4 overflow-y-auto p-5 text-sm">
-              <div className="flex items-center gap-2 rounded-xl bg-brand-ink px-3 py-2.5 text-white">
-                <Clock size={15} className="shrink-0" />
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 text-sm">
+              <div className="flex items-center gap-3 rounded-2xl bg-brand-lavender-dark px-4 py-3 text-white">
+                <Clock size={18} className="shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold leading-tight">{hoursFor(inspecting)}h total session time</p>
-                  <p className="text-[11px] text-white/70">
-                    {formatTime12(inspecting.startTime)} – {formatTime12(inspecting.endTime)}
+                  <p className="text-base font-semibold leading-tight">
+                    {minutesFor(inspecting)} min session{pkg ? ` · ${pkg.shortName}` : ''}
+                  </p>
+                  <p className="mt-0.5 text-xs tabular-nums text-white/75">
+                    {formatDateLabel(inspecting.date)}, {formatTime12(inspecting.startTime)} to {formatTime12(inspecting.endTime)}
                   </p>
                 </div>
               </div>
 
-              <div>
-                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">Proof of location selfies</p>
-                <div className="grid grid-cols-2 gap-2">
+              <section>
+                <h3 className="mb-2 text-sm font-medium text-brand-ink">Proof of location</h3>
+                <div className="grid grid-cols-2 gap-3">
                   <VisitSelfieTile
                     assignmentId={inspecting.id}
                     kind="checkin"
-                    label="Before — check-in selfie"
+                    label="Check-in selfie"
                     time={formatTime12(inspecting.startTime)}
-                    colorClass="from-brand-lavender-light to-brand-lavender/20 text-brand-lavender"
+                    colorClass="bg-brand-lavender-light text-brand-lavender"
                   />
                   <VisitSelfieTile
                     assignmentId={inspecting.id}
                     kind="checkout"
-                    label="After — check-out selfie"
+                    label="Check-out selfie"
                     time={formatTime12(inspecting.endTime)}
-                    colorClass="from-brand-pink-light to-brand-pink/20 text-brand-pink"
+                    colorClass="bg-brand-pink-light text-brand-pink"
                   />
                 </div>
-                <div className="mt-2 flex items-center gap-2 rounded-lg bg-brand-cream p-2.5 text-xs text-brand-ink">
-                  <MapPin size={13} className="shrink-0 text-brand-lavender" /> GPS pin at {inspecting.location} — within 80m of registered address, matched both check-in and check-out
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-                  <ClipboardCheck size={13} /> Package checklist
+                <p className="mt-3 flex items-start gap-2 rounded-xl bg-brand-cream p-3 text-sm text-brand-ink">
+                  <MapPin size={15} className="mt-0.5 shrink-0 text-brand-lavender" />
+                  GPS pin at {inspecting.location}, within 80 m of the registered address at both check-in and check-out.
                 </p>
-                <div className="space-y-1.5 rounded-xl border border-black/5 p-2.5">
+              </section>
+
+              <section>
+                <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-brand-ink">
+                  <ClipboardCheck size={15} className="text-brand-lavender" /> Treatment checklist
+                </h3>
+                <ul className="space-y-2 rounded-2xl bg-brand-cream p-4">
                   {checklist.map((c, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs">
+                    <li key={i} className="flex items-center gap-2 text-sm">
                       {c.done ? (
-                        <ShieldCheck size={13} className="shrink-0 text-brand-lavender" />
+                        <ShieldCheck size={15} className="shrink-0 text-brand-lavender" />
                       ) : (
-                        <ShieldX size={13} className="shrink-0 text-red-500" />
+                        <ShieldX size={15} className="shrink-0 text-red-500" />
                       )}
                       <span className={c.done ? 'text-brand-ink' : 'text-red-600'}>{c.task}</span>
-                    </div>
+                    </li>
                   ))}
-                  {checklist.length === 0 && <p className="text-xs text-brand-muted">No checklist tasks on file for this package.</p>}
-                </div>
-                {!allChecked && (
-                  <p className="mt-1.5 text-[11px] text-red-600">Some checklist items are missing photo proof — review before approving.</p>
-                )}
-              </div>
+                  {checklist.length === 0 && <li className="text-sm text-brand-muted">No treatment steps on file for this treatment.</li>}
+                </ul>
+                {!allChecked && <p className="mt-2 text-xs text-red-600">Some steps are missing photo proof. Check them before approving.</p>}
+              </section>
 
-              <div>
-                <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-                  <FileSignature size={13} /> Signed checklist form
-                </p>
+              <section>
+                <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-brand-ink">
+                  <FileSignature size={15} className="text-brand-amber" /> Signed checklist form
+                </h3>
                 <VisitSelfieTile
                   assignmentId={inspecting.id}
                   kind="form"
-                  label="Customer-signed checklist photo"
-                  colorClass="from-brand-amber-light to-brand-amber/20 text-brand-amber"
+                  label="Photo of the checklist signed by the client"
+                  colorClass="bg-brand-amber-light text-brand-amber"
                   aspect="aspect-[4/3]"
                   icon={FileSignature}
                 />
-              </div>
+              </section>
 
               {inspecting.status === 'completed' && !inspecting.approvalStatus ? (
-                <div>
-                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">Rejection note (if rejecting)</p>
+                <section>
+                  <label htmlFor="reject-note" className="mb-2 block text-sm font-medium text-brand-ink">
+                    Rejection note <span className="font-normal text-brand-muted">(only if rejecting)</span>
+                  </label>
                   <textarea
+                    id="reject-note"
                     value={rejectNote}
                     onChange={(e) => setRejectNote(e.target.value)}
-                    placeholder="Optional — explain what's missing or wrong"
+                    placeholder="What is missing or wrong?"
                     rows={2}
-                    className="w-full rounded-lg border border-black/10 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-pink"
+                    className="w-full rounded-xl bg-brand-cream p-3 text-sm text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-pink"
                   />
-                </div>
+                </section>
               ) : inspecting.approvalStatus ? (
-                <div className={`flex items-center gap-2 rounded-lg p-3 text-xs font-medium ${approvalNoticeStyles[inspecting.approvalStatus === 'approved' ? 'Approved' : 'Rejected']}`}>
-                  {inspecting.approvalStatus === 'approved' ? <ShieldCheck size={14} /> : <ShieldX size={14} />}
+                <div className={`flex items-center gap-2 rounded-xl p-3 text-sm font-medium ${approvalNoticeStyles[inspecting.approvalStatus === 'approved' ? 'Approved' : 'Rejected']}`}>
+                  {inspecting.approvalStatus === 'approved' ? <ShieldCheck size={15} /> : <ShieldX size={15} />}
                   This session was already {approvalLabel(inspecting).toLowerCase()}
-                  {inspecting.approvalNote ? ` — ${inspecting.approvalNote}` : ''}.
+                  {inspecting.approvalNote ? `: ${inspecting.approvalNote}` : ''}.
                 </div>
               ) : null}
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-black/5 p-4">
+            <div className="flex items-center justify-end gap-2 rounded-b-3xl bg-brand-cream px-6 py-4">
               {inspecting.status === 'completed' && !inspecting.approvalStatus ? (
                 <>
-                  <button onClick={reject} className="flex items-center gap-1.5 rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
-                    <ShieldX size={14} /> Reject
+                  <button
+                    onClick={reject}
+                    className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <ShieldX size={15} /> Reject
                   </button>
-                  <button onClick={approve} className="flex items-center gap-1.5 rounded-full bg-brand-lavender px-4 py-2 text-sm font-medium text-white hover:opacity-90">
-                    <ShieldCheck size={14} /> Approve session
+                  <button
+                    onClick={approve}
+                    className="flex items-center gap-1.5 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark"
+                  >
+                    <ShieldCheck size={15} /> Approve session
                   </button>
                 </>
               ) : (
-                <button onClick={() => setInspecting(null)} className="rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white">
+                <button
+                  onClick={() => setInspecting(null)}
+                  className="rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark"
+                >
                   Close
                 </button>
               )}
@@ -309,9 +366,43 @@ export default function VisitsPage() {
   );
 }
 
+function statusLabel(status: VerificationStatus) {
+  return filterLabels[status];
+}
+
+function approvalText(a: Assignment) {
+  const label = approvalLabel(a);
+  return label === 'Pending Approval' ? 'Awaiting approval' : label;
+}
+
+function HeadlineFigure({
+  label,
+  value,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  tone: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={`-m-2 rounded-2xl p-2 text-left transition-colors hover:bg-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${active ? 'bg-brand-cream' : ''}`}
+    >
+      <span className="block text-sm text-brand-muted">{label}</span>
+      <span className={`mt-2 block text-4xl font-semibold tracking-tight tabular-nums ${tone}`}>{value}</span>
+    </button>
+  );
+}
+
 /**
- * Real photo capture for visit proof, persisted via the generic AvatarStore (string-keyed, not
- * CL-specific) so it survives closing/reopening the inspection modal — matching how every other
+ * Real photo capture for session proof, persisted via the generic AvatarStore (string-keyed, not
+ * therapist-specific) so it survives closing/reopening the inspection modal, matching how every other
  * photo feature in the app (avatar, treatment photo) already works, instead of a decorative box.
  */
 function VisitSelfieTile({
@@ -343,15 +434,16 @@ function VisitSelfieTile({
 
   return (
     <label
-      className={`relative flex ${aspect} cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-gradient-to-br text-center ${colorClass}`}
+      className={`relative flex ${aspect} cursor-pointer flex-col items-center justify-center gap-1.5 overflow-hidden rounded-2xl text-center transition-opacity hover:opacity-90 ${colorClass}`}
     >
       {dataUrl ? (
         <img src={dataUrl} alt={label} className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <>
-          <Icon size={20} />
-          <span className="px-2 text-[10px] font-medium">{label}</span>
-          {time && <span className="text-[9px] opacity-70">{time}</span>}
+          <Icon size={22} />
+          <span className="px-3 text-xs font-medium">{label}</span>
+          {time && <span className="text-xs tabular-nums opacity-75">{time}</span>}
+          <span className="text-xs opacity-75">Tap to add a photo</span>
         </>
       )}
       <input type="file" accept="image/*" capture={kind === 'form' ? 'environment' : 'user'} onChange={handleUpload} className="hidden" />
