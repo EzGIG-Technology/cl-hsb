@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, X, ChevronRight, ChevronLeft, Star, Sparkles, Check, ClipboardList } from 'lucide-react';
+import { Plus, X, ChevronRight, ChevronLeft, Star, Sparkles, Check, ClipboardList, MapPin, Info } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { PackageArt } from '../components/PackageArt';
 import { Card, Badge, Avatar, formatRM } from '../components/ui';
@@ -10,9 +10,25 @@ import { useCLStore } from '../store/CLStore';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatDateLabel, formatTime12, TODAY, toDateStr } from '../lib/date';
-import type { Client, Package, Therapist } from '../types';
+import type { AssignmentStatus, Client, Package, Therapist } from '../types';
 
 type Tab = 'unassigned' | 'active' | 'completed' | 'cancelled';
+
+const statusLabels: Record<AssignmentStatus, string> = {
+  confirmed: 'Confirmed',
+  pending: 'Pending',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+/** New bookings default to the first slot of the day: the spa opens at 10.30am. */
+const DEFAULT_START = '10:30';
+
+function addMinutes(time: string, minutes: number) {
+  const [h, m] = time.split(':').map(Number);
+  const total = h * 60 + m + minutes;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
 
 export default function BookingsPage() {
   const { assignments, unassignedClientIds } = useAssignmentStore();
@@ -22,6 +38,7 @@ export default function BookingsPage() {
   const [tab, setTab] = useState<Tab>('unassigned');
   const [areaFilter, setAreaFilter] = useState('all');
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardClientId, setWizardClientId] = useState<string | null>(null);
 
   const areas = useMemo(() => Array.from(new Set(clients.map((c) => c.location))).sort(), [clients]);
 
@@ -42,44 +59,66 @@ export default function BookingsPage() {
     { id: 'cancelled', label: 'Cancelled', count: filteredCancelled.length },
   ];
 
+  function openWizard(clientId: string | null = null) {
+    setWizardClientId(clientId);
+    setWizardOpen(true);
+  }
+
+  const bookingRows = tab === 'active' ? filteredActive : tab === 'completed' ? filteredCompleted : filteredCancelled;
+
   return (
     <PageShell
-      title="Bookings & Assignment"
-      subtitle="Manage every booking from request to payroll."
+      title="Bookings"
+      subtitle="Every booking from the client's request to a matched therapist, a finished session and payroll."
       icon={ClipboardList}
-      accentColor="#c42474"
       headerAction={
         <button
-          onClick={() => setWizardOpen(true)}
-          className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark"
+          onClick={() => openWizard()}
+          className="flex items-center gap-1.5 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2"
         >
-          <PlusCircle size={15} /> New Booking
+          <Plus size={16} /> New booking
         </button>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2" role="tablist">
           {tabs.map((t) => (
             <button
               key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                tab === t.id ? 'bg-brand-pink text-white' : 'border border-black/10 bg-white text-brand-ink hover:bg-brand-cream'
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
+                tab === t.id ? 'bg-brand-pink text-white' : 'bg-white text-brand-ink hover:bg-brand-pink-light'
               }`}
             >
               {t.label}
-              <span className={`rounded-full px-1.5 text-xs ${tab === t.id ? 'bg-white/20' : 'bg-brand-cream'}`}>{t.count}</span>
+              <span
+                className={`min-w-6 rounded-full px-1.5 text-center text-xs tabular-nums ${
+                  tab === t.id ? 'bg-white/20 text-white' : 'bg-brand-cream text-brand-muted'
+                }`}
+              >
+                {t.count}
+              </span>
             </button>
           ))}
         </div>
-        <select value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)} className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-brand-ink">
-          <option value="all">All areas</option>
-          {areas.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
+        <label className="flex items-center gap-2 text-sm text-brand-muted">
+          <MapPin size={15} className="text-brand-lavender" />
+          <span className="sr-only">Filter by area</span>
+          <select
+            value={areaFilter}
+            onChange={(e) => setAreaFilter(e.target.value)}
+            className="rounded-full bg-white px-4 py-2 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink"
+          >
+            <option value="all">All areas</option>
+            {areas.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {tab === 'unassigned' && (
@@ -87,37 +126,42 @@ export default function BookingsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Customer</th>
-                  <th className="px-5 py-3 font-medium">Package</th>
-                  <th className="px-5 py-3 font-medium">Area</th>
-                  <th className="px-5 py-3 font-medium">Due date</th>
-                  <th className="px-5 py-3 font-medium"></th>
+                <tr className="text-left text-sm text-brand-muted">
+                  <th className="px-6 py-4 font-medium">Client</th>
+                  <th className="px-6 py-4 font-medium">Treatment</th>
+                  <th className="px-6 py-4 font-medium">Area</th>
+                  <th className="px-6 py-4 font-medium">Preferred date</th>
+                  <th className="px-6 py-4 font-medium">
+                    <span className="sr-only">Action</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUnassigned.map((c) => (
-                  <tr key={c.id} className="border-t border-black/5">
-                    <td className="px-5 py-3">
-                      <Link to={`/clients/${c.id}`} className="flex items-center gap-2 hover:underline">
-                        <Avatar name={c.name} size={26} />
-                        <span className="text-brand-ink">{c.name}</span>
+                  <tr key={c.id} className="border-t border-brand-cream">{/* taste-skill-ignore: table row */}
+                    <td className="px-6 py-3.5">
+                      <Link to={`/clients/${c.id}`} className="flex items-center gap-3 hover:underline">
+                        <Avatar name={c.name} size={30} />
+                        <span className="font-medium text-brand-ink">{c.name}</span>
                       </Link>
                     </td>
-                    <td className="px-5 py-3 text-brand-muted">{packageById(c.packageIds[0])?.shortName}</td>
-                    <td className="px-5 py-3 text-brand-muted">{c.location}</td>
-                    <td className="px-5 py-3 text-brand-muted">{formatDateLabel(c.preferredDate)}</td>
-                    <td className="px-5 py-3 text-right">
-                      <button onClick={() => setWizardOpen(true)} className="text-xs font-medium text-brand-pink hover:underline">
-                        Assign
+                    <td className="px-6 py-3.5 text-brand-ink">{packageById(c.packageIds[0])?.shortName ?? 'Not chosen yet'}</td>
+                    <td className="px-6 py-3.5 text-brand-ink">{c.location}</td>
+                    <td className="px-6 py-3.5 tabular-nums text-brand-ink">{c.preferredDate ? formatDateLabel(c.preferredDate) : 'Any day'}</td>
+                    <td className="px-6 py-3.5 text-right">
+                      <button
+                        onClick={() => openWizard(c.id)}
+                        className="rounded-full bg-brand-pink-light px-4 py-1.5 text-sm font-medium text-brand-pink transition-colors hover:bg-brand-pink hover:text-white"
+                      >
+                        Assign therapist
                       </button>
                     </td>
                   </tr>
                 ))}
                 {filteredUnassigned.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-6 text-center text-sm text-brand-muted">
-                      No unassigned bookings.
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-brand-muted">
+                      Every booking in this area has a therapist.
                     </td>
                   </tr>
                 )}
@@ -128,53 +172,60 @@ export default function BookingsPage() {
         </Card>
       )}
 
-      {(tab === 'active' || tab === 'completed' || tab === 'cancelled') && (
+      {tab !== 'unassigned' && (
         <Card className="!p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Booking</th>
-                  <th className="px-5 py-3 font-medium">Customer</th>
-                  <th className="px-5 py-3 font-medium">Caregiver</th>
-                  <th className="px-5 py-3 font-medium">Package</th>
-                  <th className="px-5 py-3 font-medium">Date</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
+                <tr className="text-left text-sm text-brand-muted">
+                  <th className="px-6 py-4 font-medium">Booking</th>
+                  <th className="px-6 py-4 font-medium">Client</th>
+                  <th className="px-6 py-4 font-medium">Therapist</th>
+                  <th className="px-6 py-4 font-medium">Treatment</th>
+                  <th className="px-6 py-4 font-medium">Date</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {(tab === 'active' ? filteredActive : tab === 'completed' ? filteredCompleted : filteredCancelled).map((a) => {
+                {bookingRows.map((a) => {
                   const client = clients.find((c) => c.id === a.clientId);
                   const cl = cls.find((c) => c.id === a.clId);
                   const pkg = packageById(a.packageId);
                   return (
-                    <tr key={a.id} className="border-t border-black/5">
-                      <td className="px-5 py-3 font-mono text-xs text-brand-muted">#{a.id.toUpperCase()}</td>
-                      <td className="px-5 py-3">
+                    <tr key={a.id} className="border-t border-brand-cream">{/* taste-skill-ignore: table row */}
+                      <td className="px-6 py-3.5 tabular-nums text-brand-muted">#{a.id.toUpperCase()}</td>
+                      <td className="px-6 py-3.5">
                         {client && (
-                          <Link to={`/clients/${client.id}`} className="text-brand-ink hover:underline">
+                          <Link to={`/clients/${client.id}`} className="font-medium text-brand-ink hover:underline">
                             {client.name}
                           </Link>
                         )}
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-6 py-3.5">
                         {cl && (
-                          <Link to={`/cls/${cl.id}`} className="flex items-center gap-2 hover:underline">
-                            <Avatar name={cl.name} color={cl.avatarColor} size={24} />
-                            <span className="text-brand-muted">{cl.name}</span>
+                          <Link to={`/cls/${cl.id}`} className="flex items-center gap-2.5 hover:underline">
+                            <Avatar name={cl.name} color={cl.avatarColor} size={28} />
+                            <span className="text-brand-ink">{cl.name}</span>
                           </Link>
                         )}
                       </td>
-                      <td className="px-5 py-3 text-brand-muted">{pkg?.shortName}</td>
-                      <td className="px-5 py-3 text-brand-muted">
+                      <td className="px-6 py-3.5 text-brand-ink">{pkg?.shortName}</td>
+                      <td className="px-6 py-3.5 tabular-nums text-brand-ink">
                         {formatDateLabel(a.date)} · {formatTime12(a.startTime)}
                       </td>
-                      <td className="px-5 py-3">
-                        <Badge status={a.status}>{a.status}</Badge>
+                      <td className="px-6 py-3.5">
+                        <Badge status={a.status}>{statusLabels[a.status]}</Badge>
                       </td>
                     </tr>
                   );
                 })}
+                {bookingRows.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-brand-muted">
+                      No {tab} bookings{areaFilter === 'all' ? '' : ` in ${areaFilter}`}.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -182,26 +233,27 @@ export default function BookingsPage() {
         </Card>
       )}
 
-      {wizardOpen && <NewBookingWizard onClose={() => setWizardOpen(false)} />}
+      {wizardOpen && <NewBookingWizard initialClientId={wizardClientId} onClose={() => setWizardOpen(false)} />}
       <div className="h-6" />
     </PageShell>
   );
 }
 
-function specialtyMatchBonus(cl: Therapist, pkg: Package | null): number {
-  if (!pkg) return 0;
+function specialtyMatches(cl: Therapist, pkg: Package | null): boolean {
+  if (!pkg) return false;
   const pkgText = `${pkg.name} ${pkg.summary} ${pkg.category}`.toLowerCase();
-  const overlaps = cl.specialties.some((s) =>
+  return cl.specialties.some((s) =>
     s
       .toLowerCase()
       .split(/\s+/)
       .filter((w) => w.length > 3)
       .some((w) => pkgText.includes(w)),
   );
-  return overlaps ? 1.5 : 0;
 }
 
-function NewBookingWizard({ onClose }: { onClose: () => void }) {
+const WIZARD_STEPS = ['Client', 'Treatment', 'Therapist', 'Confirm'] as const;
+
+function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; initialClientId: string | null }) {
   const { clients, addClient } = useClientStore();
   const { cls } = useCLStore();
   const { packages } = useSettings();
@@ -209,7 +261,7 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
   const { logAction } = useActivityLog();
 
   const [step, setStep] = useState(1);
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(initialClientId);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [newCustomerLocation, setNewCustomerLocation] = useState('');
@@ -225,22 +277,25 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
   const customer = customerId ? clients.find((c) => c.id === customerId) : null;
   const customerLocation = customer?.location ?? newCustomerLocation;
   const bookingDate = toDateStr(TODAY);
+  const startTime = DEFAULT_START;
+  const endTime = addMinutes(startTime, tierMinutes ?? 60);
 
+  // Ranked by specialty fit first, then area, then experience tier and rating. Anyone on leave or off duty is left out.
   const rankedCLs = useMemo(() => {
     const available = cls.filter(
       (c) =>
         (c.status === 'available' || c.status === 'on-duty') &&
         !c.leavePeriods.some((p) => bookingDate >= p.start && bookingDate <= p.end),
     );
-    return [...available]
+    return available
       .map((c) => {
         const tier = c.completedAssignments >= 250 ? 3 : c.completedAssignments >= 150 ? 2 : c.completedAssignments >= 50 ? 1 : 0;
-        const proximity = customerLocation && c.location.split(',')[0] === customerLocation.split(',')[0] ? 2 : 0;
-        const score = proximity * 10 + tier * 3 + c.rating + specialtyMatchBonus(c, selectedPackage);
-        return { cl: c, score };
+        const sameArea = Boolean(customerLocation) && c.location.split(',')[0] === customerLocation.split(',')[0];
+        const specialtyFit = specialtyMatches(c, selectedPackage);
+        const score = (specialtyFit ? 15 : 0) + (sameArea ? 10 : 0) + tier * 2 + c.rating;
+        return { cl: c, score, sameArea, specialtyFit };
       })
-      .sort((a, b) => b.score - a.score)
-      .map((x) => x.cl);
+      .sort((a, b) => b.score - a.score);
   }, [cls, customerLocation, selectedPackage, bookingDate]);
 
   const selectedCL = clId ? cls.find((c) => c.id === clId) : null;
@@ -257,81 +312,121 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
       clId,
       packageId,
       date: bookingDate,
-      startTime: '09:00',
-      endTime: '13:00',
+      startTime,
+      endTime,
       location: finalCustomer.location,
     });
-    logAction('Front Desk', 'Created new booking', `#${booking.id.toUpperCase()} — ${finalCustomer.name}`);
+    logAction('Front Desk', 'Created new booking', `#${booking.id.toUpperCase()} · ${finalCustomer.name}`);
     setConfirmedCustomer(finalCustomer);
     setConfirmedBookingId(booking.id);
   }
 
+  const canAdvance =
+    !(step === 1 && !customerId && !(newCustomerName.trim() && newCustomerPhone.trim() && newCustomerLocation.trim())) &&
+    !(step === 2 && (!packageId || !tierMinutes)) &&
+    !(step === 3 && !clId);
+
+  const fieldClass = 'w-full rounded-xl bg-white px-4 py-2.5 text-sm text-brand-ink placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-pink';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-black/5 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="new-booking-title">
+      <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-3xl bg-white shadow-xl">{/* taste-skill-ignore: overlay */}
+        <div className="flex items-start justify-between gap-4 px-6 pt-6">
           <div>
-            <p className="text-sm font-semibold text-brand-ink">New Booking</p>
-            {!confirmedBookingId && <p className="text-xs text-brand-muted">Step {step} of 4</p>}
+            <h2 id="new-booking-title" className="text-lg font-semibold text-brand-ink">
+              New booking
+            </h2>
+            {!confirmedBookingId && (
+              <ol className="mt-3 flex flex-wrap items-center gap-1 text-sm" aria-label="Booking steps">
+                {WIZARD_STEPS.map((label, i) => {
+                  const position = i + 1;
+                  const state = position === step ? 'current' : position < step ? 'done' : 'todo';
+                  return (
+                    <li key={label} className="flex items-center gap-1" aria-current={state === 'current' ? 'step' : undefined}>
+                      <span
+                        className={`rounded-full px-3 py-1 transition-colors ${
+                          state === 'current'
+                            ? 'bg-brand-pink font-medium text-white'
+                            : state === 'done'
+                              ? 'text-brand-ink'
+                              : 'text-brand-muted'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                      {position < WIZARD_STEPS.length && <ChevronRight size={14} className="text-brand-muted" aria-hidden />}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </div>
-          <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
+          <button onClick={onClose} aria-label="Close" className="rounded-full p-1.5 text-brand-muted transition-colors hover:bg-brand-cream hover:text-brand-ink">
             <X size={18} />
           </button>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto p-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {confirmedBookingId ? (
             <div className="flex flex-col items-center py-6 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-lavender-light text-brand-lavender">
                 <Check size={28} />
               </div>
-              <p className="mt-3 text-lg font-semibold text-brand-ink">Booking confirmed</p>
-              <p className="mt-1 font-mono text-sm text-brand-pink">#{confirmedBookingId.toUpperCase()}</p>
-              <p className="mt-2 max-w-xs text-sm text-brand-muted">
-                {confirmedCustomer?.name} is now matched with {selectedCL?.name} for {selectedPackage?.name}.
+              <p className="mt-4 text-lg font-semibold text-brand-ink">Booking confirmed</p>
+              <p className="mt-1 text-sm font-medium tabular-nums text-brand-pink">#{confirmedBookingId.toUpperCase()}</p>
+              <p className="mt-3 max-w-sm text-sm text-brand-ink">
+                {confirmedCustomer?.name} is booked with {selectedCL?.name} for {selectedPackage?.name}
+                {tierMinutes ? ` (${tierMinutes} min)` : ''}, {formatDateLabel(bookingDate)} at {formatTime12(startTime)}.
               </p>
             </div>
           ) : (
             <>
               {step === 1 && (
                 <div>
-                  <p className="mb-3 text-sm font-medium text-brand-ink">Choose an existing customer, or add a new one</p>
-                  <div className="max-h-52 space-y-1 overflow-y-auto">
+                  <p className="mb-3 text-sm text-brand-muted">Pick a client, or add someone new.</p>
+                  <div className="max-h-56 space-y-1 overflow-y-auto">
                     {clients.map((c) => (
                       <button
                         key={c.id}
                         onClick={() => setCustomerId(c.id)}
-                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
-                          customerId === c.id ? 'bg-brand-pink-light text-brand-pink-dark' : 'hover:bg-brand-cream'
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                          customerId === c.id ? 'bg-brand-pink-light text-brand-pink-dark' : 'text-brand-ink hover:bg-brand-cream'
                         }`}
                       >
-                        <Avatar name={c.name} size={26} />
-                        <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                        <Avatar name={c.name} size={30} />
+                        <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
                         <span className="text-xs text-brand-muted">{c.location}</span>
+                        {customerId === c.id && <Check size={16} className="text-brand-pink" />}
                       </button>
                     ))}
                   </div>
-                  <div className="mt-4 border-t border-black/5 pt-4">
-                    <p className="mb-2 text-xs font-medium text-brand-muted">Or add a new customer</p>
-                    <div className="flex gap-2">
+                  <div className="mt-5 rounded-2xl bg-brand-cream p-4">
+                    <p className="mb-3 text-sm font-medium text-brand-ink">New client</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <input
                         value={newCustomerName}
-                        onChange={(e) => setNewCustomerName(e.target.value)}
+                        onChange={(e) => {
+                          setNewCustomerName(e.target.value);
+                          if (e.target.value) setCustomerId(null);
+                        }}
                         placeholder="Full name"
-                        className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+                        aria-label="Full name"
+                        className={fieldClass}
                       />
                       <input
                         value={newCustomerPhone}
                         onChange={(e) => setNewCustomerPhone(e.target.value)}
                         placeholder="Phone"
-                        className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+                        aria-label="Phone"
+                        className={fieldClass}
                       />
                     </div>
                     <input
                       value={newCustomerLocation}
                       onChange={(e) => setNewCustomerLocation(e.target.value)}
-                      placeholder="Area (e.g. Shah Alam, Selangor)"
-                      className="mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+                      placeholder="Area (e.g. Kajang, Selangor)"
+                      aria-label="Area"
+                      className={`mt-2 ${fieldClass}`}
                     />
                   </div>
                 </div>
@@ -339,8 +434,8 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
 
               {step === 2 && (
                 <div>
-                  <p className="mb-3 text-sm font-medium text-brand-ink">Select package and duration</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <p className="mb-3 text-sm text-brand-muted">Choose the treatment, then the session length.</p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {packages.map((p) => (
                       <button
                         key={p.id}
@@ -348,31 +443,38 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
                           setPackageId(p.id);
                           setTierMinutes(p.tiers[0]?.minutes ?? null);
                         }}
-                        className={`flex items-center gap-2 rounded-lg border p-2.5 text-left text-sm ${
-                          packageId === p.id ? 'border-brand-pink bg-brand-pink-light text-brand-pink-dark' : 'border-black/10 hover:bg-brand-cream'
+                        className={`flex items-center gap-3 rounded-xl p-2.5 text-left text-sm transition-colors ${
+                          packageId === p.id ? 'bg-brand-pink-light text-brand-pink-dark' : 'bg-brand-cream text-brand-ink hover:bg-brand-pink-light/60'
                         }`}
                       >
-                        <PackageArt pkg={p} size={30} rounded="rounded-lg" />
-                        {p.shortName}
+                        <PackageArt pkg={p} size={36} rounded="rounded-lg" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{p.shortName}</span>
+                          <span className="block text-xs text-brand-muted">
+                            from {formatRM(Math.min(...p.tiers.map((t) => t.price)))}
+                            {p.estimated ? ' · est.' : ''}
+                          </span>
+                        </span>
                       </button>
                     ))}
                   </div>
                   {selectedPackage && selectedPackage.tiers.length > 0 && (
-                    <div className="mt-3">
-                      <p className="mb-1.5 text-xs font-medium text-brand-muted">Tier / duration</p>
-                      <div className="flex flex-wrap gap-1.5">
+                    <div className="mt-6">
+                      <p className="mb-2 text-sm font-medium text-brand-ink">Session length</p>
+                      <div className="flex flex-wrap gap-2">
                         {selectedPackage.tiers.map((t) => (
                           <button
                             key={t.minutes}
                             onClick={() => setTierMinutes(t.minutes)}
-                            className={`rounded-full border px-3 py-1 text-xs ${
-                              tierMinutes === t.minutes ? 'border-brand-pink bg-brand-pink text-white' : 'border-black/10 text-brand-ink hover:bg-brand-cream'
+                            className={`rounded-full px-4 py-2 text-sm tabular-nums transition-colors ${
+                              tierMinutes === t.minutes ? 'bg-brand-pink text-white' : 'bg-brand-cream text-brand-ink hover:bg-brand-pink-light'
                             }`}
                           >
                             {t.minutes} min · {formatRM(t.price)}
                           </button>
                         ))}
                       </div>
+                      {selectedPackage.estimated && <EstimatedNote />}
                     </div>
                   )}
                 </div>
@@ -380,74 +482,71 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
 
               {step === 3 && (
                 <div>
-                  <p className="mb-3 text-sm font-medium text-brand-ink">System-ranked caregivers for this booking</p>
+                  <p className="mb-3 text-sm text-brand-muted">Therapists ranked by specialty fit, area, rating and availability.</p>
                   <div className="space-y-2">
-                    {rankedCLs.slice(0, 5).map((c, i) => {
+                    {rankedCLs.slice(0, 5).map(({ cl: c, sameArea, specialtyFit }, i) => {
                       const tier = c.completedAssignments >= 250 ? 'Platinum' : c.completedAssignments >= 150 ? 'Gold' : c.completedAssignments >= 50 ? 'Silver' : 'Bronze';
                       return (
                         <button
                           key={c.id}
                           onClick={() => setClId(c.id)}
-                          className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
-                            clId === c.id ? 'border-brand-pink bg-brand-pink-light' : 'border-black/10 hover:bg-brand-cream'
+                          className={`flex w-full items-center gap-3 rounded-2xl p-3.5 text-left transition-colors ${
+                            clId === c.id ? 'bg-brand-pink-light' : 'bg-brand-cream hover:bg-brand-pink-light/60'
                           }`}
                         >
-                          <Avatar name={c.name} color={c.avatarColor} size={36} />
+                          <Avatar name={c.name} color={c.avatarColor} size={40} />
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <p className="truncate text-sm font-medium text-brand-ink">{c.name}</p>
                               {i === 0 && (
-                                <span className="flex items-center gap-0.5 rounded-full bg-brand-lavender-light px-2 py-0.5 text-[10px] font-semibold text-brand-lavender">
-                                  <Sparkles size={10} /> Best Match
+                                <span className="flex items-center gap-1 rounded-full bg-brand-lavender px-2 py-0.5 text-xs font-medium text-white">
+                                  <Sparkles size={12} /> Best match
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-brand-muted">
-                              {c.location} · {tier} Tier
+                            <p className="mt-0.5 text-xs text-brand-muted">
+                              {c.location} · {tier} tier
+                              {specialtyFit ? ' · specialty fit' : ''}
+                              {sameArea ? ' · same area' : ''}
                             </p>
                           </div>
-                          <span className="flex items-center gap-1 text-xs text-brand-ink">
-                            <Star size={12} className="fill-brand-amber text-brand-amber" /> {c.rating}
+                          <span className="flex items-center gap-1 text-sm tabular-nums text-brand-ink">
+                            <Star size={14} className="fill-brand-amber text-brand-amber" /> {c.rating}
                           </span>
                         </button>
                       );
                     })}
+                    {rankedCLs.length === 0 && (
+                      <p className="rounded-2xl bg-brand-cream p-4 text-sm text-brand-muted">No therapist is free today. Try another date from the Schedule page.</p>
+                    )}
                   </div>
                 </div>
               )}
 
               {step === 4 && (
                 <div>
-                  <p className="mb-3 text-sm font-medium text-brand-ink">Review & confirm</p>
-                  <div className="space-y-2 rounded-xl bg-brand-cream p-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-brand-muted">Customer</span>
-                      <span className="text-brand-ink">{customer?.name ?? newCustomerName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-brand-muted">Package</span>
-                      <span className="text-brand-ink">
-                        {selectedPackage?.shortName} — {tierMinutes} Hari
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-brand-muted">Caregiver</span>
-                      <span className="text-brand-ink">{selectedCL?.name}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-black/10 pt-2 font-semibold">
-                      <span className="text-brand-ink">Quoted amount</span>
-                      <span className="text-brand-pink">{formatRM(quoted)}</span>
-                    </div>
+                  <p className="mb-3 text-sm text-brand-muted">Check the details, then confirm.</p>
+                  <dl className="space-y-3 rounded-2xl bg-brand-cream p-5 text-sm">
+                    <SummaryRow label="Client" value={customer?.name ?? newCustomerName} />
+                    <SummaryRow label="Treatment" value={`${selectedPackage?.shortName ?? ''} · ${tierMinutes} min`} />
+                    <SummaryRow label="Therapist" value={selectedCL?.name ?? ''} />
+                    <SummaryRow label="When" value={`${formatDateLabel(bookingDate)}, ${formatTime12(startTime)} to ${formatTime12(endTime)}`} />
+                    <SummaryRow label="Where" value={customerLocation} />
+                  </dl>
+                  <div className="mt-5 flex items-end justify-between px-1">
+                    <span className="text-sm text-brand-muted">{selectedPackage?.estimated ? 'Est. price' : 'Price'}</span>
+                    <span className="text-4xl font-semibold tracking-tight tabular-nums text-brand-pink">{formatRM(quoted)}</span>
                   </div>
+                  {selectedPackage?.estimated && <EstimatedNote />}
                 </div>
               )}
             </>
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-black/5 p-4">
+        <div className="flex items-center justify-between gap-3 rounded-b-3xl bg-brand-cream px-6 py-4">
           {confirmedBookingId ? (
-            <button onClick={onClose} className="ml-auto rounded-full bg-brand-pink px-5 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark">
+            <button onClick={onClose} className="ml-auto rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark">
               Done
             </button>
           ) : (
@@ -455,25 +554,21 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
               <button
                 onClick={() => setStep((s) => Math.max(1, s - 1))}
                 disabled={step === 1}
-                className="flex items-center gap-1 rounded-full border border-black/10 px-4 py-2 text-sm text-brand-ink disabled:opacity-30"
+                className="flex items-center gap-1 rounded-full bg-white px-4 py-2.5 text-sm text-brand-ink transition-colors hover:bg-brand-pink-light disabled:opacity-30"
               >
-                <ChevronLeft size={14} /> Back
+                <ChevronLeft size={15} /> Back
               </button>
               {step < 4 ? (
                 <button
                   onClick={() => setStep((s) => s + 1)}
-                  disabled={
-                    (step === 1 && !customerId && !(newCustomerName.trim() && newCustomerPhone.trim() && newCustomerLocation.trim())) ||
-                    (step === 2 && (!packageId || !tierMinutes)) ||
-                    (step === 3 && !clId)
-                  }
-                  className="flex items-center gap-1 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white disabled:opacity-30"
+                  disabled={!canAdvance}
+                  className="flex items-center gap-1 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-30"
                 >
-                  Next <ChevronRight size={14} />
+                  Next <ChevronRight size={15} />
                 </button>
               ) : (
-                <button onClick={confirmBooking} className="rounded-full bg-brand-pink px-5 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark">
-                  Confirm Booking
+                <button onClick={confirmBooking} className="rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark">
+                  Confirm booking
                 </button>
               )}
             </>
@@ -481,5 +576,23 @@ function NewBookingWizard({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt className="text-brand-muted">{label}</dt>
+      <dd className="text-right font-medium text-brand-ink">{value}</dd>
+    </div>
+  );
+}
+
+function EstimatedNote() {
+  return (
+    <p className="mt-3 flex items-start gap-2 rounded-xl bg-brand-amber-light px-3 py-2.5 text-sm text-brand-ink">
+      <Info size={15} className="mt-0.5 shrink-0 text-brand-amber" />
+      Est. price. This treatment is not on the published price list yet, so confirm the price with the client before the session.
+    </p>
   );
 }

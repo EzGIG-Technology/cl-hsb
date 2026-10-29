@@ -31,14 +31,16 @@ function mondayOf(date: Date) {
 
 type ScheduleCategory = 'assigned' | 'active' | 'upcoming' | 'completed' | 'cancelled' | 'unassigned';
 
-const legend: { label: string; category: ScheduleCategory; color: string; swatch: string }[] = [
-  { label: 'Assigned', category: 'assigned', color: '#6f76b0', swatch: 'bg-brand-lavender-light border-brand-lavender/40' },
-  { label: 'Active today', category: 'active', color: '#c42474', swatch: 'bg-brand-pink-light border-brand-pink/40' },
-  { label: 'Upcoming (pending)', category: 'upcoming', color: '#d9921f', swatch: 'bg-brand-amber-light border-brand-amber/50' },
-  { label: 'Completed', category: 'completed', color: '#2563eb', swatch: 'bg-blue-50 border-blue-300' },
-  { label: 'Cancelled', category: 'cancelled', color: '#ef4444', swatch: 'bg-red-50 border-red-300' },
-  { label: 'Unassigned', category: 'unassigned', color: '#ea580c', swatch: 'bg-orange-50 border-orange-300' },
+const legend: { label: string; category: ScheduleCategory; color: string }[] = [
+  { label: 'Assigned', category: 'assigned', color: '#6f76b0' },
+  { label: 'Active today', category: 'active', color: '#c42474' },
+  { label: 'Upcoming (pending)', category: 'upcoming', color: '#d9921f' },
+  { label: 'Completed', category: 'completed', color: '#8c94c4' },
+  { label: 'Cancelled', category: 'cancelled', color: '#b23b3b' },
+  { label: 'Unassigned', category: 'unassigned', color: '#ea580c' },
 ];
+
+const colorOf = (category: ScheduleCategory) => legend.find((l) => l.category === category)?.color ?? '#6f76b0';
 
 function categoryOf(a: Assignment, isToday: boolean): ScheduleCategory {
   if (a.status === 'cancelled') return 'cancelled';
@@ -48,12 +50,9 @@ function categoryOf(a: Assignment, isToday: boolean): ScheduleCategory {
   return 'assigned';
 }
 
-function blockStyle(a: Assignment, isToday: boolean) {
-  if (a.status === 'cancelled') return 'bg-red-50 border-red-300 opacity-80';
-  if (a.status === 'completed') return 'bg-blue-50 border-blue-300';
-  if (a.status === 'pending') return 'bg-brand-amber-light border-brand-amber/50';
-  if (isToday) return 'bg-brand-pink-light border-brand-pink/50';
-  return 'bg-brand-lavender-light border-brand-lavender/40';
+function addMinutes(time: string, minutes: number) {
+  const total = toMinutes(time) + minutes;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 export default function SchedulePage() {

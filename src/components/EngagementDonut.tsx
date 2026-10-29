@@ -6,7 +6,7 @@ interface Segment {
   arc?: boolean;
 }
 
-/** Donut-chart engagement widget (ring + legend), styled after "Attendance today" cards. */
+/** Session-mix ring with its legend: a flat white card, brand colours, the ring itself is the data. */
 export function EngagementDonut({
   title,
   periodLabel,
@@ -30,32 +30,34 @@ export function EngagementDonut({
     const end = (acc / arcTotal) * 360;
     return `${s.color} ${start}deg ${end}deg`;
   });
-  const gradient = stops.length ? `conic-gradient(${stops.join(', ')})` : '#e5e7eb';
+  const hasData = arcSegments.some((s) => s.count > 0);
+  // The conic fill is the chart itself (hard stops, one per segment), not a decorative gradient.
+  const ring = hasData ? `conic-gradient(${stops.join(', ')})` : '#f3e4ec'; // taste-skill-ignore: chart data
 
   return (
-    <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-semibold text-brand-ink">{title}</h3>
-        <span className="text-xs text-brand-muted">{periodLabel}</span>
+    <div className="rounded-2xl bg-white p-6">
+      <div className="mb-5 flex items-baseline justify-between gap-3">
+        <h3 className="text-lg font-semibold text-brand-ink">{title}</h3>
+        <span className="text-sm text-brand-muted">{periodLabel}</span>
       </div>
-      <div className="flex items-center gap-5">
-        <div className="relative h-28 w-28 shrink-0 rounded-full" style={{ background: gradient }}>
-          <div className="absolute inset-2 flex flex-col items-center justify-center rounded-full bg-white text-center">
-            <span className="text-2xl font-semibold text-brand-ink">{total}</span>
-            <span className="text-[10px] text-brand-muted">{totalLabel}</span>
+      <div className="flex items-center gap-6">
+        <div className="relative h-32 w-32 shrink-0 rounded-full" style={{ background: ring }}>
+          <div className="absolute inset-3 flex flex-col items-center justify-center rounded-full bg-white text-center">
+            <span className="text-3xl font-semibold tracking-tight text-brand-ink">{total}</span>
+            <span className="text-xs text-brand-muted">{totalLabel}</span>
           </div>
         </div>
-        <div className="flex-1 space-y-2">
+        <ul className="flex-1 space-y-2.5">
           {segments.map((s) => (
-            <div key={s.label} className="flex items-center justify-between gap-3 text-sm">
+            <li key={s.label} className="flex items-center justify-between gap-3 text-sm">
               <span className="flex items-center gap-2 text-brand-ink">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
                 {s.label}
               </span>
-              <span className="font-medium text-brand-ink">{s.count}</span>
-            </div>
+              <span className="font-semibold text-brand-ink">{s.count}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   );

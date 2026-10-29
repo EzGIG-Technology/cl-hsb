@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 function buildMonthGrid(year: number, monthIndex: number) {
   const firstOfMonth = new Date(year, monthIndex, 1);
@@ -40,34 +40,36 @@ export function MiniCalendar({ selectedDate, onSelect }: MiniCalendarProps) {
   const [cursor, setCursor] = useState(new Date(selectedDate ?? today));
 
   const cells = buildMonthGrid(cursor.getFullYear(), cursor.getMonth());
-  const monthLabel = cursor.toLocaleDateString('en-US', { month: 'long' });
+  const monthLabel = cursor.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-brand-ink">{monthLabel}</span>
+        <span className="text-base font-semibold text-brand-ink">{monthLabel}</span>
         <div className="flex gap-1">
           <button
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            className="rounded-md p-1 text-brand-muted hover:bg-brand-cream hover:text-brand-ink"
+            aria-label="Previous month"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-cream text-brand-ink transition-colors hover:bg-brand-pink-light hover:text-brand-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink"
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={15} />
           </button>
           <button
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            className="rounded-md p-1 text-brand-muted hover:bg-brand-cream hover:text-brand-ink"
+            aria-label="Next month"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-cream text-brand-ink transition-colors hover:bg-brand-pink-light hover:text-brand-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink"
           >
-            <ChevronRight size={14} />
+            <ChevronRight size={15} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1 text-center text-[10px] text-brand-muted">
+      <div className="mb-1 grid grid-cols-7 text-center text-xs text-brand-muted">
         {WEEKDAYS.map((w) => (
           <span key={w}>{w}</span>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
+      <div className="grid grid-cols-7 gap-y-1 text-center text-sm">
         {cells.map(({ day, inMonth, date }, i) => {
           const selected = selectedDate && isSameDay(date, selectedDate);
           const isToday = isSameDay(date, today);
@@ -75,11 +77,11 @@ export function MiniCalendar({ selectedDate, onSelect }: MiniCalendarProps) {
             <button
               key={i}
               onClick={() => onSelect?.(date)}
-              className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+              className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
                 selected
                   ? 'bg-brand-pink font-semibold text-white'
                   : isToday
-                    ? 'border border-brand-pink text-brand-pink'
+                    ? 'bg-brand-pink-light font-semibold text-brand-pink'
                     : inMonth
                       ? 'text-brand-ink hover:bg-brand-cream'
                       : 'text-brand-muted/40'
