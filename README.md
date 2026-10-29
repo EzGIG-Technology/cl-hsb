@@ -1,60 +1,49 @@
-# NR Mothercare Confinement — Admin Console
+# Honey Spa Bangi: Admin Console
 
-A demo admin dashboard, caregiver (CL) mobile app, and mother's review form for **NR Mothercare Confinement**,
-built with React, TypeScript, Vite, Tailwind CSS, and Recharts. Brand colours are the logo's pink (`#d94f8c`)
-and green (`#3c6f57`).
+A demo admin dashboard, therapist mobile app and client review form for **Honey Spa Bangi**, a women-only
+spa at Bangi Sentral, Bandar Baru Bangi. Built with React, TypeScript, Vite, Tailwind CSS and Recharts.
+
+Brand colours come from the Honey Spa logo and price card: magenta `#c42474` (primary), lavender `#6f76b0`
+(the five-petal flower), honey `#d9921f` (the bee) on a blush ground `#fdf6f9`. Type is Jost. The wordmark is
+cut from the published logo (`scripts/optimize-logo.mjs`); the flower-and-bee mark is redrawn as SVG
+(`src/components/Logo.tsx`, `public/favicon.svg`).
 
 ## Admin dashboard pages
 
-**Operations**
-- **Overview / Live Monitor** — alert banners, active-caregiver count, business health KPIs (revenue, rating,
-  repeat rate, utilisation), live care map, live activity stream, month-on-month bookings chart, today's roster
-- **Bookings & Assignment** — Unassigned / Active / Completed / Cancelled tabs, area filter, and a 4-step
-  New Booking wizard (pick customer → package & tier → system-ranked caregiver match → confirm)
-- **Caregiver (CL) Directory** — leaderboard (top 3 by tier/points), full roster table; click through to a
-  profile with stats (sessions, verified hours, lifetime earnings, leaderboard points, good/poor reviews),
-  action buttons (WhatsApp, reports, mark inactive), and Current Schedule / Active / Completed / Monthly tabs.
-  Each profile also has an **internal vs. customer-facing view** (print/PDF-style, strips private info) and
-  banned/complained flagging.
-- **Customer Directory** — click through to a customer profile with editable address, multi-package
-  assignment with a running total, and full booking history
-- **Visit Records & Audit** — every visit with a computed verification status (Verified / In Progress /
-  Missing Check-Out Selfie / GPS Mismatch) and an inspect panel
+**Today**
+- **Overview**: greeting with the outlet's live open/closed status, headline figures (sessions, revenue,
+  rating, therapists on duty), today's roster, activity stream, bookings chart and client map
+- **Bookings**: Unassigned / Active / Completed / Cancelled, area filter, and a New Booking wizard
+  (client → treatment & session length → ranked therapist match → confirm)
+- **Schedule & roster**: week view with status filters
+- **Session records**: every session with a verification status (Verified / In Progress / Missing Check-Out
+  Selfie / GPS Mismatch) and an inspect panel
 
-**Finance & Risk**
-- **Hourly Payroll** — monthly summary (caregiver count, approved/disputed hours, total pay), CSV/Excel export,
-  bulk "mark as paid", per-caregiver approval status
-- **Disputes & Exceptions** — Open/Resolved tickets with severity and a resolve action
+**People**
+- **Therapists**: leaderboard, roster, and profiles with stats, certifications, leave, flagging, and an internal
+  vs client-facing (printable) view
+- **Clients**: profiles with address, treatments and session length, booking history
+- **Messages**: chat with therapists and clients
 
-**Catalog**
-- **Packages & Availability** — every package (Melur, Mawar, Dahlia, Rafflesia, Cempaka, Oversea, Seri Ibu,
-  Keguguran, Penutup Pantang — priced from the real flyers) with day-tier pricing, treatment lists, and a
-  **per-location, per-package slot editor** (daily/weekly/monthly cadence + cap)
+**Menu & money**
+- **Treatments & prices**: the Honey Spa menu with per-length pricing, treatment steps (used as the therapist's
+  session checklist) and availability by area
+- **Payroll**, **Complaints**, **Reports**
 
 **System**
-- **Reports** — revenue, completed assignments, package popularity, rating distribution, CL leaderboard
-- **Messages** — chat with CLs and clients
-- **Settings & Users** — company profile (with logo upload), admin team (Admin / Operations / Finance roles),
-  and a global "reset all demo data" control
-- **Mobile App Preview** — see below
+- **Settings & users**: company profile (address, hours, phone/WhatsApp, socials, logo upload), admin team,
+  reset demo data
+- **Mobile app preview**: Therapist App, Client Review Form (Phase 1) and Client App (Phase 2 preview)
 
-All admin actions (reassign CL, flag a caregiver, edit an address, update a package, etc.) are recorded to a
-live **Activity Log**, surfaced in the header notification bell and on the Overview's Activity Stream.
+All admin actions are recorded to a live Activity Log.
 
-## Mobile app preview (`/mobile-app`)
+## Data
 
-Three switchable modes in one phone mockup:
-
-1. **Confinement Lady App** — Home (caregiver card, monthly stats, today's job, quick actions) / Jobs
-   (Active·Upcoming·Past) / Messages / Earnings (month picker + payslip history) / Profile (particulars,
-   support, a demo persona switcher, log out). Tapping **Open Job** launches the real session flow: check-in →
-   package checklist (photo required per task, pulled live from the assigned package) → photo of the signed
-   closing form → complete.
-2. **Mother's Review Form (Phase 1)** — the only mother-facing piece scoped for launch: a link sent after each
-   session with 4 star-rating categories, free-text feedback, tap-to-sign confirmation, and a "call us instead"
-   escape hatch. Ratings never reach the CL.
-3. **Mother's App (Phase 2 preview)** — clearly labelled as not yet in scope: profile, bookings + add-on
-   packages, reviews, and payments, so the team can plan ahead.
+The treatment menu and company details come from Honey Spa's own price list and public listings; see
+[`docs/honey-spa-audit.md`](docs/honey-spa-audit.md) for sources and the open questions (two treatments
+still have placeholder prices, flagged "Price to confirm"). Therapists, clients, bookings, complaints and
+payroll are illustrative mock data wired through shared React Context stores (`src/store/`), persisted per
+browser in `localStorage` and resettable from **Settings → Reset all demo data**.
 
 ## Local development
 
@@ -67,38 +56,11 @@ npm run dev
 
 ```bash
 npm run build
-npm run preview   # sanity-check the production build locally
+npm run preview
 ```
 
 ## Deploying to Vercel
 
-This is a static single-page app — `vercel.json` already includes the SPA rewrite so client-side routes
-(e.g. `/schedule`, `/cls/:id`, `/packages/:id`) work on refresh/direct link.
-
-**Option A — Vercel CLI**
-
-```bash
-npm i -g vercel
-vercel          # first run links/creates the project, deploys a preview
-vercel --prod   # promote to production
-```
-
-**Option B — GitHub + Vercel dashboard**
-
-1. This repo is already pushed to `https://github.com/ezgig-hq/cl`.
-2. In the Vercel dashboard, "Add New Project" → import that repo.
-3. Framework preset: **Vite**. Build command `npm run build`, output directory `dist` (auto-detected).
-4. Deploy.
-
-No environment variables or backend are required — all data is local mock data plus `localStorage`. Each
-visitor's browser starts from the same seeded dataset; edits persist locally per-browser and can be cleared
-from **Settings → Reset all demo data**.
-
-## Notes on the data
-
-Package pricing/day-tiers for Melur, Mawar, Dahlia, Rafflesia, Cempaka, Oversea, Seri Ibu (prenatal), Keguguran,
-and Penutup Pantang are sourced from the real NR Mothercare pricing flyers. A few tiers for Cempaka/Oversea were
-interpolated where the flyers didn't cover every day-count. Everything else (CL roster, clients, assignments,
-disputes, payroll) is illustrative mock data wired through shared React Context stores (`src/store/`), so admin
-edits made in one page (e.g. reassigning a CL in Bookings) are reflected everywhere else (Schedule, CL profile,
-Overview) in the same session.
+Static single-page app; `vercel.json` includes the SPA rewrite so client-side routes work on refresh.
+Framework preset **Vite**, build command `npm run build`, output directory `dist`. No environment variables or
+backend are required.
