@@ -12,7 +12,7 @@ export const messageThreads: MessageThread[] = [
     lastMessageAt: '10:14',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Morning Mariam, client pertama hari ni Puan Nadia pukul 10.30, traditional 60 min di Bilik 2. Dia alah minyak lavender, guna base oil ye.', time: '09:05' },
+      { id: 'm1', from: 'admin', text: 'Morning Mariam, client pertama pagi ni Puan Nadia pukul 10.30, traditional 60 min di Bilik 2. Dia alah minyak lavender, guna base oil ye.', time: '09:05' },
       { id: 'm2', from: 'them', text: 'Ok noted admin, on the way.', time: '09:40' },
       { id: 'm3', from: 'them', text: 'Dah clock in. Bilik 2 dah siap, tunggu Puan Nadia.', time: '10:14' },
     ],

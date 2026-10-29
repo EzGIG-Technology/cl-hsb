@@ -11,7 +11,8 @@ import { useAssignmentStore } from '../store/AssignmentStore';
 import { TODAY, toDateStr, formatTime12 } from '../lib/date';
 import type { Assignment, Therapist } from '../types';
 
-const DAY_START_MIN = 7 * 60;
+// Grid spans opening hours (10.30am–7.30pm) with half an hour either side.
+const DAY_START_MIN = 10 * 60;
 const DAY_END_MIN = 20 * 60;
 const HOUR_HEIGHT = 76;
 const GRID_HEIGHT = ((DAY_END_MIN - DAY_START_MIN) / 60) * HOUR_HEIGHT;

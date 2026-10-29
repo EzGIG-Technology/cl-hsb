@@ -13,7 +13,7 @@ export function HeroBanner({ name, dateLabel }: { name: string; dateLabel: strin
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-brand-pink px-8 py-9 text-white">
-      <HoneySpaMark size={260} className="pointer-events-none absolute -right-10 -top-8 hidden opacity-25 sm:block" />
+      <HoneySpaMark size={260} className="pointer-events-none absolute -bottom-20 right-6 hidden opacity-25 sm:block" />
       <div className="relative max-w-xl">
         <p className="text-base text-white/80">{dateLabel}</p>
         <h2 className="mt-2 text-5xl font-semibold leading-none tracking-tight">Hello, {name.split(' ')[0]}</h2>

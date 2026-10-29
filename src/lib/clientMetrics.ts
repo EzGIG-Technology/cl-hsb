@@ -20,15 +20,31 @@ export interface ClientMonthSummary {
   isCurrent: boolean;
 }
 
-function priceOf(pkg: Package | undefined) {
-  if (!pkg) return 0;
-  return pkg.tiers[0]?.price ?? 0;
+function slotMinutes(a: Pick<Assignment, 'startTime' | 'endTime'>) {
+  const [sh, sm] = a.startTime.split(':').map(Number);
+  const [eh, em] = a.endTime.split(':').map(Number);
+  return eh * 60 + em - (sh * 60 + sm);
 }
 
 /**
- * Monthly spend + session-count breakdown for a customer. Aug 2026 uses real seeded booking data;
- * earlier months are deterministic mock history (dataset only spans a few real days), seeded by
- * client id so the numbers stay stable across renders.
+ * Price of one session: the price of the tier the client booked. The tier is matched on the
+ * session's own length first (a 90-min slot = the 90-min price), then on the length saved on the
+ * client (`packageMinutes`), and falls back to the treatment's first tier.
+ */
+export function sessionPrice(a: Assignment, client: Client, pkg: Package | undefined) {
+  if (!pkg || pkg.tiers.length === 0) return 0;
+  const byLength = pkg.tiers.find((t) => t.minutes === slotMinutes(a));
+  if (byLength) return byLength.price;
+  const saved = client.packageMinutes?.[pkg.id];
+  const bySaved = saved ? pkg.tiers.find((t) => t.minutes === saved) : undefined;
+  return (bySaved ?? pkg.tiers[0]).price;
+}
+
+/**
+ * Monthly spend and session-count breakdown for a client. Aug 2026 uses the real seeded sessions,
+ * each priced at its booked tier. Earlier months are deterministic mock history (the dataset only
+ * spans a few real days), seeded by client id so the numbers stay stable across renders: a regular
+ * comes in one to four times a month and spends RM 50 to RM 160 a visit.
  */
 export function monthlySpendForClient(
   client: Client,
@@ -44,12 +60,12 @@ export function monthlySpendForClient(
       const cancelled = bookingsForClient.filter((a) => a.status === 'cancelled').length;
       const spent = bookingsForClient
         .filter((a) => a.status === 'completed' || a.status === 'confirmed')
-        .reduce((sum, a) => sum + priceOf(packageById(a.packageId)), 0);
+        .reduce((sum, a) => sum + sessionPrice(a, client, packageById(a.packageId)), 0);
       return { month: `${label} 2026`, sessionsPlanned: planned, sessionsCompleted: completed, sessionsCancelled: cancelled, spent, isCurrent };
     }
     const sessionsCompleted = 1 + Math.floor(rand() * 4);
     const sessionsCancelled = rand() > 0.7 ? 1 : 0;
-    const spent = sessionsCompleted * (800 + Math.floor(rand() * 700));
+    const spent = sessionsCompleted * (50 + Math.floor(rand() * 11) * 10);
     return {
       month: `${label} 2026`,
       sessionsPlanned: sessionsCompleted + sessionsCancelled,

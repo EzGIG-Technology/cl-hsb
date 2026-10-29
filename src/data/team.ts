@@ -246,7 +246,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'Tamil'],
     yearsExperience: 6,
     flag: 'none',
-    bio: 'Gentle and careful with detail. Popular with Tamil-speaking clients and with expecting mothers coming in from Nilai.',
+    bio: 'Gentle and careful with detail. Popular with Tamil-speaking clients and with pregnant clients coming in from Nilai.',
     shiftAvailability: 'both',
   },
   {

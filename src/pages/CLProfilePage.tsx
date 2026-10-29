@@ -219,7 +219,7 @@ export default function CLProfilePage() {
         </div>
         <p className="mt-5 text-sm text-brand-muted">
           {scheduleRows.length} {scheduleRows.length === 1 ? 'session' : 'sessions'} planned
-          {metrics.currentJobId && metrics.currentJobId !== '\u2014' ? ` · current session ${metrics.currentJobId}` : ''}
+          {metrics.currentJobId ? ` · current session ${metrics.currentJobId}` : ''}
         </p>
       </Card>
 

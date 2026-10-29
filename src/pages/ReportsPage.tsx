@@ -154,12 +154,12 @@ export default function ReportsPage() {
               <YAxis hide />
               <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={tooltipStyle} cursor={{ fill: C.grid, opacity: 0.6 }} />
               <Legend wrapperStyle={{ fontSize: 13 }} iconType="circle" />
-              <Bar dataKey="revenue" name="Revenue" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="revenue" name="Revenue" fill={C.magenta} radius={[6, 6, 0, 0]}>
                 {financeChartData.map((m) => (
                   <Cell key={m.month} fill={C.magenta} fillOpacity={m.month === selectedMonth ? 1 : 0.55} />
                 ))}
               </Bar>
-              <Bar dataKey="payroll" name="Paid to therapists" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="payroll" name="Paid to therapists" fill={C.honey} radius={[6, 6, 0, 0]}>
                 {financeChartData.map((m) => (
                   <Cell key={m.month} fill={C.honey} fillOpacity={m.month === selectedMonth ? 1 : 0.55} />
                 ))}

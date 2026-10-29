@@ -1,8 +1,14 @@
 import type { Therapist, Assignment } from '../types';
 
-export const HOURLY_RATE = 22;
-export const HOURS_PER_SESSION = 4;
-/** Last 6 months ending at the demo's "today" (Aug 2026) — Aug uses real seeded assignment data, earlier months are deterministic mock history. */
+/**
+ * Therapist pay is a commission on treatment time: RM 40 for every hour on the bed. That is half of a
+ * 60-minute traditional massage (RM 80) and 40% of a 30-minute back or foot session (RM 50 for half an
+ * hour), which lands monthly payroll at roughly 45% of revenue.
+ */
+export const HOURLY_RATE = 40;
+/** Average treatment time per session, used where only a session count is known (lifetime totals, mock history). */
+export const HOURS_PER_SESSION = 1;
+/** Last 6 months ending at the demo's "today" (Aug 2026). Aug uses real seeded session data, earlier months are deterministic mock history. */
 const MONTH_LABELS = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'] as const;
 
 /** Small deterministic PRNG keyed by a string id, so mock monthly history stays stable across renders/reloads instead of re-randomizing. */
@@ -15,6 +21,14 @@ function seededRandom(seed: string) {
   };
 }
 
+/** Treatment time of one session in hours, from its start and end time (30 min = 0.5). */
+export function sessionHours(a: Pick<Assignment, 'startTime' | 'endTime'>) {
+  const [sh, sm] = a.startTime.split(':').map(Number);
+  const [eh, em] = a.endTime.split(':').map(Number);
+  const minutes = eh * 60 + em - (sh * 60 + sm);
+  return minutes > 0 ? minutes / 60 : HOURS_PER_SESSION;
+}
+
 export interface CLMonthSummary {
   month: string;
   approvedSessions: number;
@@ -25,9 +39,11 @@ export interface CLMonthSummary {
 }
 
 /**
- * Monthly approved-vs-disapproved session breakdown and pay for a CL. Aug 2026 (the demo's "now")
- * is computed from real seeded/store assignment + approval data; earlier months are seeded mock
- * history since the dataset only spans a few days — deterministic per CL id so numbers don't jitter.
+ * Monthly approved-vs-disapproved session breakdown and pay for a therapist. Aug 2026 (the demo's
+ * "now") is computed from the real seeded/store sessions and their approval status, paid on actual
+ * treatment time. Earlier months are seeded mock history (the dataset only spans a few days),
+ * deterministic per therapist id so the numbers don't jitter. A full-time therapist does roughly
+ * 20 to 35 sessions a month.
  */
 export function monthlyFinancialsForCL(cl: Therapist, assignmentsForCL: Assignment[]): CLMonthSummary[] {
   const rand = seededRandom(cl.id);
@@ -35,18 +51,20 @@ export function monthlyFinancialsForCL(cl: Therapist, assignmentsForCL: Assignme
     const isCurrent = label === 'Aug';
     if (isCurrent) {
       const completed = assignmentsForCL.filter((a) => a.status === 'completed');
-      const approved = completed.filter((a) => a.approvalStatus === 'approved' || (!a.approvalStatus && a.paymentStatus === 'released')).length;
-      const disapproved = completed.length - approved;
+      const isApproved = (a: Assignment) => a.approvalStatus === 'approved' || (!a.approvalStatus && a.paymentStatus === 'released');
+      const approved = completed.filter(isApproved);
+      const disapproved = completed.filter((a) => !isApproved(a));
+      const pay = (list: Assignment[]) => Math.round(list.reduce((sum, a) => sum + sessionHours(a), 0) * HOURLY_RATE);
       return {
         month: `${label} 2026`,
-        approvedSessions: approved,
-        disapprovedSessions: disapproved,
-        earned: approved * HOURS_PER_SESSION * HOURLY_RATE,
-        lost: disapproved * HOURS_PER_SESSION * HOURLY_RATE,
+        approvedSessions: approved.length,
+        disapprovedSessions: disapproved.length,
+        earned: pay(approved),
+        lost: pay(disapproved),
         isCurrent,
       };
     }
-    const approvedSessions = 6 + Math.floor(rand() * 10);
+    const approvedSessions = 18 + Math.floor(rand() * 16);
     const disapprovedSessions = Math.floor(rand() * 3);
     return {
       month: `${label} 2026`,
@@ -84,7 +102,7 @@ export function computeCLMetrics(cl: Therapist, assignmentsForCL: Assignment[]) 
     lifetimeEarnings,
     goodReviews,
     poorReviews,
-    currentJobId: currentJob ? currentJob.id.toUpperCase().replace('ASG-', 'JOB-') : '—',
+    currentJobId: currentJob ? currentJob.id.toUpperCase().replace('ASG-', 'SES-') : '',
   };
 }
 

@@ -33,8 +33,8 @@ export function StatCard({ label, value, hint, icon, className = '' }: StatCardP
         <span>{label}</span>
         {icon}
       </div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-4xl font-semibold tracking-tight text-brand-ink">{value}</span>
+      <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="whitespace-nowrap text-4xl font-semibold tracking-tight text-brand-ink">{value}</span>
         {hint}
       </div>
     </Card>
