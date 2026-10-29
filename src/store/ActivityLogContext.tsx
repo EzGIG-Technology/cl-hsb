@@ -14,29 +14,29 @@ interface ActivityLogContextValue {
   clear: () => void;
 }
 
-const STORAGE_KEY = 'honeyspa-activity-log-v1';
+const STORAGE_KEY = 'honeyspa-activity-log-v2';
 
 const seedEntries: ActivityLogEntry[] = [
   {
     id: 'log-seed-1',
     time: new Date(2026, 7, 13, 9, 12).toISOString(),
     adminName: 'Front Desk',
-    action: 'Reassigned CL',
-    details: 'Moved Puan Nadia Ismail’s Pakej Mawar booking to Siti Rahayu',
+    action: 'Reassigned therapist',
+    details: 'Moved Nadia Ismail’s Friday Mix & Match to Mariam Adawiyah',
   },
   {
     id: 'log-seed-2',
     time: new Date(2026, 7, 13, 8, 40).toISOString(),
     adminName: 'Spa Manager',
     action: 'Updated client address',
-    details: 'Puan Elina Zulkifli changed to Setia Alam, Selangor',
+    details: 'Izzah Hamid moved to Presint 16, Putrajaya (home service)',
   },
   {
     id: 'log-seed-3',
     time: new Date(2026, 7, 12, 17, 5).toISOString(),
     adminName: 'Front Desk',
-    action: 'Flagged CL profile',
-    details: 'Husna Nadia marked as complained — late arrival',
+    action: 'Logged complaint',
+    details: 'DSP-1041 · Husna Nadia, home-service address mix-up',
   },
 ];
 

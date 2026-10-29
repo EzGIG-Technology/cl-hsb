@@ -1,18 +1,20 @@
 import type { MessageThread } from '../types';
 
+// Seed WhatsApp-style threads between the front desk and therapists or clients. Written the way the
+// team actually chats: a mix of Malay and English.
 export const messageThreads: MessageThread[] = [
   {
     id: 'th-01',
     participantName: 'Mariam Yusof',
     participantType: 'cl',
     avatarColor: '#c42474',
-    lastMessage: 'Baru sampai rumah Puan Siti, dah clock in.',
-    lastMessageAt: '09:04',
+    lastMessage: 'Dah clock in. Bilik 2 dah siap, tunggu Puan Nadia.',
+    lastMessageAt: '10:14',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Morning Mariam, sesi hari ini pukul 9 pagi ye di Setia Alam.', time: '08:15' },
-      { id: 'm2', from: 'them', text: 'Ok admin, on the way sekarang.', time: '08:42' },
-      { id: 'm3', from: 'them', text: 'Baru sampai rumah Puan Siti, dah clock in.', time: '09:04' },
+      { id: 'm1', from: 'admin', text: 'Morning Mariam, client pertama hari ni Puan Nadia pukul 10.30, traditional 60 min di Bilik 2. Dia alah minyak lavender, guna base oil ye.', time: '09:05' },
+      { id: 'm2', from: 'them', text: 'Ok noted admin, on the way.', time: '09:40' },
+      { id: 'm3', from: 'them', text: 'Dah clock in. Bilik 2 dah siap, tunggu Puan Nadia.', time: '10:14' },
     ],
   },
   {
@@ -20,50 +22,51 @@ export const messageThreads: MessageThread[] = [
     participantName: 'Puan Adibah Karim',
     participantType: 'client',
     avatarColor: '#d9921f',
-    lastMessage: 'Boleh confirm CL untuk esok tak? Urgent sikit.',
+    lastMessage: 'Ada slot prenatal petang esok lepas 4pm? Urgent sikit, sakit belakang.',
     lastMessageAt: 'Yesterday',
     unread: 2,
     messages: [
-      { id: 'm1', from: 'them', text: 'Hi, nak tanya pasal booking Pakej Dahlia saya.', time: 'Yesterday 14:02' },
-      { id: 'm2', from: 'them', text: 'Boleh confirm CL untuk esok tak? Urgent sikit.', time: 'Yesterday 14:03' },
+      { id: 'm1', from: 'them', text: 'Hi Honey Spa, saya 32 minggu. Nak book prenatal massage 60 min.', time: 'Yesterday 14:02' },
+      { id: 'm2', from: 'them', text: 'Ada slot prenatal petang esok lepas 4pm? Urgent sikit, sakit belakang.', time: 'Yesterday 14:03' },
     ],
   },
   {
     id: 'th-03',
     participantName: 'Husna Nadia',
     participantType: 'cl',
-    avatarColor: '#3b6d8a',
-    lastMessage: 'Ok noted, akan cuba sampai lebih awal lepas ni.',
+    avatarColor: '#9c1a5b',
+    lastMessage: 'Ok noted, sorry admin. Lepas ni saya check alamat dalam app dulu.',
     lastMessageAt: 'Tue',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Husna, ada aduan sikit pasal masa sampai minggu lepas. Boleh cuba on-time ye.', time: 'Tue 10:20' },
-      { id: 'm2', from: 'them', text: 'Ok noted, akan cuba sampai lebih awal lepas ni.', time: 'Tue 10:31' },
+      { id: 'm1', from: 'admin', text: 'Husna, Puan Izzah dah pindah ke Presint 16. Tadi dia tunggu 25 minit. Sila check alamat dalam app sebelum gerak ye.', time: 'Tue 15:05' },
+      { id: 'm2', from: 'them', text: 'Ok noted, sorry admin. Lepas ni saya check alamat dalam app dulu.', time: 'Tue 15:12' },
     ],
   },
   {
     id: 'th-04',
     participantName: 'Puan Elina Zulkifli',
     participantType: 'client',
-    avatarColor: '#8c94c4',
-    lastMessage: 'Terima kasih! Tak sabar nak start.',
+    avatarColor: '#6f76b0',
+    lastMessage: 'Terima kasih! Tak sabar nak cuba totok wajah.',
     lastMessageAt: 'Mon',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Puan Elina, Pakej Rafflesia untuk 14 Ogos sudah confirmed, CL akan kami update esok.', time: 'Mon 16:10' },
-      { id: 'm2', from: 'them', text: 'Terima kasih! Tak sabar nak start.', time: 'Mon 16:14' },
+      { id: 'm1', from: 'admin', text: 'Puan Elina, Mix & Match (foot, back, totok wajah) untuk Jumaat 14 Ogos dah kami terima. Nama therapist kami update esok.', time: 'Mon 16:10' },
+      { id: 'm2', from: 'them', text: 'Terima kasih! Tak sabar nak cuba totok wajah.', time: 'Mon 16:14' },
     ],
   },
   {
     id: 'th-05',
     participantName: 'Mariam Adawiyah',
     participantType: 'cl',
-    avatarColor: '#9c1a5b',
-    lastMessage: 'Set NERA untuk Puan Amirah dah bawa sekali.',
-    lastMessageAt: 'Mon',
+    avatarColor: '#2f2b55',
+    lastMessage: 'Dah sampai rumah Puan Amirah di Kajang, tengah set up katil lipat.',
+    lastMessageAt: '10:52',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'them', text: 'Set NERA untuk Puan Amirah dah bawa sekali.', time: 'Mon 07:50' },
+      { id: 'm1', from: 'admin', text: 'Kak Mariam, home service Kajang pukul 11. Bawa tuala extra, client ada anak kecil.', time: '09:30' },
+      { id: 'm2', from: 'them', text: 'Dah sampai rumah Puan Amirah di Kajang, tengah set up katil lipat.', time: '10:52' },
     ],
   },
 ];

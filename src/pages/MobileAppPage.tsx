@@ -487,8 +487,8 @@ function TherapistHomeScreen({
           <p className="text-xs text-brand-muted">Hours done</p>
         </div>
         <div>
-          <p className="text-xl font-semibold tracking-tight text-brand-ink">{Math.round(hoursThisMonth * HOURLY_RATE).toLocaleString()}</p>
-          <p className="text-xs text-brand-muted">Est. pay, RM</p>
+          <p className="text-xl font-semibold tracking-tight text-brand-ink">RM {Math.round(hoursThisMonth * HOURLY_RATE).toLocaleString()}</p>
+          <p className="text-xs text-brand-muted">Est. pay</p>
         </div>
       </div>
 

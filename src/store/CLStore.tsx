@@ -3,9 +3,9 @@ import { confinementLadies as seedCLs } from '../data/team';
 import { TODAY_STR } from '../lib/date';
 import type { CLFlag, CLStatus, Therapist, Review, Certification, LeavePeriod } from '../types';
 
-// v2: added reviews/certifications/nationality/leavePeriods/flagHistory/payroll fields — bumped so
-// browsers holding a pre-existing v1 record (old shape, missing these) don't crash on load.
-const STORAGE_KEY = 'honeyspa-cls-v1';
+// Therapist roster store. The key is versioned: bump it whenever the seed roster changes shape or
+// content, so a browser holding an older copy reloads the current seed instead of stale data.
+const STORAGE_KEY = 'honeyspa-therapists-v2';
 
 function loadInitial(): Therapist[] {
   if (typeof window !== 'undefined') {
@@ -22,7 +22,8 @@ function loadInitial(): Therapist[] {
   return seedCLs;
 }
 
-const avatarPalette = ['#c42474', '#6f76b0', '#d9921f', '#8c94c4', '#9c1a5b', '#3b6d8a', '#8b5fbf', '#2f9b87'];
+// Brand set, same as the seeded roster in data/team.ts.
+const avatarPalette = ['#c42474', '#6f76b0', '#d9921f', '#9c1a5b', '#2f2b55', '#e07aa8', '#9aa0d4'];
 
 export interface NewCLInput {
   name: string;

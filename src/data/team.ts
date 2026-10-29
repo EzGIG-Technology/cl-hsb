@@ -76,7 +76,7 @@ const rawTherapists: RawTherapist[] = [
     yearsExperience: 5,
     flag: 'none',
     bio: 'Trained in Javanese urut before joining Honey Spa. Regulars book her for firm back work and the twice-weekly back plans.',
-    shiftAvailability: 'morning',
+    shiftAvailability: 'both',
     passportNumber: 'C4821907',
   },
   {

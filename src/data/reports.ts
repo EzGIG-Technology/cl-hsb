@@ -1,72 +1,77 @@
+// Volume and money for one outlet (Bangi Sentral plus home service). Roughly 350 to 550 sessions a
+// month at an average ticket of about RM 95. March dips for Ramadan; June and December are busy with
+// school holidays and wedding season.
 export const monthlyCompletedAssignments = [
-  { month: 'Jan', completed: 58 },
-  { month: 'Feb', completed: 71 },
-  { month: 'Mar', completed: 64 },
-  { month: 'Apr', completed: 69 },
-  { month: 'May', completed: 55 },
-  { month: 'Jun', completed: 80 },
-  { month: 'Jul', completed: 60 },
-  { month: 'Aug', completed: 76 },
-  { month: 'Sep', completed: 52 },
-  { month: 'Oct', completed: 74 },
-  { month: 'Nov', completed: 63 },
-  { month: 'Dec', completed: 40 },
+  { month: 'Jan', completed: 412 },
+  { month: 'Feb', completed: 438 },
+  { month: 'Mar', completed: 361 },
+  { month: 'Apr', completed: 468 },
+  { month: 'May', completed: 455 },
+  { month: 'Jun', completed: 502 },
+  { month: 'Jul', completed: 476 },
+  { month: 'Aug', completed: 498 },
+  { month: 'Sep', completed: 431 },
+  { month: 'Oct', completed: 452 },
+  { month: 'Nov', completed: 470 },
+  { month: 'Dec', completed: 536 },
 ];
 
 export const monthlyRevenue = [
-  { month: 'Jan', revenue: 148500 },
-  { month: 'Feb', revenue: 172300 },
-  { month: 'Mar', revenue: 159800 },
-  { month: 'Apr', revenue: 168900 },
-  { month: 'May', revenue: 141200 },
-  { month: 'Jun', revenue: 196500 },
-  { month: 'Jul', revenue: 152700 },
-  { month: 'Aug', revenue: 184900 },
-  { month: 'Sep', revenue: 132600 },
-  { month: 'Oct', revenue: 179400 },
-  { month: 'Nov', revenue: 156100 },
-  { month: 'Dec', revenue: 98200 },
+  { month: 'Jan', revenue: 39600 },
+  { month: 'Feb', revenue: 42300 },
+  { month: 'Mar', revenue: 35400 },
+  { month: 'Apr', revenue: 45200 },
+  { month: 'May', revenue: 43900 },
+  { month: 'Jun', revenue: 49100 },
+  { month: 'Jul', revenue: 46000 },
+  { month: 'Aug', revenue: 48300 },
+  { month: 'Sep', revenue: 41500 },
+  { month: 'Oct', revenue: 43600 },
+  { month: 'Nov', revenue: 45400 },
+  { month: 'Dec', revenue: 52800 },
 ];
 
-/** CL payroll payout — hand-tuned to a realistic ~49-53% of that month's revenue, mirroring a labor-heavy care-services cost ratio. */
+/** Therapist payroll (commission on treatment time), hand-tuned to about 45-47% of that month's revenue. */
 export const monthlyPayroll = [
-  { month: 'Jan', payroll: 74000 },
-  { month: 'Feb', payroll: 86500 },
-  { month: 'Mar', payroll: 79500 },
-  { month: 'Apr', payroll: 85200 },
-  { month: 'May', payroll: 71800 },
-  { month: 'Jun', payroll: 97200 },
-  { month: 'Jul', payroll: 78400 },
-  { month: 'Aug', payroll: 92800 },
-  { month: 'Sep', payroll: 68500 },
-  { month: 'Oct', payroll: 88900 },
-  { month: 'Nov', payroll: 79800 },
-  { month: 'Dec', payroll: 52400 },
+  { month: 'Jan', payroll: 18200 },
+  { month: 'Feb', payroll: 19300 },
+  { month: 'Mar', payroll: 16500 },
+  { month: 'Apr', payroll: 20400 },
+  { month: 'May', payroll: 19900 },
+  { month: 'Jun', payroll: 22000 },
+  { month: 'Jul', payroll: 20900 },
+  { month: 'Aug', payroll: 21700 },
+  { month: 'Sep', payroll: 18900 },
+  { month: 'Oct', payroll: 19800 },
+  { month: 'Nov', payroll: 20500 },
+  { month: 'Dec', payroll: 23600 },
 ];
 
+/** Today's sessions across the spa and home service, by check-in punctuality. */
 export const attendanceToday = {
-  scheduled: 247,
-  onTime: 218,
-  late: 18,
-  notClockedIn: 11,
+  scheduled: 26,
+  onTime: 22,
+  late: 3,
+  notClockedIn: 1,
 };
 
 export const ratingDistribution = [
-  { stars: 5, count: 412 },
-  { stars: 4, count: 168 },
-  { stars: 3, count: 44 },
-  { stars: 2, count: 12 },
-  { stars: 1, count: 6 },
+  { stars: 5, count: 268 },
+  { stars: 4, count: 96 },
+  { stars: 3, count: 21 },
+  { stars: 2, count: 6 },
+  { stars: 1, count: 3 },
 ];
 
+/** Bookings per treatment this month. */
 export const packagePopularity = [
-  { packageId: 'melur', bookings: 62 },
-  { packageId: 'dahlia', bookings: 88 },
-  { packageId: 'mawar', bookings: 74 },
-  { packageId: 'rafflesia', bookings: 41 },
-  { packageId: 'cempaka', bookings: 29 },
-  { packageId: 'oversea', bookings: 15 },
-  { packageId: 'seri-ibu', bookings: 33 },
+  { packageId: 'traditional', bookings: 168 },
+  { packageId: 'prenatal', bookings: 92 },
+  { packageId: 'back', bookings: 74 },
+  { packageId: 'foot', bookings: 61 },
+  { packageId: 'mix-match', bookings: 38 },
+  { packageId: 'totok-wajah', bookings: 24 },
+  { packageId: 'mandi-bunga', bookings: 15 },
 ];
 
 // Real-world coordinates (WGS84) for Honey Spa's catchment around Bangi Sentral, Selangor.

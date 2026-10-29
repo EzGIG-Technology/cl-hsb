@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { clients as seedClients } from '../data/clients';
 import type { Client } from '../types';
 
-const STORAGE_KEY = 'honeyspa-clients-v1';
+const STORAGE_KEY = 'honeyspa-clients-v2';
 
 function loadInitial(): Client[] {
   if (typeof window !== 'undefined') {

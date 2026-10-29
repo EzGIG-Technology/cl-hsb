@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { assignments as seedAssignments, unassignedClientIds as seedUnassigned } from '../data/assignments';
 import type { Assignment, AssignmentStatus, ApprovalStatus, PaymentStatus } from '../types';
 
-const STORAGE_KEY = 'honeyspa-assignments-v1';
-const UNASSIGNED_KEY = 'honeyspa-unassigned-v1';
+// Sessions (bookings) store. Keys are versioned so stale seeds from an older dataset are dropped.
+const STORAGE_KEY = 'honeyspa-assignments-v2';
+const UNASSIGNED_KEY = 'honeyspa-unassigned-v2';
 
 function loadAssignments(): Assignment[] {
   if (typeof window !== 'undefined') {
