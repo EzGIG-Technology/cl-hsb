@@ -1,74 +1,86 @@
-import { useMemo, useState } from 'react';
-import { TrendingUp, TrendingDown, Star, Award, ChevronDown, Wallet, PiggyBank } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  CartesianGrid,
-  Cell,
-} from 'recharts';
+import { useMemo, useState, type CSSProperties } from 'react';
+import { Star, ChevronDown } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Cell } from 'recharts';
 import { PageShell } from '../components/PageShell';
 import { Card, StatCard, SectionTitle, Avatar, formatRM } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
 import { monthlyRevenue, monthlyPayroll, monthlyCompletedAssignments, ratingDistribution, packagePopularity } from '../data/reports';
 import { useSettings } from '../store/SettingsContext';
 
-const CURRENT_MONTH_INDEX = 7; // August — data only exists for Jan-Aug in the seed set
+const CURRENT_MONTH_INDEX = 7; // August: the seed set treats Aug 2026 as the current month
+
+// Brand chart palette (house rules): magenta, lavender, light lavender, honey, muted.
+const C = {
+  magenta: '#c42474',
+  lavender: '#6f76b0',
+  lavenderLight: '#8c94c4',
+  honey: '#d9921f',
+  muted: '#8a7f8c',
+  grid: '#f3e6ed',
+};
+
+// Tooltips are real overlays, so they keep a soft shadow.
+const tooltipStyle: CSSProperties = {
+  borderRadius: 12,
+  border: 'none',
+  boxShadow: '0 6px 20px rgba(31, 26, 36, 0.12)', // taste-skill-ignore: overlay
+  fontSize: 13,
+};
+const axisTick = { fill: C.muted, fontSize: 12 };
+
+const ratingColors: Record<number, string> = { 5: C.magenta, 4: C.lavender, 3: C.lavenderLight, 2: C.honey, 1: C.muted };
 
 export default function ReportsPage() {
   const { cls } = useCLStore();
   const { packageById } = useSettings();
   const [selectedMonth, setSelectedMonth] = useState(monthlyRevenue[CURRENT_MONTH_INDEX].month);
-  const isCurrentMonth = selectedMonth === monthlyRevenue[CURRENT_MONTH_INDEX].month;
+  const monthLabel = `${selectedMonth} 2026`;
 
-  const ytdRevenue = useMemo(
-    () => monthlyRevenue.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.revenue, 0),
-    [],
-  );
-  const selectedMonthRevenue = monthlyRevenue.find((m) => m.month === selectedMonth)?.revenue ?? 0;
-  const selectedMonthCompleted = monthlyCompletedAssignments.find((m) => m.month === selectedMonth)?.completed ?? 0;
+  const ytdRevenue = useMemo(() => monthlyRevenue.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.revenue, 0), []);
   const ytdCompleted = useMemo(
     () => monthlyCompletedAssignments.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.completed, 0),
     [],
   );
+  const ytdPayroll = useMemo(() => monthlyPayroll.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.payroll, 0), []);
+  const ytdMargin = ytdRevenue - ytdPayroll;
+
+  const selectedMonthRevenue = monthlyRevenue.find((m) => m.month === selectedMonth)?.revenue ?? 0;
+  const selectedMonthCompleted = monthlyCompletedAssignments.find((m) => m.month === selectedMonth)?.completed ?? 0;
+  const selectedMonthPayroll = monthlyPayroll.find((m) => m.month === selectedMonth)?.payroll ?? 0;
+  const selectedMonthMargin = selectedMonthRevenue - selectedMonthPayroll;
+  const selectedMonthMarginPct = selectedMonthRevenue ? Math.round((selectedMonthMargin / selectedMonthRevenue) * 100) : 0;
 
   const financeChartData = monthlyRevenue.map((m) => {
     const payroll = monthlyPayroll.find((p) => p.month === m.month)?.payroll ?? 0;
     return { month: m.month, revenue: m.revenue, payroll, margin: m.revenue - payroll };
   });
-  const selectedMonthPayroll = monthlyPayroll.find((m) => m.month === selectedMonth)?.payroll ?? 0;
-  const selectedMonthMargin = selectedMonthRevenue - selectedMonthPayroll;
-  const selectedMonthMarginPct = selectedMonthRevenue ? Math.round((selectedMonthMargin / selectedMonthRevenue) * 100) : 0;
-  const ytdPayroll = useMemo(
-    () => monthlyPayroll.slice(0, CURRENT_MONTH_INDEX + 1).reduce((acc, m) => acc + m.payroll, 0),
-    [],
+
+  const averageRating = cls.length ? (cls.reduce((a, c) => a + c.rating, 0) / cls.length).toFixed(1) : '–';
+  const totalRatings = ratingDistribution.reduce((a, r) => a + r.count, 0);
+  const fiveStarPct = totalRatings ? Math.round(((ratingDistribution.find((r) => r.stars === 5)?.count ?? 0) / totalRatings) * 100) : 0;
+
+  const topCLs = useMemo(
+    () => [...cls].sort((a, b) => b.rating - a.rating || b.completedAssignments - a.completedAssignments).slice(0, 6),
+    [cls],
   );
-  const ytdMargin = ytdRevenue - ytdPayroll;
 
-  const topCLs = useMemo(() => [...cls].sort((a, b) => b.rating - a.rating || b.completedAssignments - a.completedAssignments).slice(0, 6), [cls]);
-
+  // Only treatments still on the menu are charted, so a retired id never shows up as a raw label.
   const packageChartData = packagePopularity
-    .map((p) => ({ name: packageById(p.packageId)?.shortName ?? p.packageId, bookings: p.bookings }))
+    .filter((p) => packageById(p.packageId))
+    .map((p) => ({ name: packageById(p.packageId)!.shortName, bookings: p.bookings }))
     .sort((a, b) => b.bookings - a.bookings);
-
-  const ratingColors: Record<number, string> = { 5: '#2f2b55', 4: '#6f76b0', 3: '#d9921f', 2: '#b45f3b', 1: '#b23b3b' };
 
   return (
     <PageShell
       title="Reports"
-      subtitle="Revenue, bookings, and CL performance at a glance."
+      subtitle="Revenue, sessions and therapist performance at a glance."
       headerAction={
         <div className="relative">
           <select
+            aria-label="Report month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="appearance-none rounded-full border border-black/10 bg-white py-2 pl-4 pr-9 text-sm font-medium text-brand-ink"
+            className="appearance-none rounded-full bg-white py-2.5 pl-5 pr-10 text-sm font-medium text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink"
           >
             {monthlyRevenue.map((m) => (
               <option key={m.month} value={m.month}>
@@ -76,127 +88,160 @@ export default function ReportsPage() {
               </option>
             ))}
           </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted" />
+          <ChevronDown size={15} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-brand-muted" />
         </div>
       }
     >
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="YTD revenue" value={formatRM(ytdRevenue)} icon={<TrendingUp size={16} className="text-brand-lavender" />} />
-        <StatCard label="YTD completed assignments" value={ytdCompleted} />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label={isCurrentMonth ? "This month's revenue" : `${selectedMonth} 2026 revenue`}
+          label={`Revenue, ${monthLabel}`}
           value={formatRM(selectedMonthRevenue)}
+          hint={<span className="text-sm text-brand-muted">YTD {formatRM(ytdRevenue)}</span>}
+          className="p-6"
         />
-        <StatCard label={`${selectedMonth} 2026 completed`} value={selectedMonthCompleted} />
-        <StatCard label="Average CL rating" value={(cls.reduce((a, c) => a + c.rating, 0) / cls.length).toFixed(1)} icon={<Award size={16} className="text-brand-amber" />} />
+        <StatCard
+          label={`Completed sessions, ${monthLabel}`}
+          value={selectedMonthCompleted}
+          hint={<span className="text-sm text-brand-muted">YTD {ytdCompleted}</span>}
+          className="p-6"
+        />
+        <StatCard
+          label="Average therapist rating"
+          value={averageRating}
+          icon={<Star size={16} className="fill-brand-amber text-brand-amber" />}
+          hint={<span className="text-sm text-brand-muted">of 5</span>}
+          className="p-6"
+        />
+        <StatCard
+          label="Five-star reviews"
+          value={`${fiveStarPct}%`}
+          hint={<span className="text-sm text-brand-muted">of {totalRatings}</span>}
+          className="p-6"
+        />
       </div>
 
-      <Card className="mt-5">
-        <SectionTitle action={<span className="text-xs text-brand-muted">{isCurrentMonth ? 'This month' : `${selectedMonth} 2026`}</span>}>
-          Revenue vs. Payroll
-        </SectionTitle>
-        <p className="-mt-3 mb-4 text-xs text-brand-muted">What customers pay in, what CLs are paid out, and what's left over.</p>
+      <Card className="mt-8 p-6">
+        <SectionTitle action={<span className="text-sm text-brand-muted">{monthLabel}</span>}>Revenue vs payroll</SectionTitle>
+        <p className="-mt-2 mb-6 text-sm text-brand-muted">What clients pay in, what therapists are paid out, and what the spa keeps.</p>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl bg-brand-cream p-3">
-            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-              <TrendingUp size={11} className="text-brand-lavender" /> Revenue collected
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm text-brand-muted">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: C.honey }} aria-hidden /> Paid to therapists
             </p>
-            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthRevenue)}</p>
-            <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdRevenue)}</p>
+            <p className="mt-1 text-4xl font-semibold tracking-tight text-brand-ink">{formatRM(selectedMonthPayroll)}</p>
+            <p className="mt-1 text-sm text-brand-muted">YTD {formatRM(ytdPayroll)}</p>
           </div>
-          <div className="rounded-xl bg-brand-cream p-3">
-            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-              <Wallet size={11} className="text-brand-amber" /> Paid out to CLs
-            </p>
-            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthPayroll)}</p>
-            <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdPayroll)}</p>
+          <div>
+            <p className="text-sm text-brand-muted">Gross margin</p>
+            <p className="mt-1 text-4xl font-semibold tracking-tight text-brand-ink">{formatRM(selectedMonthMargin)}</p>
+            <p className="mt-1 text-sm text-brand-muted">YTD {formatRM(ytdMargin)}</p>
           </div>
-          <div className="rounded-xl bg-brand-cream p-3">
-            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-              <PiggyBank size={11} className="text-brand-pink" /> Gross margin
+          <div>
+            <p className="text-sm text-brand-muted">Kept after payroll</p>
+            <p className={`mt-1 text-4xl font-semibold tracking-tight ${selectedMonthMarginPct >= 0 ? 'text-brand-ink' : 'text-red-600'}`}>
+              {selectedMonthMarginPct}%
             </p>
-            <p className="mt-1 text-xl font-semibold text-brand-ink">{formatRM(selectedMonthMargin)}</p>
-            <p className="text-[10px] text-brand-muted">YTD {formatRM(ytdMargin)}</p>
-          </div>
-          <div className="rounded-xl bg-brand-cream p-3">
-            <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-              {selectedMonthMarginPct >= 0 ? (
-                <TrendingUp size={11} className="text-brand-lavender" />
-              ) : (
-                <TrendingDown size={11} className="text-red-500" />
-              )}
-              Margin %
-            </p>
-            <p className={`mt-1 text-xl font-semibold ${selectedMonthMarginPct >= 0 ? 'text-brand-ink' : 'text-red-600'}`}>{selectedMonthMarginPct}%</p>
-            <p className="text-[10px] text-brand-muted">of revenue kept after payroll</p>
+            <p className="mt-1 text-sm text-brand-muted">of {formatRM(selectedMonthRevenue)} revenue</p>
           </div>
         </div>
 
-        <div className="mt-4">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={financeChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
+        <div className="mt-8">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={financeChartData} barGap={4}>
+              <CartesianGrid stroke={C.grid} vertical={false} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={axisTick} />
               <YAxis hide />
-              <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="revenue" name="Revenue" fill="#c42474" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="payroll" name="Paid to CLs" fill="#d9921f" radius={[6, 6, 0, 0]} />
+              <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={tooltipStyle} cursor={{ fill: C.grid, opacity: 0.6 }} />
+              <Legend wrapperStyle={{ fontSize: 13 }} iconType="circle" />
+              <Bar dataKey="revenue" name="Revenue" radius={[6, 6, 0, 0]}>
+                {financeChartData.map((m) => (
+                  <Cell key={m.month} fill={C.magenta} fillOpacity={m.month === selectedMonth ? 1 : 0.55} />
+                ))}
+              </Bar>
+              <Bar dataKey="payroll" name="Paid to therapists" radius={[6, 6, 0, 0]}>
+                {financeChartData.map((m) => (
+                  <Cell key={m.month} fill={C.honey} fillOpacity={m.month === selectedMonth ? 1 : 0.55} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </Card>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Card>
-          <SectionTitle>Monthly revenue (RM)</SectionTitle>
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="p-6">
+          <SectionTitle>Monthly revenue</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={monthlyRevenue}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
+              <CartesianGrid stroke={C.grid} vertical={false} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={axisTick} />
               <YAxis hide />
-              <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Line type="monotone" dataKey="revenue" stroke="#c42474" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              <Tooltip formatter={(v) => formatRM(Number(v))} contentStyle={tooltipStyle} />
+              <Line
+                type="monotone"
+                dataKey="revenue"
+                name="Revenue"
+                stroke={C.magenta}
+                strokeWidth={2.5}
+                dot={{ r: 3, fill: C.magenta, strokeWidth: 0 }}
+                activeDot={{ r: 5 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </Card>
 
-        <Card>
-          <SectionTitle>Completed assignments</SectionTitle>
+        <Card className="p-6">
+          <SectionTitle action={<span className="text-sm text-brand-muted">{monthLabel} highlighted</span>}>Completed sessions</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={monthlyCompletedAssignments}>
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Bar dataKey="completed" radius={[8, 8, 8, 8]}>
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={axisTick} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: C.grid, opacity: 0.6 }} />
+              <Bar dataKey="completed" name="Sessions" radius={[8, 8, 8, 8]}>
                 {monthlyCompletedAssignments.map((m) => (
-                  <Cell key={m.month} fill={m.month === selectedMonth ? '#c42474' : '#8c94c4'} />
+                  <Cell key={m.month} fill={m.month === selectedMonth ? C.magenta : C.lavenderLight} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Card>
 
-        <Card>
-          <SectionTitle>Package popularity (bookings)</SectionTitle>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={packageChartData} layout="vertical" margin={{ left: 10 }}>
-              <XAxis type="number" hide />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={80} tick={{ fill: '#8a7f8c', fontSize: 12 }} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Bar dataKey="bookings" radius={[0, 8, 8, 0]} fill="#d9921f" />
-            </BarChart>
-          </ResponsiveContainer>
+        <Card className="p-6">
+          <SectionTitle>Treatment popularity</SectionTitle>
+          {packageChartData.length === 0 ? (
+            <p className="py-10 text-center text-sm text-brand-muted">No bookings recorded for the current menu yet.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(180, packageChartData.length * 36)}>
+              <BarChart data={packageChartData} layout="vertical" margin={{ left: 10 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={96} tick={axisTick} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: C.grid, opacity: 0.6 }} />
+                <Bar dataKey="bookings" name="Bookings" radius={[0, 8, 8, 0]}>
+                  {packageChartData.map((p, i) => (
+                    <Cell key={p.name} fill={i === 0 ? C.magenta : C.lavender} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
-        <Card>
-          <SectionTitle>Rating distribution</SectionTitle>
-          <ResponsiveContainer width="100%" height={240}>
+        <Card className="p-6">
+          <SectionTitle action={<span className="text-sm text-brand-muted">{totalRatings} ratings</span>}>Rating distribution</SectionTitle>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={ratingDistribution} layout="vertical" margin={{ left: 10 }}>
               <XAxis type="number" hide />
-              <YAxis dataKey="stars" type="category" axisLine={false} tickLine={false} width={50} tick={{ fill: '#8a7f8c', fontSize: 12 }} tickFormatter={(v) => `${v}★`} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }} />
-              <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+              <YAxis
+                dataKey="stars"
+                type="category"
+                axisLine={false}
+                tickLine={false}
+                width={60}
+                tick={axisTick}
+                tickFormatter={(v) => `${v} star${v === 1 ? '' : 's'}`}
+              />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: C.grid, opacity: 0.6 }} />
+              <Bar dataKey="count" name="Ratings" radius={[0, 8, 8, 0]}>
                 {ratingDistribution.map((r) => (
                   <Cell key={r.stars} fill={ratingColors[r.stars]} />
                 ))}
@@ -206,36 +251,38 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      <Card className="mt-5 !p-0 overflow-hidden">
-        <div className="p-5 pb-0">
-          <SectionTitle>CL performance leaderboard</SectionTitle>
+      <Card className="mt-8 overflow-hidden !p-0">
+        <div className="px-6 pt-6">
+          <SectionTitle>Therapist leaderboard</SectionTitle>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-brand-muted">
-                <th className="px-5 py-3 font-medium">CL</th>
-                <th className="px-5 py-3 font-medium">Rating</th>
-                <th className="px-5 py-3 font-medium">Reviews</th>
-                <th className="px-5 py-3 font-medium">Completed</th>
-                <th className="px-5 py-3 font-medium">Experience</th>
+              <tr className="text-left text-sm text-brand-muted">
+                <th className="px-6 py-3 font-medium">Therapist</th>
+                <th className="px-6 py-3 font-medium">Rating</th>
+                <th className="px-6 py-3 font-medium">Reviews</th>
+                <th className="px-6 py-3 font-medium">Completed sessions</th>
+                <th className="px-6 py-3 font-medium">Experience</th>
               </tr>
             </thead>
             <tbody>
               {topCLs.map((cl) => (
-                <tr key={cl.id} className="border-t border-black/5">
-                  <td className="flex items-center gap-2 px-5 py-3">
-                    <Avatar name={cl.name} color={cl.avatarColor} size={26} />
-                    {cl.name}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="flex items-center gap-1">
-                      <Star size={13} className="fill-brand-amber text-brand-amber" /> {cl.rating}
+                <tr key={cl.id} /* taste-skill-ignore: table row */ className="border-t border-black/5">
+                  <td className="px-6 py-3">
+                    <span className="flex items-center gap-2.5 text-brand-ink">
+                      <Avatar name={cl.name} color={cl.avatarColor} size={28} />
+                      {cl.name}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-brand-muted">{cl.reviewCount}</td>
-                  <td className="px-5 py-3 text-brand-muted">{cl.completedAssignments}</td>
-                  <td className="px-5 py-3 text-brand-muted">{cl.yearsExperience} yrs</td>
+                  <td className="px-6 py-3">
+                    <span className="flex items-center gap-1 font-medium text-brand-ink">
+                      <Star size={14} className="fill-brand-amber text-brand-amber" /> {cl.rating}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-brand-ink">{cl.reviewCount}</td>
+                  <td className="px-6 py-3 text-brand-ink">{cl.completedAssignments}</td>
+                  <td className="px-6 py-3 text-brand-ink">{cl.yearsExperience} yrs</td>
                 </tr>
               ))}
             </tbody>

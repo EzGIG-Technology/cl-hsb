@@ -27,7 +27,7 @@ const DEFAULT_START = '10:30';
 function addMinutes(time: string, minutes: number) {
   const [h, m] = time.split(':').map(Number);
   const total = h * 60 + m + minutes;
-  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`; // taste-skill-ignore: clock time, not index numbering
 }
 
 export default function BookingsPage() {

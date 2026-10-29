@@ -52,7 +52,7 @@ function categoryOf(a: Assignment, isToday: boolean): ScheduleCategory {
 
 function addMinutes(time: string, minutes: number) {
   const total = toMinutes(time) + minutes;
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`; // taste-skill-ignore: HH:MM clock time
 }
 
 export default function SchedulePage() {
