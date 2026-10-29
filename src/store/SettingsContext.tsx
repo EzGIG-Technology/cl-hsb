@@ -4,8 +4,14 @@ import { locationCapacity as defaultLocationCapacity } from '../data/capacity';
 import { locationTotals } from '../data/reports';
 import type { LocationCapacity, Package, PackageLocationSlot, PackageTier, SlotCadence } from '../types';
 
+/** The outlet itself (rooms at Bangi Sentral), then each home-service area around it. */
+export const IN_SPA_LOCATION = 'In the spa (Bangi Sentral)';
+
 function defaultPackageAvailability(): PackageLocationSlot[] {
-  return locationTotals.map((l) => ({ location: l.name, cadence: 'weekly' as SlotCadence, slots: Math.max(2, Math.round(l.count / 8)) }));
+  return [
+    { location: IN_SPA_LOCATION, cadence: 'daily' as SlotCadence, slots: 12 },
+    ...locationTotals.map((l) => ({ location: l.name, cadence: 'weekly' as SlotCadence, slots: Math.max(2, Math.round(l.count / 8)) })),
+  ];
 }
 
 interface CompanyProfile {
