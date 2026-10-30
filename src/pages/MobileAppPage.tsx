@@ -924,7 +924,8 @@ function SessionFlow({
   const minutes = sessionMinutes(assignment);
 
   const [stage, setStage] = useState<SessionStage>('checkin');
-  const [checkinSelfieUrl, setCheckinSelfieUrl] = useState<string>();
+  // Demo only: the check-in selfie is simulated, so no camera or file upload is involved.
+  const [selfie, setSelfie] = useState<'none' | 'taking' | 'taken'>('none');
   const [items, setItems] = useState<{ label: string; photoUrl?: string; done: boolean }[]>(
     checklistLabels.map((label) => ({ label, done: false })),
   );
@@ -986,36 +987,32 @@ function SessionFlow({
             <MapPin size={16} className="text-brand-pink" /> Ready to check in
           </div>
           <p className="mt-0.5 text-xs text-brand-muted">GPS location verified</p>
-          <label className="mt-3 flex cursor-pointer items-center justify-between rounded-xl bg-brand-cream px-3 py-2.5 text-sm text-brand-ink">
+          <button
+            type="button"
+            disabled={selfie !== 'none'}
+            onClick={() => {
+              setSelfie('taking');
+              window.setTimeout(() => setSelfie('taken'), 700);
+            }}
+            className="mt-3 flex w-full items-center justify-between rounded-xl bg-brand-cream px-3 py-2.5 text-left text-sm text-brand-ink transition-colors enabled:hover:bg-brand-pink-light"
+          >
             <span className="flex items-center gap-1.5">
-              <Camera size={14} /> {checkinSelfieUrl ? 'Selfie taken' : 'Take a selfie to check in'}
+              <Camera size={14} /> {selfie === 'taken' ? 'Selfie taken' : selfie === 'taking' ? 'Taking selfie…' : 'Take a selfie to check in'}
             </span>
-            {checkinSelfieUrl ? (
-              <img src={checkinSelfieUrl} alt="Check-in selfie" className="h-8 w-8 rounded-full object-cover" />
+            {selfie === 'taken' ? (
+              <Avatar name={staffMember.name} color={staffMember.avatarColor} size={32} />
             ) : (
               <ShieldCheck size={14} className="text-brand-muted" />
             )}
-            <input
-              type="file"
-              accept="image/*"
-              capture="user"
-              className="hidden"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => setCheckinSelfieUrl(reader.result as string);
-                reader.readAsDataURL(file);
-              }}
-            />
-          </label>
+          </button>
+          <p className="mt-1.5 text-xs text-brand-muted">Demo: the selfie is simulated, no camera needed.</p>
         </div>
         <button
           onClick={() => {
             setStartedAt(Date.now());
             setStage('checklist');
           }}
-          disabled={checklistLabels.length === 0 || !checkinSelfieUrl}
+          disabled={checklistLabels.length === 0 || selfie !== 'taken'}
           className="mt-auto flex w-full items-center justify-center gap-2 rounded-full bg-brand-pink py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-pink-dark disabled:opacity-40"
         >
           Check in and start session
