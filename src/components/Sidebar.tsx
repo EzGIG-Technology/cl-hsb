@@ -85,7 +85,7 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-white">
-      <div className="px-5 pb-4 pt-6">
+      <div className="px-5 pb-3 pt-5">
         {company.logoDataUrl ? (
           <img src={company.logoDataUrl} alt={company.name} className="h-14 w-auto object-contain" />
         ) : (
@@ -95,7 +95,7 @@ export function Sidebar() {
 
       <nav className="scrollbar-thin flex-1 overflow-y-auto px-3 pb-4" aria-label="Main">
         {groups.map((group) => (
-          <div key={group.label} className="mb-5">
+          <div key={group.label} className="mb-3 last:mb-0">
             <p className="mb-1 px-3 text-sm text-brand-muted">{group.label}</p>
             <div className="flex flex-col gap-0.5">
               {group.items.map((item) => {
@@ -106,7 +106,7 @@ export function Sidebar() {
                     to={item.to}
                     end={item.to === '/'}
                     className={({ isActive }) =>
-                      `group flex items-center gap-3 rounded-full px-3 py-2 text-[15px] transition-colors ${
+                      `group flex items-center gap-3 rounded-full px-3 py-1.5 text-[15px] transition-colors ${
                         isActive ? 'bg-brand-pink font-medium text-white' : 'text-brand-ink hover:bg-brand-pink-light'
                       }`
                     }
@@ -134,13 +134,13 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="m-3 rounded-2xl bg-brand-lavender-light p-4">
-        <p className="flex items-center gap-2 text-sm font-medium text-brand-ink">
+      <div className="m-3 rounded-2xl bg-brand-lavender-light px-4 py-3">
+        <p className="flex items-center gap-2 text-sm text-brand-ink">
           <span className={`h-2 w-2 shrink-0 rounded-full ${status.open ? 'bg-emerald-500' : 'bg-brand-muted'}`} />
-          {status.open ? 'Open now' : 'Closed'}
+          <span className="whitespace-nowrap font-medium">{status.open ? 'Open now' : 'Closed'}</span>
+          <span className="truncate text-brand-muted">· {status.label.split(' · ')[1]?.split(' (')[0]}</span>
         </p>
-        <p className="mt-1 text-sm leading-snug text-brand-muted">{status.label.split(' · ')[1]}</p>
-        <p className="mt-2 text-sm leading-snug text-brand-ink">Bangi Sentral · {company.phone}</p>
+        <p className="mt-1 text-sm leading-snug text-brand-ink">Bangi Sentral · {company.phone}</p>
       </div>
     </aside>
   );
