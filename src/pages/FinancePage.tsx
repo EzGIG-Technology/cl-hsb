@@ -217,7 +217,7 @@ function PnLTab({ series, current, previous, ytd }: { series: MonthFinancials[];
 
   const lines: { label: string; pick: (m: MonthFinancials) => number; kind: 'item' | 'subtotal' | 'total' | 'cost'; indent?: boolean }[] = [
     { label: 'CL home-care packages', pick: (m) => m.clRevenue, kind: 'item', indent: true },
-    { label: 'Spa treatments', pick: (m) => m.spaRevenue, kind: 'item', indent: true },
+    { label: 'Honey Spa Bangi treatments', pick: (m) => m.spaRevenue, kind: 'item', indent: true },
     { label: 'Total revenue', pick: (m) => m.revenue, kind: 'subtotal' },
     { label: 'CL payroll', pick: (m) => -m.clPayroll, kind: 'cost', indent: true },
     { label: 'Spa staff salaries', pick: (m) => -m.spaSalaries, kind: 'cost', indent: true },
@@ -340,7 +340,7 @@ function PnLTab({ series, current, previous, ytd }: { series: MonthFinancials[];
           </table>
         </div>
         <p className="px-5 py-3 text-[11px] text-brand-muted">
-          Costs shown in brackets. Spa staff salaries use the current Spa Directory payroll; operating expenses come from the Expenses ledger
+          Costs shown in brackets. Spa staff salaries use the current Honey Spa Bangi payroll from the Spa Directory; operating expenses come from the Expenses ledger
           (paid and unpaid, i.e. accrual basis).
         </p>
       </Card>
@@ -859,7 +859,7 @@ function CashFlowTab({ series, current, budgets }: { series: MonthFinancials[]; 
   return (
     <>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Cash in" icon={<ArrowDownCircle size={12} className="text-brand-green" />} value={formatRM(current.cashIn)} hint="Customer collections (CL + spa)" />
+        <Kpi label="Cash in" icon={<ArrowDownCircle size={12} className="text-brand-green" />} value={formatRM(current.cashIn)} hint="Customer collections (CL + Honey Spa)" />
         <Kpi label="Cash out" icon={<ArrowUpCircle size={12} className="text-brand-amber" />} value={formatRM(current.cashOut)} hint="Payroll, salaries & paid bills" />
         <Kpi
           label="Net cash flow"

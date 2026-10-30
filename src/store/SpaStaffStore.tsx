@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { spaStaff as seedStaff } from '../data/spaStaff';
 import type { CLStatus, SpaStaff } from '../types';
 
-const STORAGE_KEY = 'nrmc-spa-staff-v1';
+// v2: dropped the per-staff outlet field — everyone works at Honey Spa Bangi.
+const STORAGE_KEY = 'nrmc-spa-staff-v2';
 
 function loadInitial(): SpaStaff[] {
   if (typeof window !== 'undefined') {
@@ -25,7 +26,6 @@ export interface NewSpaStaffInput {
   name: string;
   phone: string;
   role: SpaStaff['role'];
-  outlet: string;
   icNumber?: string;
   email?: string;
   monthlySalary?: number;
@@ -38,7 +38,7 @@ interface SpaStaffStoreValue {
   updateStatus: (id: string, status: CLStatus) => void;
   updateDetails: (
     id: string,
-    patch: Partial<Pick<SpaStaff, 'phone' | 'email' | 'icNumber' | 'role' | 'outlet' | 'shift' | 'skills' | 'languages' | 'yearsExperience' | 'monthlySalary' | 'notes'>>,
+    patch: Partial<Pick<SpaStaff, 'phone' | 'email' | 'icNumber' | 'role' | 'shift' | 'skills' | 'languages' | 'yearsExperience' | 'monthlySalary' | 'notes'>>,
   ) => void;
   removeStaff: (id: string) => void;
   resetToDefaults: () => void;
@@ -67,7 +67,6 @@ export function SpaStaffStoreProvider({ children }: { children: ReactNode }) {
           name: input.name,
           avatarColor: avatarPalette[staff.length % avatarPalette.length],
           role: input.role,
-          outlet: input.outlet,
           phone: input.phone,
           email: input.email ?? '',
           icNumber: input.icNumber ?? '',

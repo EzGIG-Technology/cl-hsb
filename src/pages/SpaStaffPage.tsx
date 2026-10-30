@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, UserPlus, X, Phone, IdCard, Mail, Flower2, Store, Wallet } from 'lucide-react';
+import { Star, UserPlus, X, Phone, IdCard, Mail, Flower2, Store, Wallet, Sparkles } from 'lucide-react';
 import { PageShell } from '../components/PageShell';
 import { Card, Badge, Avatar, formatRM } from '../components/ui';
 import { useSpaStaffStore, type NewSpaStaffInput } from '../store/SpaStaffStore';
 import { useActivityLog } from '../store/ActivityLogContext';
-import { SPA_OUTLETS, SPA_ROLES, spaRoleStyles } from '../data/spaStaff';
+import { SPA_NAME, SPA_ROLES, spaRoleStyles } from '../data/spaStaff';
 import type { CLStatus, SpaStaffRole } from '../types';
 
 const statusFilters: { label: string; value: CLStatus | 'all' }[] = [
@@ -24,46 +24,34 @@ export default function SpaStaffPage() {
   const { logAction } = useActivityLog();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<CLStatus | 'all'>('all');
-  const [outlet, setOutlet] = useState<string>('all');
   const [showAdd, setShowAdd] = useState(false);
 
   function handleAdd(input: NewSpaStaffInput) {
     const s = addStaff(input);
-    logAction('Admin Amy', 'Added new spa staff', `${s.name} · ${s.role}, ${s.outlet}`);
+    logAction('Admin Amy', 'Added new spa staff', `${s.name} · ${s.role}`);
     setShowAdd(false);
     navigate(`/spa/${s.id}`);
   }
 
-  const outletSummary = useMemo(
-    () =>
-      SPA_OUTLETS.map((o) => {
-        const team = staff.filter((s) => s.outlet === o);
-        return {
-          outlet: o,
-          headcount: team.length,
-          onDuty: team.filter((s) => s.status === 'on-duty').length,
-          treatments: team.reduce((sum, s) => sum + s.treatmentsThisMonth, 0),
-        };
-      }),
-    [staff],
-  );
+  const onDuty = staff.filter((s) => s.status === 'on-duty').length;
+  const treatments = staff.reduce((sum, s) => sum + s.treatmentsThisMonth, 0);
+  const avgRating = staff.length ? (staff.reduce((sum, s) => sum + s.rating, 0) / staff.length).toFixed(1) : '—';
   const totalSalaries = staff.reduce((sum, s) => sum + s.monthlySalary, 0);
 
   const filtered = staff.filter((s) => {
     const q = query.toLowerCase();
-    const matchesQuery = s.name.toLowerCase().includes(q) || s.outlet.toLowerCase().includes(q) || s.role.toLowerCase().includes(q);
+    const matchesQuery = s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q);
     const matchesFilter = filter === 'all' || s.status === filter;
-    const matchesOutlet = outlet === 'all' || s.outlet === outlet;
-    return matchesQuery && matchesFilter && matchesOutlet;
+    return matchesQuery && matchesFilter;
   });
 
   return (
     <PageShell
       title="Spa Directory"
-      subtitle={`${staff.length} spa staff across ${SPA_OUTLETS.length} outlets — ${staff.filter((s) => s.status === 'on-duty').length} on duty now`}
+      subtitle={`${SPA_NAME} — ${staff.length} spa staff, ${onDuty} on duty now`}
       icon={Flower2}
       accentColor="#3c6f57"
-      searchPlaceholder="Search spa staff by name, role or outlet"
+      searchPlaceholder="Search spa staff by name or role"
       onSearch={setQuery}
       headerAction={
         <button
@@ -75,23 +63,29 @@ export default function SpaStaffPage() {
       }
     >
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {outletSummary.map((o) => (
-          <button
-            key={o.outlet}
-            onClick={() => setOutlet(outlet === o.outlet ? 'all' : o.outlet)}
-            className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition-colors ${
-              outlet === o.outlet ? 'border-brand-green ring-2 ring-brand-green/20' : 'border-black/5 hover:bg-brand-cream/60'
-            }`}
-          >
-            <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
-              <Store size={14} className="text-brand-green" /> {o.outlet}
-            </p>
-            <p className="mt-2 text-lg font-semibold text-brand-ink">
-              {o.headcount} <span className="text-xs font-normal text-brand-muted">staff · {o.onDuty} on duty</span>
-            </p>
-            <p className="text-xs text-brand-muted">{o.treatments} treatments this month</p>
-          </button>
-        ))}
+        <Card className="!p-4">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
+            <Store size={14} className="text-brand-green" /> {SPA_NAME}
+          </p>
+          <p className="mt-2 text-lg font-semibold text-brand-ink">
+            {staff.length} <span className="text-xs font-normal text-brand-muted">staff · {onDuty} on duty</span>
+          </p>
+          <p className="text-xs text-brand-muted">Bangi, Selangor</p>
+        </Card>
+        <Card className="!p-4">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
+            <Sparkles size={14} className="text-brand-pink" /> Treatments this month
+          </p>
+          <p className="mt-2 text-lg font-semibold text-brand-ink">{treatments}</p>
+          <p className="text-xs text-brand-muted">Delivered by spa staff</p>
+        </Card>
+        <Card className="!p-4">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
+            <Star size={14} className="fill-brand-amber text-brand-amber" /> Average rating
+          </p>
+          <p className="mt-2 text-lg font-semibold text-brand-ink">{avgRating}</p>
+          <p className="text-xs text-brand-muted">Across all spa staff</p>
+        </Card>
         <Card className="!p-4">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
             <Wallet size={14} className="text-brand-amber" /> Monthly spa salaries
@@ -113,14 +107,6 @@ export default function SpaStaffPage() {
             {f.label}
           </button>
         ))}
-        {outlet !== 'all' && (
-          <button
-            onClick={() => setOutlet('all')}
-            className="flex items-center gap-1 rounded-full bg-brand-green-light px-3 py-1.5 text-xs font-medium text-brand-green"
-          >
-            {outlet} <X size={12} />
-          </button>
-        )}
       </div>
 
       <Card className="!p-0 overflow-hidden">
@@ -130,7 +116,6 @@ export default function SpaStaffPage() {
               <tr className="text-left text-xs text-brand-muted">
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-5 py-3 font-medium">Role</th>
-                <th className="px-5 py-3 font-medium">Outlet</th>
                 <th className="px-5 py-3 font-medium">Phone</th>
                 <th className="px-5 py-3 font-medium">Treatments (month)</th>
                 <th className="px-5 py-3 font-medium">Rating</th>
@@ -148,7 +133,6 @@ export default function SpaStaffPage() {
                   <td className="px-5 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${spaRoleStyles[s.role]}`}>{s.role}</span>
                   </td>
-                  <td className="px-5 py-3 text-brand-muted">{s.outlet}</td>
                   <td className="px-5 py-3 text-brand-muted">{s.phone}</td>
                   <td className="px-5 py-3 text-brand-muted">{s.role === 'Front Desk' ? '—' : s.treatmentsThisMonth}</td>
                   <td className="px-5 py-3">
@@ -190,7 +174,6 @@ function AddSpaStaffModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
   const [icNumber, setIcNumber] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<SpaStaffRole>('Spa Specialist');
-  const [outlet, setOutlet] = useState<string>(SPA_OUTLETS[0]);
   const [salary, setSalary] = useState('');
 
   const canSubmit = name.trim() && phone.trim() && icNumber.trim();
@@ -199,7 +182,7 @@ function AddSpaStaffModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-black/5 p-4">
-          <p className="text-sm font-semibold text-brand-ink">Add new spa staff</p>
+          <p className="text-sm font-semibold text-brand-ink">Add staff to {SPA_NAME}</p>
           <button onClick={onClose} className="text-brand-muted hover:text-brand-ink">
             <X size={18} />
           </button>
@@ -209,23 +192,13 @@ function AddSpaStaffModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
             <label className="mb-1 block text-xs font-medium text-brand-muted">Full name *</label>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nurul Ain binti Hassan" className={inputClass} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-brand-muted">Role *</label>
-              <select value={role} onChange={(e) => setRole(e.target.value as SpaStaffRole)} className={inputClass}>
-                {SPA_ROLES.map((r) => (
-                  <option key={r}>{r}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-brand-muted">Outlet *</label>
-              <select value={outlet} onChange={(e) => setOutlet(e.target.value)} className={inputClass}>
-                {SPA_OUTLETS.map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-muted">Role *</label>
+            <select value={role} onChange={(e) => setRole(e.target.value as SpaStaffRole)} className={inputClass}>
+              {SPA_ROLES.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="mb-1 flex items-center gap-1 text-xs font-medium text-brand-muted">
@@ -266,7 +239,6 @@ function AddSpaStaffModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
                 icNumber: icNumber.trim(),
                 email: email.trim() || undefined,
                 role,
-                outlet,
                 monthlySalary: Number(salary) || 0,
               })
             }

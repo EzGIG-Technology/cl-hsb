@@ -5,7 +5,7 @@ import { PageShell } from '../components/PageShell';
 import { Card, Avatar, SectionTitle, SpecialtyChip, formatRM } from '../components/ui';
 import { useSpaStaffStore } from '../store/SpaStaffStore';
 import { useActivityLog } from '../store/ActivityLogContext';
-import { SPA_OUTLETS, SPA_ROLES, SPA_SKILLS, spaRoleStyles } from '../data/spaStaff';
+import { SPA_NAME, SPA_ROLES, SPA_SKILLS, spaRoleStyles } from '../data/spaStaff';
 import { formatDateLabel } from '../lib/date';
 import type { CLStatus, SpaStaff, SpaStaffRole } from '../types';
 
@@ -47,12 +47,12 @@ export default function SpaStaffProfilePage() {
   function handleRemove() {
     if (!window.confirm(`Remove ${s.name} from the spa roster? This can't be undone.`)) return;
     removeStaff(s.id);
-    logAction('Admin Amy', 'Removed spa staff', `${s.name} · ${s.outlet}`);
+    logAction('Admin Amy', 'Removed spa staff', s.name);
     navigate('/spa');
   }
 
   return (
-    <PageShell title={s.name} subtitle={`${s.role} · ${s.outlet}`}>
+    <PageShell title={s.name} subtitle={`${s.role} · ${SPA_NAME}`}>
       <button onClick={() => navigate('/spa')} className="mb-4 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-ink">
         <ArrowLeft size={15} /> Back to Spa Directory
       </button>
@@ -67,7 +67,7 @@ export default function SpaStaffProfilePage() {
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${spaRoleStyles[s.role]}`}>{s.role}</span>
               </div>
               <p className="flex items-center gap-1 text-sm text-brand-muted">
-                <Store size={13} /> {s.outlet}
+                <Store size={13} /> {SPA_NAME}
               </p>
               <div className="mt-1 flex items-center gap-3 text-sm">
                 <span className="flex items-center gap-1 text-brand-ink">
@@ -228,7 +228,6 @@ function EditSpaStaffModal({ staff, onClose }: { staff: SpaStaff; onClose: () =>
   const [email, setEmail] = useState(staff.email);
   const [icNumber, setIcNumber] = useState(staff.icNumber);
   const [role, setRole] = useState<SpaStaffRole>(staff.role);
-  const [outlet, setOutlet] = useState(staff.outlet);
   const [shift, setShift] = useState<SpaStaff['shift']>(staff.shift);
   const [languages, setLanguages] = useState(staff.languages.join(', '));
   const [years, setYears] = useState(String(staff.yearsExperience));
@@ -240,7 +239,6 @@ function EditSpaStaffModal({ staff, onClose }: { staff: SpaStaff; onClose: () =>
       email: email.trim(),
       icNumber: icNumber.trim(),
       role,
-      outlet,
       shift,
       languages: languages.split(',').map((l) => l.trim()).filter(Boolean),
       yearsExperience: Number(years) || 0,
@@ -264,13 +262,6 @@ function EditSpaStaffModal({ staff, onClose }: { staff: SpaStaff; onClose: () =>
             <select value={role} onChange={(e) => setRole(e.target.value as SpaStaffRole)} className={inputClass}>
               {SPA_ROLES.map((r) => (
                 <option key={r}>{r}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Outlet">
-            <select value={outlet} onChange={(e) => setOutlet(e.target.value)} className={inputClass}>
-              {SPA_OUTLETS.map((o) => (
-                <option key={o}>{o}</option>
               ))}
             </select>
           </Field>

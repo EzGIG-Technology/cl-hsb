@@ -5,7 +5,8 @@ import { packages as seedPackages } from '../data/packages';
 import { buildSeedPayments } from '../lib/finance';
 import type { CustomerPayment, Expense, ExpenseCategory } from '../types';
 
-const STORAGE_KEY = 'nrmc-finance-v1';
+// v2: expense seed reworked for Honey Spa Bangi as the only spa premises.
+const STORAGE_KEY = 'nrmc-finance-v2';
 
 interface FinanceState {
   expenses: Expense[];

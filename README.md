@@ -16,8 +16,8 @@ and green (`#3c6f57`).
   action buttons (WhatsApp, reports, mark inactive), and Current Schedule / Active / Completed / Monthly tabs.
   Each profile also has an **internal vs. customer-facing view** (print/PDF-style, strips private info) and
   banned/complained flagging.
-- **Spa Directory** — spa staff across the three spa outlets (Setia Alam, Shah Alam, Bangi), with outlet headcount /
-  on-duty / treatment summary cards and total monthly spa salaries. Roles are Spa Supervisor, Spa Specialist, Spa
+- **Spa Directory** — staff of **Honey Spa Bangi**, the company's spa, with headcount / on-duty, treatments this
+  month, average rating and total monthly spa salaries. Roles are Spa Supervisor, Spa Specialist, Spa
   Attendant and Front Desk (there is no therapist role). Each profile has status, treatment skills (tap to toggle),
   contact details, salary, admin notes, and edit / remove-from-roster actions.
 - **Customer Directory** — click through to a customer profile with editable address, multi-package

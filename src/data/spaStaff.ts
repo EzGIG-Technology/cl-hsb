@@ -1,6 +1,7 @@
 import type { SpaStaff, SpaStaffRole } from '../types';
 
-export const SPA_OUTLETS = ['NR Spa Setia Alam', 'NR Spa Shah Alam', 'NR Spa Bangi'] as const;
+/** The company's spa — every spa staff member works here. */
+export const SPA_NAME = 'Honey Spa Bangi';
 
 export const SPA_ROLES: SpaStaffRole[] = ['Spa Supervisor', 'Spa Specialist', 'Spa Attendant', 'Front Desk'];
 
@@ -31,7 +32,6 @@ export const spaStaff: SpaStaff[] = [
     name: 'Rozita Hamzah',
     avatarColor: '#3c6f57',
     role: 'Spa Supervisor',
-    outlet: 'NR Spa Setia Alam',
     phone: '+60 12-410 2231',
     email: 'rozita.hamzah@nrmothercare.my',
     icNumber: '850612-10-5512',
@@ -44,14 +44,13 @@ export const spaStaff: SpaStaff[] = [
     yearsExperience: 11,
     shift: 'full-day',
     monthlySalary: 4200,
-    notes: 'Runs the Setia Alam outlet roster and trains new spa staff on herbal treatments.',
+    notes: 'Runs the Honey Spa Bangi roster and trains new spa staff on herbal treatments.',
   },
   {
     id: 'spa-02',
     name: 'Nadia Kamal',
     avatarColor: '#d94f8c',
     role: 'Spa Specialist',
-    outlet: 'NR Spa Setia Alam',
     phone: '+60 13-882 4410',
     email: 'nadia.kamal@nrmothercare.my',
     icNumber: '930305-14-6624',
@@ -70,7 +69,6 @@ export const spaStaff: SpaStaff[] = [
     name: 'Kavitha Raj',
     avatarColor: '#c98a3b',
     role: 'Spa Specialist',
-    outlet: 'NR Spa Setia Alam',
     phone: '+60 16-221 0938',
     email: 'kavitha.raj@nrmothercare.my',
     icNumber: '910822-08-5370',
@@ -89,7 +87,6 @@ export const spaStaff: SpaStaff[] = [
     name: 'Aina Sofea Rosli',
     avatarColor: '#b13570',
     role: 'Front Desk',
-    outlet: 'NR Spa Setia Alam',
     phone: '+60 11-3302 7714',
     email: 'aina.rosli@nrmothercare.my',
     icNumber: '000419-10-4402',
@@ -107,8 +104,7 @@ export const spaStaff: SpaStaff[] = [
     id: 'spa-05',
     name: 'Halimah Osman',
     avatarColor: '#21493a',
-    role: 'Spa Supervisor',
-    outlet: 'NR Spa Shah Alam',
+    role: 'Spa Specialist',
     phone: '+60 19-552 6180',
     email: 'halimah.osman@nrmothercare.my',
     icNumber: '820130-10-6688',
@@ -120,14 +116,13 @@ export const spaStaff: SpaStaff[] = [
     languages: ['Bahasa Malaysia'],
     yearsExperience: 14,
     shift: 'full-day',
-    monthlySalary: 4000,
+    monthlySalary: 3400,
   },
   {
     id: 'spa-06',
     name: 'Farah Nabila Zainal',
     avatarColor: '#e0829f',
     role: 'Spa Specialist',
-    outlet: 'NR Spa Shah Alam',
     phone: '+60 12-781 3305',
     email: 'farah.zainal@nrmothercare.my',
     icNumber: '960711-10-5248',
@@ -147,7 +142,6 @@ export const spaStaff: SpaStaff[] = [
     name: 'Mei Ling Tan',
     avatarColor: '#3b6d8a',
     role: 'Spa Attendant',
-    outlet: 'NR Spa Shah Alam',
     phone: '+60 17-664 2019',
     email: 'meiling.tan@nrmothercare.my',
     icNumber: '980214-14-5822',
@@ -166,7 +160,6 @@ export const spaStaff: SpaStaff[] = [
     name: 'Zuraidah Ahmad',
     avatarColor: '#4f8a6d',
     role: 'Spa Specialist',
-    outlet: 'NR Spa Bangi',
     phone: '+60 13-209 8841',
     email: 'zuraidah.ahmad@nrmothercare.my',
     icNumber: '880903-06-5136',
@@ -185,7 +178,6 @@ export const spaStaff: SpaStaff[] = [
     name: 'Siti Hajar Mokhtar',
     avatarColor: '#8b5fbf',
     role: 'Spa Attendant',
-    outlet: 'NR Spa Bangi',
     phone: '+60 11-2087 6653',
     email: 'hajar.mokhtar@nrmothercare.my',
     icNumber: '020617-10-6046',

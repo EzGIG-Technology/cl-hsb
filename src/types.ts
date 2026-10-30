@@ -191,7 +191,6 @@ export interface SpaStaff {
   name: string;
   avatarColor: string;
   role: SpaStaffRole;
-  outlet: string;
   phone: string;
   email: string;
   icNumber: string;
