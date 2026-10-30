@@ -8,6 +8,8 @@ import { useCLStore } from '../store/CLStore';
 import { useClientStore } from '../store/ClientStore';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useActivityLog } from '../store/ActivityLogContext';
+import { useSpaStaffStore } from '../store/SpaStaffStore';
+import { useFinanceStore } from '../store/FinanceStore';
 
 type Section = 'company' | 'team';
 
@@ -26,6 +28,8 @@ export default function SettingsPage() {
   const { resetToDefaults: resetCLs } = useCLStore();
   const { resetToDefaults: resetClients } = useClientStore();
   const { resetToDefaults: resetAssignments } = useAssignmentStore();
+  const { resetToDefaults: resetSpaStaff } = useSpaStaffStore();
+  const { resetToDefaults: resetFinance } = useFinanceStore();
   const { clear: clearActivityLog } = useActivityLog();
 
   function resetEverything() {
@@ -33,6 +37,8 @@ export default function SettingsPage() {
     resetCLs();
     resetClients();
     resetAssignments();
+    resetSpaStaff();
+    resetFinance();
     clearActivityLog();
   }
 

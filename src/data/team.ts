@@ -70,7 +70,7 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 5,
     flag: 'none',
-    bio: 'Gentle bedside manner with newborns, frequently requested for repeat clients.',
+    bio: 'Gentle bedside manner with newborns, frequently requested for repeat customers.',
     shiftAvailability: 'morning',
   },
   {
@@ -91,8 +91,8 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia', 'Mandarin'],
     yearsExperience: 4,
     flag: 'complained',
-    flagNote: 'Client reported a late arrival on 2026-06-02. Verbal warning issued, no repeat since.',
-    bio: 'Strong technical skills; admin is monitoring punctuality after one client complaint.',
+    flagNote: 'Customer reported a late arrival on 2026-06-02. Verbal warning issued, no repeat since.',
+    bio: 'Strong technical skills; admin is monitoring punctuality after one customer complaint.',
     shiftAvailability: 'afternoon',
   },
   {
@@ -198,7 +198,7 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 8,
     flag: 'none',
-    bio: 'Trusted with high day-count Pakej Melur bookings; excellent client retention.',
+    bio: 'Trusted with high day-count Pakej Melur bookings; excellent customer retention.',
     shiftAvailability: 'both',
   },
   {
@@ -219,7 +219,7 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia'],
     yearsExperience: 12,
     flag: 'banned',
-    flagNote: 'Suspended 2026-05-10 after repeated no-shows confirmed by two clients. Not eligible for new bookings.',
+    flagNote: 'Suspended 2026-05-10 after repeated no-shows confirmed by two customers. Not eligible for new bookings.',
     bio: 'Long-tenured CL, currently suspended pending review — excluded from the assignment pool.',
     shiftAvailability: 'flexible',
   },
@@ -241,7 +241,7 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia', 'Tamil'],
     yearsExperience: 6,
     flag: 'none',
-    bio: 'Popular with Tamil-speaking clients, gentle and detail-oriented.',
+    bio: 'Popular with Tamil-speaking customers, gentle and detail-oriented.',
     shiftAvailability: 'both',
   },
   {
@@ -304,7 +304,7 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 2,
     flag: 'none',
-    bio: 'Rising CL with strong client feedback in her first year.',
+    bio: 'Rising CL with strong customer feedback in her first year.',
     shiftAvailability: 'morning',
   },
   {
@@ -346,7 +346,7 @@ const rawCLs: RawCL[] = [
     languages: ['Bahasa Malaysia'],
     yearsExperience: 2,
     flag: 'none',
-    bio: 'Covers the Sepang and KLIA-adjacent client base.',
+    bio: 'Covers the Sepang and KLIA-adjacent customer base.',
     shiftAvailability: 'flexible',
   },
 ];
@@ -397,7 +397,7 @@ const extras: Record<string, CLExtras> = {
     paymentMethod: 'e-wallet',
   },
   'cl-04': {
-    flagHistory: [{ date: '2026-06-02', flag: 'complained', note: 'Client reported a late arrival on 2026-06-02. Verbal warning issued, no repeat since.' }],
+    flagHistory: [{ date: '2026-06-02', flag: 'complained', note: 'Customer reported a late arrival on 2026-06-02. Verbal warning issued, no repeat since.' }],
   },
   'cl-05': {
     reviews: [{ id: 'rev-seed-3', rating: 5, text: 'The most experienced CL we worked with — handled our stay-in placement flawlessly.', date: '2026-07-20', clientName: 'Puan Farah Adilah' }],
@@ -416,7 +416,7 @@ const extras: Record<string, CLExtras> = {
     paymentMethod: 'bank-transfer',
   },
   'cl-10': {
-    flagHistory: [{ date: '2026-05-10', flag: 'banned', note: 'Suspended 2026-05-10 after repeated no-shows confirmed by two clients. Not eligible for new bookings.' }],
+    flagHistory: [{ date: '2026-05-10', flag: 'banned', note: 'Suspended 2026-05-10 after repeated no-shows confirmed by two customers. Not eligible for new bookings.' }],
   },
   'cl-12': {
     nationality: 'Filipino',

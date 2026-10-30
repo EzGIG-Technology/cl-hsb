@@ -118,7 +118,7 @@ export default function SchedulePage() {
     const a = allAssignments.find((x) => x.id === assignmentId);
     const client = a ? clientById(a.clientId) : undefined;
     storeReschedule(assignmentId, date, startTime, endTime);
-    logAction('Admin Amy', 'Rescheduled booking', `${client?.name ?? 'Client'} → ${date} ${startTime}-${endTime}`);
+    logAction('Admin Amy', 'Rescheduled booking', `${client?.name ?? 'Customer'} → ${date} ${startTime}-${endTime}`);
   }
 
   return (
@@ -127,7 +127,7 @@ export default function SchedulePage() {
       subtitle="Plan CL assignments, availability, and replacements."
       icon={CalendarDays}
       accentColor="#d94f8c"
-      searchPlaceholder="Search CL or client"
+      searchPlaceholder="Search CL or customer"
     >
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Scheduled" value={scheduledCount} icon={<CalendarClock size={16} className="text-brand-pink" />} />
@@ -303,7 +303,7 @@ export default function SchedulePage() {
               Unassigned requests
               <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-600">{unassigned.length}</span>
             </SectionTitle>
-            <p className="mb-3 -mt-2 text-xs text-brand-muted">Clients still requiring a CL</p>
+            <p className="mb-3 -mt-2 text-xs text-brand-muted">Customers still requiring a CL</p>
             <div className="space-y-3">
               {unassigned.map((clientId) => {
                 const client = clientById(clientId);

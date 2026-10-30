@@ -183,3 +183,58 @@ export interface MessageThread {
   unread: number;
   messages: { id: string; from: 'admin' | 'them'; text: string; time: string }[];
 }
+
+export type SpaStaffRole = 'Spa Supervisor' | 'Spa Specialist' | 'Spa Attendant' | 'Front Desk';
+
+export interface SpaStaff {
+  id: string;
+  name: string;
+  avatarColor: string;
+  role: SpaStaffRole;
+  outlet: string;
+  phone: string;
+  email: string;
+  icNumber: string;
+  joinedDate: string; // yyyy-mm-dd
+  status: CLStatus;
+  rating: number;
+  treatmentsThisMonth: number;
+  /** Treatments this staff member is trained to deliver at the spa (e.g. Lulur Wangi, Bertangas Herba). */
+  skills: string[];
+  languages: string[];
+  yearsExperience: number;
+  shift: 'morning' | 'afternoon' | 'full-day';
+  /** Fixed monthly salary in RM — feeds the Spa staff salaries line in Financial Management. */
+  monthlySalary: number;
+  notes?: string;
+}
+
+export type ExpenseCategory =
+  | 'Rent & Utilities'
+  | 'Herbs & Supplies'
+  | 'Transport & Fuel'
+  | 'Marketing'
+  | 'Admin & Software'
+  | 'Insurance & Licences'
+  | 'Equipment & Maintenance';
+
+export interface Expense {
+  id: string;
+  date: string; // yyyy-mm-dd
+  category: ExpenseCategory;
+  description: string;
+  vendor: string;
+  amount: number;
+  status: 'paid' | 'unpaid';
+}
+
+export type CustomerPaymentKind = 'deposit' | 'balance' | 'full';
+
+export interface CustomerPayment {
+  id: string;
+  clientId: string;
+  date: string; // yyyy-mm-dd
+  amount: number;
+  kind: CustomerPaymentKind;
+  method: PaymentMethod;
+}

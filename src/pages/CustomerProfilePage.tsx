@@ -36,7 +36,7 @@ const paymentStatusBadge: Record<string, 'completed' | 'pending' | 'confirmed'> 
   pending: 'pending',
 };
 
-export default function ClientProfilePage() {
+export default function CustomerProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { clients, updateAddress, addPackageToClient, removePackageFromClient, updatePackageDays } = useClientStore();
@@ -55,7 +55,7 @@ export default function ClientProfilePage() {
   if (!client) {
     return (
       <PageShell title="Customer not found">
-        <Link to="/clients" className="text-brand-pink underline">
+        <Link to="/customers" className="text-brand-pink underline">
           Back to Customer Directory
         </Link>
       </PageShell>
@@ -78,13 +78,13 @@ export default function ClientProfilePage() {
 
   function saveAddress() {
     updateAddress(client!.id, addressDraft, locationDraft);
-    logAction('Admin Amy', 'Updated client address', `${client!.name} → ${locationDraft}`);
+    logAction('Admin Amy', 'Updated customer address', `${client!.name} → ${locationDraft}`);
     setEditingAddress(false);
   }
 
   return (
     <PageShell title={client.name} subtitle={client.location}>
-      <button onClick={() => navigate('/clients')} className="mb-4 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-ink">
+      <button onClick={() => navigate('/customers')} className="mb-4 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-ink">
         <ArrowLeft size={15} /> Back to Customer Directory
       </button>
 
@@ -305,7 +305,7 @@ export default function ClientProfilePage() {
                   <button
                     onClick={() => {
                       removePackageFromClient(client.id, pid);
-                      logAction('Admin Amy', 'Removed package from client', `${pkg.shortName} from ${client.name}`);
+                      logAction('Admin Amy', 'Removed package from customer', `${pkg.shortName} from ${client.name}`);
                     }}
                     className="shrink-0 text-brand-muted hover:text-red-500"
                   >
@@ -326,7 +326,7 @@ export default function ClientProfilePage() {
                     key={p.id}
                     onClick={() => {
                       addPackageToClient(client.id, p.id, p.tiers[0]?.days);
-                      logAction('Admin Amy', 'Added package to client', `${p.shortName} for ${client.name}`);
+                      logAction('Admin Amy', 'Added package to customer', `${p.shortName} for ${client.name}`);
                       setShowPicker(false);
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-brand-ink hover:bg-white"
@@ -343,13 +343,13 @@ export default function ClientProfilePage() {
           )}
         </Card>
       </div>
-      {editingProfile && <EditClientModal client={client} onClose={() => setEditingProfile(false)} />}
+      {editingProfile && <EditCustomerModal client={client} onClose={() => setEditingProfile(false)} />}
       <div className="h-6" />
     </PageShell>
   );
 }
 
-function EditClientModal({ client, onClose }: { client: Client; onClose: () => void }) {
+function EditCustomerModal({ client, onClose }: { client: Client; onClose: () => void }) {
   const { updateDetails } = useClientStore();
   const { logAction } = useActivityLog();
   const [phone, setPhone] = useState(client.phone);
@@ -360,7 +360,7 @@ function EditClientModal({ client, onClose }: { client: Client; onClose: () => v
 
   function save() {
     updateDetails(client.id, { phone: phone.trim(), email: email.trim(), dueOrBirthDate, notes: notes.trim() || undefined, status });
-    logAction('Admin Amy', 'Edited client profile', client.name);
+    logAction('Admin Amy', 'Edited customer profile', client.name);
     onClose();
   }
 

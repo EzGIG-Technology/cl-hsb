@@ -46,7 +46,7 @@ const activityFilters: { id: 'all' | ActivityCategory; label: string }[] = [
 function classifyActivity(action: string): { category: ActivityCategory; icon: typeof Activity; color: string } {
   if (/booking|reassign|reschedul|approved|rejected/i.test(action)) return { category: 'booking', icon: ClipboardCheck, color: 'bg-brand-pink-light text-brand-pink' };
   if (/cl flag|cl status|passport|treatment|caregiver/i.test(action)) return { category: 'cl', icon: Users, color: 'bg-brand-green-light text-brand-green' };
-  if (/client|address|package/i.test(action)) return { category: 'client', icon: Contact, color: 'bg-blue-100 text-blue-700' };
+  if (/client|customer|address|package/i.test(action)) return { category: 'client', icon: Contact, color: 'bg-blue-100 text-blue-700' };
   if (/paid|payroll|report/i.test(action)) return { category: 'payroll', icon: Wallet, color: 'bg-brand-amber-light text-brand-amber' };
   return { category: 'other', icon: Activity, color: 'bg-gray-100 text-gray-600' };
 }

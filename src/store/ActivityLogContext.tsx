@@ -28,7 +28,7 @@ const seedEntries: ActivityLogEntry[] = [
     id: 'log-seed-2',
     time: new Date(2026, 7, 13, 8, 40).toISOString(),
     adminName: 'Admin Akma',
-    action: 'Updated client address',
+    action: 'Updated customer address',
     details: 'Puan Elina Zulkifli changed to Setia Alam, Selangor',
   },
   {

@@ -199,7 +199,7 @@ export const packages: Package[] = [
     category: 'postnatal',
     theme: 'pink',
     durationEstimate: 'Stay-in 7.30am – 7.30pm, 21 hari',
-    summary: 'CL travels overseas with the client for a fixed 21-day confinement placement.',
+    summary: 'CL travels overseas with the customer for a fixed 21-day confinement placement.',
     dailyMotherCare: DAILY_MOTHER_CARE,
     scheduledMotherCare: [
       { label: 'Lulur', count: 10 },

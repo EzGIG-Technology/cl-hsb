@@ -61,7 +61,7 @@ export default function CLsPage() {
 
   return (
     <PageShell
-      title="Caregiver (CL) Directory"
+      title="CL Directory"
       subtitle={`${cls.length} CLs on the roster — ${counts.flagged} flagged for review`}
       icon={Users}
       accentColor="#d94f8c"

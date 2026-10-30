@@ -11,17 +11,31 @@ and green (`#3c6f57`).
   repeat rate, utilisation), live care map, live activity stream, month-on-month bookings chart, today's roster
 - **Bookings & Assignment** — Unassigned / Active / Completed / Cancelled tabs, area filter, and a 4-step
   New Booking wizard (pick customer → package & tier → system-ranked caregiver match → confirm)
-- **Caregiver (CL) Directory** — leaderboard (top 3 by tier/points), full roster table; click through to a
+- **CL Directory** — leaderboard (top 3 by tier/points), full roster table; click through to a
   profile with stats (sessions, verified hours, lifetime earnings, leaderboard points, good/poor reviews),
   action buttons (WhatsApp, reports, mark inactive), and Current Schedule / Active / Completed / Monthly tabs.
   Each profile also has an **internal vs. customer-facing view** (print/PDF-style, strips private info) and
   banned/complained flagging.
+- **Spa Directory** — spa staff across the three spa outlets (Setia Alam, Shah Alam, Bangi), with outlet headcount /
+  on-duty / treatment summary cards and total monthly spa salaries. Roles are Spa Supervisor, Spa Specialist, Spa
+  Attendant and Front Desk (there is no therapist role). Each profile has status, treatment skills (tap to toggle),
+  contact details, salary, admin notes, and edit / remove-from-roster actions.
 - **Customer Directory** — click through to a customer profile with editable address, multi-package
   assignment with a running total, and full booking history
 - **Visit Records & Audit** — every visit with a computed verification status (Verified / In Progress /
   Missing Check-Out Selfie / GPS Mismatch) and an inspect panel
 
 **Finance & Risk**
+- **Financial Management** — company-wide finances with a month picker (Jan–Aug 2026) and four tabs:
+  - *P&L Overview* — revenue (CL home-care packages + spa treatments) minus CL payroll, spa staff salaries and
+    operating expenses; net profit and margin vs. last month, a revenue/costs/profit chart, and a full P&L
+    statement (month, previous month, YTD, % of revenue) with CSV export
+  - *Expenses* — categorised expense ledger (rent & utilities, herbs & supplies, transport, marketing, admin,
+    insurance, equipment) with add / delete / mark paid, filters, spend-by-category breakdown, and CSV export
+  - *Receivables & Deposits* — what each customer has been billed, deposit required, paid, and outstanding, with
+    Overdue / Awaiting deposit / Deposit paid / Paid in full statuses, a "Record payment" flow, and recent payments
+  - *Cash Flow & Budget* — monthly cash in/out, running bank balance, and editable per-category monthly budgets
+    with budget-vs-actual bars and over-budget alerts
 - **Hourly Payroll** — monthly summary (caregiver count, approved/disputed hours, total pay), CSV/Excel export,
   bulk "mark as paid", per-caregiver approval status
 - **Disputes & Exceptions** — Open/Resolved tickets with severity and a resolve action

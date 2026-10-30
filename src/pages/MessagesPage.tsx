@@ -25,7 +25,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <PageShell title="Messages" subtitle="Chat with CLs and clients in real time.">
+    <PageShell title="Messages" subtitle="Chat with CLs and customers in real time.">
       <div className="grid h-[calc(100vh-160px)] grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
         <Card className="!p-0 flex flex-col overflow-hidden">
           <div className="border-b border-black/5 p-3">
@@ -73,7 +73,7 @@ export default function MessagesPage() {
               <div>
                 <p className="font-semibold text-brand-ink">{active.participantName}</p>
                 <Badge status={active.participantType === 'cl' ? 'on-duty' : 'active'}>
-                  {active.participantType === 'cl' ? 'Confinement Lady' : 'Client'}
+                  {active.participantType === 'cl' ? 'Confinement Lady' : 'Customer'}
                 </Badge>
               </div>
             </div>

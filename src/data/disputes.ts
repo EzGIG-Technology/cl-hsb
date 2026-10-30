@@ -17,7 +17,7 @@ export const disputes: Dispute[] = [
     clId: 'cl-04',
     clientId: 'cli-07',
     issue: 'GPS Mismatch',
-    detail: 'Check-in location was 4.2km from the registered client address.',
+    detail: 'Check-in location was 4.2km from the registered customer address.',
     severity: 'Medium',
     status: 'Open',
   },

@@ -14,6 +14,8 @@ import {
   MessageCircle,
   Sparkles,
   CalendarDays,
+  Flower2,
+  Landmark,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { useSettings } from '../store/SettingsContext';
@@ -41,8 +43,9 @@ const groups: NavGroup[] = [
       { to: '/', label: 'Overview / Live Monitor', icon: Diamond },
       { to: '/bookings', label: 'Bookings & Assignment', icon: ClipboardList, badgeColor: 'bg-brand-pink' },
       { to: '/schedule', label: 'Schedule & Roster', icon: CalendarDays },
-      { to: '/cls', label: 'Caregiver (CL) Directory', icon: Users },
-      { to: '/clients', label: 'Customer Directory', icon: Contact },
+      { to: '/cls', label: 'CL Directory', icon: Users },
+      { to: '/spa', label: 'Spa Directory', icon: Flower2 },
+      { to: '/customers', label: 'Customer Directory', icon: Contact },
       { to: '/visits', label: 'Visit Records & Audit', icon: ShieldCheck },
     ],
   },
@@ -50,6 +53,7 @@ const groups: NavGroup[] = [
     label: 'Finance & Risk',
     accent: 'bg-brand-amber',
     items: [
+      { to: '/finance', label: 'Financial Management', icon: Landmark },
       { to: '/payroll', label: 'Hourly Payroll', icon: Clock },
       { to: '/disputes', label: 'Disputes & Exceptions', icon: AlertTriangle, badgeColor: 'bg-red-500' },
     ],

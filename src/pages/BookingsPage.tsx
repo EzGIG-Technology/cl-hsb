@@ -99,7 +99,7 @@ export default function BookingsPage() {
                 {filteredUnassigned.map((c) => (
                   <tr key={c.id} className="border-t border-black/5">
                     <td className="px-5 py-3">
-                      <Link to={`/clients/${c.id}`} className="flex items-center gap-2 hover:underline">
+                      <Link to={`/customers/${c.id}`} className="flex items-center gap-2 hover:underline">
                         <Avatar name={c.name} size={26} />
                         <span className="text-brand-ink">{c.name}</span>
                       </Link>
@@ -152,7 +152,7 @@ export default function BookingsPage() {
                       <td className="px-5 py-3 font-mono text-xs text-brand-muted">#{a.id.toUpperCase()}</td>
                       <td className="px-5 py-3">
                         {client && (
-                          <Link to={`/clients/${client.id}`} className="text-brand-ink hover:underline">
+                          <Link to={`/customers/${client.id}`} className="text-brand-ink hover:underline">
                             {client.name}
                           </Link>
                         )}

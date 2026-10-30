@@ -12,7 +12,7 @@ import { formatDateLabel, formatTime12, TODAY_STR } from '../lib/date';
 
 type DirectoryTab = 'active' | 'upcoming';
 
-export default function ClientsPage() {
+export default function CustomersPage() {
   const { packageById } = useSettings();
   const { clients, addClient } = useClientStore();
   const { clById } = useCLStore();
@@ -48,7 +48,7 @@ export default function ClientsPage() {
     const client = addClient(input);
     logAction('Admin Amy', 'Added new customer', client.name);
     setShowAdd(false);
-    navigate(`/clients/${client.id}`);
+    navigate(`/customers/${client.id}`);
   }
 
   return (
@@ -111,7 +111,7 @@ export default function ClientsPage() {
                   return (
                     <tr key={c.id} className="border-t border-black/5 hover:bg-brand-cream/60">
                       <td className="px-5 py-3">
-                        <button onClick={() => navigate(`/clients/${c.id}`)} className="flex items-center gap-2 hover:underline">
+                        <button onClick={() => navigate(`/customers/${c.id}`)} className="flex items-center gap-2 hover:underline">
                           <Avatar name={c.name} size={28} />
                           <span className="text-brand-ink">{c.name}</span>
                         </button>
@@ -132,7 +132,7 @@ export default function ClientsPage() {
                         <Badge status={returning ? 'completed' : 'upcoming'}>{returning ? 'Returning' : 'New'}</Badge>
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <button onClick={() => navigate(`/clients/${c.id}`)} className="text-xs font-medium text-brand-pink hover:underline">
+                        <button onClick={() => navigate(`/customers/${c.id}`)} className="text-xs font-medium text-brand-pink hover:underline">
                           View
                         </button>
                       </td>
@@ -172,7 +172,7 @@ export default function ClientsPage() {
                     <tr key={a.id} className="border-t border-black/5 hover:bg-brand-cream/60">
                       <td className="px-5 py-3">
                         {client && (
-                          <button onClick={() => navigate(`/clients/${client.id}`)} className="flex items-center gap-2 hover:underline">
+                          <button onClick={() => navigate(`/customers/${client.id}`)} className="flex items-center gap-2 hover:underline">
                             <Avatar name={client.name} size={26} />
                             <span className="text-brand-ink">{client.name}</span>
                           </button>

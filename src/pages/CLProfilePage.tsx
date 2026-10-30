@@ -402,7 +402,7 @@ export default function CLProfilePage() {
           <div className="space-y-5">
             <Card className="h-fit">
               <SectionTitle>Profile flag</SectionTitle>
-              <p className="mb-3 text-xs text-brand-muted">Tag this CL if a client complaint was filed, or suspend them from new bookings.</p>
+              <p className="mb-3 text-xs text-brand-muted">Tag this CL if a customer complaint was filed, or suspend them from new bookings.</p>
 
               <div className="mb-3 flex items-center gap-2">
                 {cl.flag === 'none' && <ShieldCheck size={16} className="text-brand-green" />}

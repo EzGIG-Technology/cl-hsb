@@ -1,10 +1,13 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import OverviewPage from './pages/OverviewPage';
 import MobileAppPage from './pages/MobileAppPage';
 import CLsPage from './pages/CLsPage';
 import CLProfilePage from './pages/CLProfilePage';
-import ClientsPage from './pages/ClientsPage';
-import ClientProfilePage from './pages/ClientProfilePage';
+import CustomersPage from './pages/CustomersPage';
+import CustomerProfilePage from './pages/CustomerProfilePage';
+import SpaStaffPage from './pages/SpaStaffPage';
+import SpaStaffProfilePage from './pages/SpaStaffProfilePage';
+import FinancePage from './pages/FinancePage';
 import MapPage from './pages/MapPage';
 import SchedulePage from './pages/SchedulePage';
 import ReportsPage from './pages/ReportsPage';
@@ -25,10 +28,15 @@ export default function App() {
       <Route path="/bookings" element={<BookingsPage />} />
       <Route path="/cls" element={<CLsPage />} />
       <Route path="/cls/:id" element={<CLProfilePage />} />
-      <Route path="/clients" element={<ClientsPage />} />
-      <Route path="/clients/:id" element={<ClientProfilePage />} />
+      <Route path="/spa" element={<SpaStaffPage />} />
+      <Route path="/spa/:id" element={<SpaStaffProfilePage />} />
+      <Route path="/customers" element={<CustomersPage />} />
+      <Route path="/customers/:id" element={<CustomerProfilePage />} />
+      <Route path="/clients" element={<Navigate to="/customers" replace />} />
+      <Route path="/clients/:id" element={<LegacyCustomerRedirect />} />
       <Route path="/visits" element={<VisitsPage />} />
       <Route path="/payroll" element={<PayrollPage />} />
+      <Route path="/finance" element={<FinancePage />} />
       <Route path="/disputes" element={<DisputesPage />} />
       <Route path="/packages" element={<PackagesPage />} />
       <Route path="/packages/:id" element={<PackageDetailPage />} />
@@ -39,4 +47,10 @@ export default function App() {
       <Route path="/settings" element={<SettingsPage />} />
     </Routes>
   );
+}
+
+/** Old /clients/:id links (bookmarks, shared URLs) keep working after the Client → Customer rename. */
+function LegacyCustomerRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/customers/${id}`} replace />;
 }
