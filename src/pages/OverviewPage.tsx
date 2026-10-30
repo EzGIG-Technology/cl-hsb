@@ -16,38 +16,41 @@ import { useAssignmentStore } from '../store/AssignmentStore';
 import { useDisputeStore } from '../store/DisputeStore';
 import { monthlyCompletedAssignments, locationTotals } from '../data/reports';
 import { TODAY, TODAY_STR, formatTime12, toDateStr, expiryUrgency } from '../lib/date';
+import { staffPath } from '../types';
 
 const monthlyCancelled = [4, 6, 3, 5, 7, 2, 6, 3, 8, 4, 5, 9];
 const weekdayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-type ActivityCategory = 'booking' | 'therapist' | 'client' | 'payroll' | 'other';
+type ActivityCategory = 'booking' | 'staff' | 'customer' | 'payroll' | 'other';
 const activityFilters: { id: 'all' | ActivityCategory; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'booking', label: 'Bookings' },
-  { id: 'therapist', label: 'Therapists' },
-  { id: 'client', label: 'Clients' },
+  { id: 'staff', label: 'Staff' },
+  { id: 'customer', label: 'Customers' },
   { id: 'payroll', label: 'Payroll' },
 ];
 
 function classifyActivity(action: string): { category: ActivityCategory; icon: typeof Activity; color: string } {
   if (/booking|reassign|reschedul|approved|rejected|session/i.test(action))
     return { category: 'booking', icon: ClipboardCheck, color: 'bg-brand-pink-light text-brand-pink' };
-  if (/\bcl\b|therapist|caregiver|flag|passport|certification|leave|treatment photo/i.test(action))
-    return { category: 'therapist', icon: Users, color: 'bg-brand-lavender-light text-brand-lavender' };
-  if (/client|customer|address|package|treatment/i.test(action)) return { category: 'client', icon: Contact, color: 'bg-brand-cream text-brand-lavender-dark' };
-  if (/paid|payroll|report/i.test(action)) return { category: 'payroll', icon: Wallet, color: 'bg-brand-amber-light text-brand-amber' };
+  if (/\bcls?\b|staff|therapist|caregiver|flag|passport|certification|leave|treatment photo/i.test(action))
+    return { category: 'staff', icon: Users, color: 'bg-brand-lavender-light text-brand-lavender' };
+  if (/client|customer|address|package|treatment/i.test(action)) return { category: 'customer', icon: Contact, color: 'bg-brand-cream text-brand-lavender-dark' };
+  if (/paid|payroll|report|expense|budget|payment/i.test(action)) return { category: 'payroll', icon: Wallet, color: 'bg-brand-amber-light text-brand-amber' };
   return { category: 'other', icon: Activity, color: 'bg-brand-cream text-brand-muted' };
 }
 
-/** Older log entries were written with the old wording; show them in today's terms. */
+/** Older log entries were written with older wording; show them in today's terms. */
 function displayAction(action: string) {
   return action
-    .replace(/\bCLs\b/g, 'therapists')
-    .replace(/\bCL\b/g, 'therapist')
-    .replace(/caregiver/gi, 'therapist')
-    .replace(/customer/gi, 'client')
-    .replace(/\bpackage\b/gi, 'treatment')
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/therapists/g, 'staff')
+    .replace(/therapist/g, 'staff')
+    .replace(/caregiver/g, 'cl')
+    .replace(/clients/g, 'customers')
+    .replace(/client/g, 'customer')
+    .replace(/\bpackage\b/g, 'treatment')
+    .replace(/\bcl(s?)\b/g, 'CL$1');
 }
 
 function startOfWeek(d: Date) {
@@ -162,7 +165,7 @@ export default function OverviewPage() {
   return (
     <PageShell
       title="Overview"
-      subtitle="Today at Honey Spa Bangi: sessions, therapists and bookings at a glance."
+      subtitle="Today at Honey Spa Bangi: sessions, staff and bookings at a glance."
       headerAction={
         <Link
           to="/bookings"
@@ -178,7 +181,7 @@ export default function OverviewPage() {
         <div className="mt-6 space-y-2">
           {missedCheckIn > 0 && (
             <AlertLink to="/bookings" tone="red">
-              {missedCheckIn} therapist has a session with a missed check-in. See today&rsquo;s roster below.
+              {missedCheckIn} staff member has a session with a missed check-in. See today&rsquo;s roster below.
             </AlertLink>
           )}
           {openDisputes > 0 && (
@@ -188,7 +191,7 @@ export default function OverviewPage() {
           )}
           {expiringCompliance > 0 && (
             <AlertLink to="/cls" tone="amber">
-              {expiringCompliance} certification{expiringCompliance === 1 ? '' : 's'} or permit{expiringCompliance === 1 ? '' : 's'} expiring soon. Review therapists.
+              {expiringCompliance} certification{expiringCompliance === 1 ? '' : 's'} or permit{expiringCompliance === 1 ? '' : 's'} expiring soon. Review CL and spa staff.
             </AlertLink>
           )}
         </div>
@@ -202,9 +205,9 @@ export default function OverviewPage() {
             note={`${checkedInToday} checked in · ${dailyCancelled} cancelled`}
           />
           <HeadlineFigure label="Revenue" value={formatRM(Math.round(revenue))} note="Confirmed and completed sessions" />
-          <HeadlineFigure label="Average rating" value={avgRating} suffix="/ 5" note={`${repeatRate}% of clients come back`} />
+          <HeadlineFigure label="Average rating" value={avgRating} suffix="/ 5" note={`${repeatRate}% of customers come back`} />
           <HeadlineFigure
-            label="Therapists on duty"
+            label="Staff on duty"
             value={onDuty.length}
             suffix={`/ ${cls.length}`}
             note={`${utilization}% of the team working now`}
@@ -229,8 +232,8 @@ export default function OverviewPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-sm text-brand-muted">
-                  <th className="px-6 py-2 font-normal">Therapist</th>
-                  <th className="px-6 py-2 font-normal">Client</th>
+                  <th className="px-6 py-2 font-normal">Staff</th>
+                  <th className="px-6 py-2 font-normal">Customer</th>
                   <th className="px-6 py-2 font-normal">Time</th>
                   <th className="px-6 py-2 font-normal">Check-in</th>
                   <th className="px-6 py-2 font-normal">
@@ -240,16 +243,16 @@ export default function OverviewPage() {
               </thead>
               <tbody>
                 {todaysAssignments.map((a) => {
-                  const therapist = cls.find((c) => c.id === a.clId);
+                  const staffMember = cls.find((c) => c.id === a.clId);
                   const client = clients.find((c) => c.id === a.clientId);
-                  if (!therapist || !client) return null;
+                  if (!staffMember || !client) return null;
                   const checkedIn = a.status === 'completed' || a.status === 'confirmed';
                   return (
                     <tr key={a.id} className="border-t border-brand-cream" /* taste-skill-ignore: table row */>
                       <td className="px-6 py-3.5">
                         <span className="flex items-center gap-2.5 text-brand-ink">
-                          <Avatar name={therapist.name} color={therapist.avatarColor} size={28} />
-                          {therapist.name}
+                          <Avatar name={staffMember.name} color={staffMember.avatarColor} size={28} />
+                          {staffMember.name}
                         </span>
                       </td>
                       <td className="px-6 py-3.5 text-brand-ink">{client.name}</td>
@@ -258,7 +261,7 @@ export default function OverviewPage() {
                         <Badge status={checkedIn ? 'confirmed' : 'pending'}>{checkedIn ? 'Checked in' : 'Not yet'}</Badge>
                       </td>
                       <td className="px-6 py-3.5 text-right">
-                        <Link to={`/cls/${therapist.id}`} className="text-sm font-medium text-brand-pink hover:underline">
+                        <Link to={staffPath(staffMember)} className="text-sm font-medium text-brand-pink hover:underline">
                           View
                         </Link>
                       </td>
@@ -348,10 +351,10 @@ export default function OverviewPage() {
               </Link>
             }
           >
-            Where clients live
+            Where customers live
           </SectionTitle>
           <p className="-mt-2 mb-4 text-sm text-brand-muted">
-            {totalClientsMapped} clients across {locationTotals.length} areas around Bangi Sentral.
+            {totalClientsMapped} customers across {locationTotals.length} areas around Bangi Sentral.
           </p>
           <div className="h-[300px] overflow-hidden rounded-xl">
             <OperationsMap compact />
@@ -393,7 +396,7 @@ export default function OverviewPage() {
               { label: 'Assigned', count: dailyAssigned, color: '#6f76b0' },
               { label: 'Rescheduled', count: dailyRescheduled, color: '#c42474' },
               { label: 'Cancelled', count: dailyCancelled, color: '#b23b3b' },
-              { label: 'Waiting for a therapist', count: unassignedForEngagement.length, color: '#d9921f', arc: false },
+              { label: 'Waiting for staff', count: unassignedForEngagement.length, color: '#d9921f', arc: false },
             ]}
           />
           <EngagementDonut
@@ -405,7 +408,7 @@ export default function OverviewPage() {
               { label: 'Assigned', count: weeklyAssigned, color: '#6f76b0' },
               { label: 'Rescheduled', count: weeklyRescheduled, color: '#c42474' },
               { label: 'Cancelled', count: weeklyCancelled, color: '#b23b3b' },
-              { label: 'Waiting for a therapist', count: unassignedForEngagement.length, color: '#d9921f', arc: false },
+              { label: 'Waiting for staff', count: unassignedForEngagement.length, color: '#d9921f', arc: false },
             ]}
           />
         </div>

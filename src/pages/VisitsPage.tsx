@@ -148,8 +148,8 @@ export default function VisitsPage() {
             <thead>
               <tr className="text-left text-sm text-brand-muted">
                 <th className="px-6 py-4 font-medium">Date & check-in</th>
-                <th className="px-6 py-4 font-medium">Therapist</th>
-                <th className="px-6 py-4 font-medium">Client</th>
+                <th className="px-6 py-4 font-medium">Staff</th>
+                <th className="px-6 py-4 font-medium">Customer</th>
                 <th className="px-6 py-4 font-medium">Treatment</th>
                 <th className="px-6 py-4 font-medium">Session time</th>
                 <th className="px-6 py-4 font-medium">Verification</th>
@@ -304,7 +304,7 @@ export default function VisitsPage() {
                 <VisitSelfieTile
                   assignmentId={inspecting.id}
                   kind="form"
-                  label="Photo of the checklist signed by the client"
+                  label="Photo of the checklist signed by the customer"
                   colorClass="bg-brand-amber-light text-brand-amber"
                   aspect="aspect-[4/3]"
                   icon={FileSignature}
@@ -402,7 +402,7 @@ function HeadlineFigure({
 
 /**
  * Real photo capture for session proof, persisted via the generic AvatarStore (string-keyed, not
- * therapist-specific) so it survives closing/reopening the inspection modal, matching how every other
+ * staff member-specific) so it survives closing/reopening the inspection modal, matching how every other
  * photo feature in the app (avatar, treatment photo) already works, instead of a decorative box.
  */
 function VisitSelfieTile({

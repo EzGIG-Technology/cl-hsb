@@ -20,7 +20,7 @@ function saveAll(map: Record<string, string>) {
   }
 }
 
-/** Small localStorage-backed store for demo profile pictures, keyed by person id ('admin', a therapist id like 'cl-01', a client id like 'cli-01'). */
+/** Small localStorage-backed store for demo profile pictures, keyed by person id ('admin', a staff member id like 'cl-01', a customer id like 'cli-01'). */
 export function useAvatarStore(key: string) {
   const [dataUrl, setDataUrl] = useState<string | undefined>(() => loadAll()[key]);
 

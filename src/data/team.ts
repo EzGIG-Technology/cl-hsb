@@ -1,4 +1,4 @@
-import type { Therapist } from '../types';
+import type { Staff } from '../types';
 
 // Honey Spa Bangi brand set: magenta, lavender, honey, deep magenta, ink lavender, blush, soft lavender.
 const colors = ['#c42474', '#6f76b0', '#d9921f', '#9c1a5b', '#2f2b55', '#e07aa8', '#9aa0d4'];
@@ -7,14 +7,17 @@ function color(i: number) {
   return colors[i % colors.length];
 }
 
-type RawTherapist = Omit<Therapist, 'reviews' | 'flagHistory' | 'certifications' | 'nationality' | 'leavePeriods'>;
+type RawStaff = Omit<Staff, 'staffType' | 'reviews' | 'flagHistory' | 'certifications' | 'nationality' | 'leavePeriods'>;
+
+/** The CLs: home-service and prenatal/postnatal care. Everyone else is spa staff at Bangi Sentral. */
+const CL_IDS = new Set(['cl-04', 'cl-05', 'cl-07', 'cl-11', 'cl-13', 'cl-16']);
 
 /**
- * The therapist roster. Every therapist is a woman (Honey Spa is a muslimah, women-only spa).
+ * The staff member roster. Every staff member is a woman (Honey Spa is a muslimah, women-only spa).
  * `location` is one of the catchment areas around Bangi Sentral and is where she lives, which is
- * what the booking wizard uses to suggest therapists for home-service sessions.
+ * what the booking wizard uses to suggest staff for home-service sessions.
  */
-const rawTherapists: RawTherapist[] = [
+const rawStaffList: RawStaff[] = [
   {
     id: 'cl-01',
     name: 'Mariam Yusof',
@@ -33,7 +36,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 7,
     flag: 'none',
-    bio: 'Senior therapist and the most requested name for the 90 and 120-minute traditional massage. Trains every new joiner on the Honey Spa urut sequence.',
+    bio: 'Senior spa staff and the most requested name for the 90 and 120-minute traditional massage. Trains every new joiner on the Honey Spa urut sequence.',
     shiftAvailability: 'both',
   },
   {
@@ -54,7 +57,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia'],
     yearsExperience: 3,
     flag: 'none',
-    bio: 'Strong, steady hands. The go-to therapist for 30-minute back and foot sessions at lunchtime and after office hours.',
+    bio: 'Strong, steady hands. The go-to spa staff for 30-minute back and foot sessions at lunchtime and after office hours.',
     shiftAvailability: 'both',
   },
   {
@@ -97,7 +100,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 4,
     flag: 'complained',
-    flagNote: 'Client reported a late arrival for a home-service session on 2026-06-02. Verbal warning issued, no repeat since.',
+    flagNote: 'Customer reported a late arrival for a home-service session on 2026-06-02. Verbal warning issued, no repeat since.',
     bio: 'Covers home-service bookings in Putrajaya and Cyberjaya and does most of the totok wajah. The manager is keeping an eye on punctuality after one complaint.',
     shiftAvailability: 'afternoon',
   },
@@ -119,7 +122,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 9,
     flag: 'none',
-    bio: 'The most senior therapist on the team. Runs the Mix & Match promo and the longer home-service sessions around Kajang.',
+    bio: 'The most senior CL on the team. Runs the Mix & Match promo and the longer home-service sessions around Kajang.',
     shiftAvailability: 'flexible',
   },
   {
@@ -182,7 +185,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia'],
     yearsExperience: 1,
     flag: 'none',
-    bio: 'Newest therapist on the roster. Finished the in-house urut and reflexology training in September 2024.',
+    bio: 'Newest spa staff on the roster. Finished the in-house urut and reflexology training in September 2024.',
     shiftAvailability: 'morning',
   },
   {
@@ -203,7 +206,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 8,
     flag: 'none',
-    bio: 'Leads prenatal massage at Honey Spa. Knows the side-lying routine by heart and keeps notes on each client’s trimester.',
+    bio: 'Leads prenatal massage at Honey Spa. Knows the side-lying routine by heart and keeps notes on each customer’s trimester.',
     shiftAvailability: 'both',
   },
   {
@@ -224,8 +227,8 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia'],
     yearsExperience: 12,
     flag: 'banned',
-    flagNote: 'Suspended 2026-05-10 after repeated no-shows confirmed by two clients. Not eligible for new bookings.',
-    bio: 'Long-serving therapist, currently suspended pending review and left out of the booking pool.',
+    flagNote: 'Suspended 2026-05-10 after repeated no-shows confirmed by two customers. Not eligible for new bookings.',
+    bio: 'Long-serving spa staff, currently suspended pending review and left out of the booking pool.',
     shiftAvailability: 'flexible',
   },
   {
@@ -246,7 +249,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'Tamil'],
     yearsExperience: 6,
     flag: 'none',
-    bio: 'Gentle and careful with detail. Popular with Tamil-speaking clients and with pregnant clients coming in from Nilai.',
+    bio: 'Gentle and careful with detail. Popular with Tamil-speaking customers and with pregnant customers around Nilai who book her for home visits.',
     shiftAvailability: 'both',
   },
   {
@@ -310,7 +313,7 @@ const rawTherapists: RawTherapist[] = [
     languages: ['Bahasa Malaysia', 'English'],
     yearsExperience: 2,
     flag: 'none',
-    bio: 'Strong client feedback in her first year, especially for the aromatherapy add-on.',
+    bio: 'Strong customer feedback in her first year, especially for the aromatherapy add-on.',
     shiftAvailability: 'morning',
   },
   {
@@ -357,9 +360,9 @@ const rawTherapists: RawTherapist[] = [
   },
 ];
 
-type TherapistExtras = Partial<
+type StaffExtras = Partial<
   Pick<
-    Therapist,
+    Staff,
     | 'reviews'
     | 'flagHistory'
     | 'certifications'
@@ -374,19 +377,19 @@ type TherapistExtras = Partial<
 >;
 
 /**
- * Hand-authored extras for a handful of therapists, layered onto the defaults below, so the
+ * Hand-authored extras for a handful of staff, layered onto the defaults below, so the
  * certifications, compliance, leave, review and flag-history UI has real data to demo instead of
- * empty states everywhere. Not every therapist needs every field, which is realistic (a new
+ * empty states everywhere. Not every staff member needs every field, which is realistic (a new
  * joiner may have no payroll details on file yet).
  */
-const extras: Record<string, TherapistExtras> = {
+const extras: Record<string, StaffExtras> = {
   'cl-01': {
     reviews: [
       { id: 'rev-seed-1', rating: 5, text: 'Best urut I have had in Bangi. Firm without ever hurting, and she remembered my stiff shoulder from the last visit.', date: '2026-08-11', clientName: 'Siti Rahman' },
       { id: 'rev-seed-2', rating: 5, text: 'Punctual, warm and very skilled. The 90 minutes went by far too fast.', date: '2026-07-24', clientName: 'Nadia Ismail' },
     ],
     certifications: [
-      { id: 'cert-seed-1', name: 'Certified Massage Therapist (KKM-approved)', issuer: 'Traditional & Complementary Medicine Division, KKM', expiryDate: '2027-06-01' },
+      { id: 'cert-seed-1', name: 'Certified Massage Practitioner (KKM-approved)', issuer: 'Traditional & Complementary Medicine Division, KKM', expiryDate: '2027-06-01' },
     ],
     bankName: 'Maybank',
     bankAccountMasked: '•••• 4821',
@@ -405,7 +408,7 @@ const extras: Record<string, TherapistExtras> = {
     paymentMethod: 'e-wallet',
   },
   'cl-04': {
-    flagHistory: [{ date: '2026-06-02', flag: 'complained', note: 'Client reported a late arrival for a home-service session on 2026-06-02. Verbal warning issued, no repeat since.' }],
+    flagHistory: [{ date: '2026-06-02', flag: 'complained', note: 'Customer reported a late arrival for a home-service session on 2026-06-02. Verbal warning issued, no repeat since.' }],
   },
   'cl-05': {
     reviews: [
@@ -426,7 +429,7 @@ const extras: Record<string, TherapistExtras> = {
     paymentMethod: 'bank-transfer',
   },
   'cl-10': {
-    flagHistory: [{ date: '2026-05-10', flag: 'banned', note: 'Suspended 2026-05-10 after repeated no-shows confirmed by two clients. Not eligible for new bookings.' }],
+    flagHistory: [{ date: '2026-05-10', flag: 'banned', note: 'Suspended 2026-05-10 after repeated no-shows confirmed by two customers. Not eligible for new bookings.' }],
   },
   'cl-11': {
     bankName: 'RHB Bank',
@@ -444,9 +447,10 @@ const extras: Record<string, TherapistExtras> = {
   },
 };
 
-/** All therapists. The export keeps its original name because pages and stores import it. */
-export const confinementLadies: Therapist[] = rawTherapists.map((t) => ({
+/** All staff. The export keeps its original name because pages and stores import it. */
+export const confinementLadies: Staff[] = rawStaffList.map((t) => ({
   ...t,
+  staffType: CL_IDS.has(t.id) ? 'cl' : 'spa',
   reviews: [],
   flagHistory: [],
   certifications: [],

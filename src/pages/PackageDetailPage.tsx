@@ -106,7 +106,7 @@ export default function PackageDetailPage() {
   }
 
   return (
-    <PageShell title={pkg.name} subtitle="Edit the price card, the therapist's session checklist and where this treatment can be booked.">
+    <PageShell title={pkg.name} subtitle="Edit the price card, the session checklist and where this treatment can be booked.">
       <button
         onClick={() => navigate('/packages')}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted transition-colors hover:text-brand-ink"
@@ -169,7 +169,7 @@ export default function PackageDetailPage() {
               </div>
               <div>
                 <label className={labelClass} htmlFor="pkg-duration">
-                  Duration shown to clients
+                  Duration shown to customers
                 </label>
                 <input
                   id="pkg-duration"
@@ -296,7 +296,7 @@ export default function PackageDetailPage() {
                   onChange={(e) => setStepsText(e.target.value)}
                   onBlur={() => updatePackage(pkg.id, { treatmentSteps: linesOf(stepsText) })}
                 />
-                <p className={hintClass}>One step per line, in order. The therapist ticks these off in the app during the session.</p>
+                <p className={hintClass}>One step per line, in order. The CL or spa staff member ticks these off in the app during the session.</p>
               </div>
               <div>
                 <label className={labelClass} htmlFor="pkg-extras">
@@ -355,14 +355,14 @@ export default function PackageDetailPage() {
           ) : (
             <div className="rounded-xl bg-brand-lavender-light p-3 text-sm text-brand-ink">
               <p className="font-medium">Bangi Sentral outlet</p>
-              <p className="mt-0.5 text-xs text-brand-muted">Bookable whenever a room and therapist are free. {company.hours}.</p>
+              <p className="mt-0.5 text-xs text-brand-muted">Bookable whenever a room and a staff member are free. {company.hours}.</p>
             </div>
           )}
 
           <h3 className="mb-2 mt-6 flex items-center gap-1.5 text-sm font-semibold text-brand-ink">
             <MapPin size={15} className="text-brand-lavender" /> Home service
           </h3>
-          <p className="mb-3 text-xs text-brand-muted">Cap on home-service sessions per area, so therapists are not booked too far apart.</p>
+          <p className="mb-3 text-xs text-brand-muted">Cap on home-service sessions per area, so CLs are not booked too far apart.</p>
           <div className="space-y-2">{homeSlots.map(renderSlot)}</div>
         </Card>
       </div>

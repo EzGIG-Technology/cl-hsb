@@ -12,24 +12,24 @@ export default function MapPage() {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   const capFor = (name: string) => locationCapacity.find((l) => l.location === name)?.monthlySlots;
-  // locationTotals.count = clients on the books who live in each area
+  // locationTotals.count = customers on the books who live in each area
   const totalClients = locationTotals.reduce((acc, l) => acc + l.count, 0);
   const sortedAreas = locationTotals.slice().sort((a, b) => b.count - a.count);
   const topCount = sortedAreas[0]?.count ?? 1;
   const selectedCount = selectedLocation ? locationTotals.find((l) => l.name === selectedLocation)?.count ?? 0 : totalClients;
 
-  const filteredTherapists = useMemo(() => {
+  const filteredStaffList = useMemo(() => {
     if (!selectedLocation) return cls;
     return cls.filter((c) => c.location.toLowerCase().includes(selectedLocation.toLowerCase()));
   }, [cls, selectedLocation]);
 
   return (
-    <PageShell title="Client map" subtitle="Where our clients live around Bangi Sentral, for planning home-service sessions.">
+    <PageShell title="Customer map" subtitle="Where our customers live around Bangi Sentral, for planning home-service sessions.">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr] 2xl:grid-cols-[280px_1fr_340px]">
         <Card className="p-6">
-          <p className="text-sm text-brand-muted">{selectedLocation ? `Clients in ${selectedLocation}` : 'Clients, all areas'}</p>
+          <p className="text-sm text-brand-muted">{selectedLocation ? `Customers in ${selectedLocation}` : 'Customers, all areas'}</p>
           <p className="mt-2 text-4xl font-semibold tracking-tight text-brand-ink">{selectedCount}</p>
-          {selectedLocation && <p className="mt-1 text-sm text-brand-muted">of {totalClients} clients in total</p>}
+          {selectedLocation && <p className="mt-1 text-sm text-brand-muted">of {totalClients} customers in total</p>}
 
           <div className="mt-6 space-y-1">
             <button
@@ -75,15 +75,15 @@ export default function MapPage() {
             <OperationsMap />
           </div>
           <p className="px-2 pb-1 pt-3 text-sm text-brand-muted">
-            Each pin shows how many clients live in that area. Bigger, magenta pins are where most of our clients are.
+            Each pin shows how many customers live in that area. Bigger, magenta pins are where most of our customers are.
           </p>
         </Card>
 
         <Card className="p-6 lg:col-span-2 2xl:col-span-1">
-          <SectionTitle>{selectedLocation ? `Therapists in ${selectedLocation}` : 'All therapists'}</SectionTitle>
+          <SectionTitle>{selectedLocation ? `Staff in ${selectedLocation}` : 'All staff'}</SectionTitle>
           <p className="-mt-2 mb-4 text-sm text-brand-muted">Who is based nearby for home-service sessions.</p>
           <div className="scrollbar-thin max-h-[460px] space-y-2 overflow-y-auto">
-            {filteredTherapists.map((t) => (
+            {filteredStaffList.map((t) => (
               <div key={t.id} className="flex items-center gap-3 rounded-xl bg-brand-cream p-3">
                 <Avatar name={t.name} color={t.avatarColor} size={36} />
                 <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export default function MapPage() {
                 </Badge>
               </div>
             ))}
-            {filteredTherapists.length === 0 && <p className="text-sm text-brand-muted">No therapists based in this area yet.</p>}
+            {filteredStaffList.length === 0 && <p className="text-sm text-brand-muted">No staff based in this area yet.</p>}
           </div>
         </Card>
       </div>

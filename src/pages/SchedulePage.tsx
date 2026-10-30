@@ -9,7 +9,7 @@ import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { TODAY, toDateStr, formatTime12 } from '../lib/date';
-import type { Assignment, Therapist } from '../types';
+import type { Assignment, Staff } from '../types';
 
 // Grid spans opening hours (10.30am–7.30pm) with half an hour either side.
 const DAY_START_MIN = 10 * 60;
@@ -57,7 +57,7 @@ function addMinutes(time: string, minutes: number) {
 }
 
 export default function SchedulePage() {
-  const { cls: therapists, clById } = useCLStore();
+  const { cls: staffList, clById } = useCLStore();
   const { packageById } = useSettings();
   const { clientById } = useClientStore();
   const { logAction } = useActivityLog();
@@ -83,17 +83,17 @@ export default function SchedulePage() {
         ? []
         : weekAssignments.filter((a) => categoryOf(a, a.date === todayStr) === categoryFilter);
   const scheduledCount = weekAssignments.filter((a) => a.status !== 'cancelled').length;
-  const availableTherapists = therapists.filter((c) => c.status === 'available');
-  const onLeave = therapists.filter((c) => c.status === 'on-leave');
+  const availableStaffList = staffList.filter((c) => c.status === 'available');
+  const onLeave = staffList.filter((c) => c.status === 'on-leave');
   const conflicts = weekAssignments.filter((a) => a.status === 'cancelled' || a.urgent).length;
 
   const hours = Array.from({ length: (DAY_END_MIN - DAY_START_MIN) / 60 + 1 }, (_, i) => DAY_START_MIN / 60 + i);
 
-  function assignTherapist(clientId: string, clId: string) {
+  function assignStaff(clientId: string, clId: string) {
     const client = clientById(clientId);
     if (!client) return;
     const packageId = client.packageIds[0];
-    // First slot after the spa opens (10.30am), as long as the client's chosen session.
+    // First slot after the spa opens (10.30am), as long as the customer's chosen session.
     const minutes = client.packageMinutes?.[packageId] ?? packageById(packageId)?.tiers[0]?.minutes ?? 60;
     addBooking({
       clientId,
@@ -105,23 +105,23 @@ export default function SchedulePage() {
       location: client.location,
     });
     setPickerFor(null);
-    const therapist = clById(clId);
-    logAction('Front Desk', 'Assigned therapist', `${therapist?.name ?? clId} → ${client.name}`);
+    const staffMember = clById(clId);
+    logAction('Front Desk', 'Assigned staff', `${staffMember?.name ?? clId} → ${client.name}`);
   }
 
-  function reassignTherapist(assignmentId: string, newClId: string) {
+  function reassignStaff(assignmentId: string, newClId: string) {
     const a = allAssignments.find((x) => x.id === assignmentId);
-    const oldTherapist = a ? clById(a.clId) : undefined;
-    const newTherapist = clById(newClId);
+    const oldStaff = a ? clById(a.clId) : undefined;
+    const newStaff = clById(newClId);
     storeReassign(assignmentId, newClId);
-    logAction('Front Desk', 'Reassigned therapist', `${oldTherapist?.name ?? 'Unknown'} → ${newTherapist?.name ?? newClId}`);
+    logAction('Front Desk', 'Reassigned staff', `${oldStaff?.name ?? 'Unknown'} → ${newStaff?.name ?? newClId}`);
   }
 
   function rescheduleAssignment(assignmentId: string, date: string, startTime: string, endTime: string) {
     const a = allAssignments.find((x) => x.id === assignmentId);
     const client = a ? clientById(a.clientId) : undefined;
     storeReschedule(assignmentId, date, startTime, endTime);
-    logAction('Front Desk', 'Rescheduled booking', `${client?.name ?? 'Client'} → ${date} ${startTime}-${endTime}`);
+    logAction('Front Desk', 'Rescheduled booking', `${client?.name ?? 'Customer'} → ${date} ${startTime}-${endTime}`);
   }
 
   const toggleCategory = (category: ScheduleCategory) => setCategoryFilter((f) => (f === category ? 'all' : category));
@@ -129,13 +129,13 @@ export default function SchedulePage() {
   return (
     <PageShell
       title="Schedule & roster"
-      subtitle="Plan therapist sessions, availability and cover for the week."
-      searchPlaceholder="Search therapist or client"
+      subtitle="Plan staff sessions, availability and cover for the week."
+      searchPlaceholder="Search staff or customer"
     >
       <Card className="p-6 sm:p-8">
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4">
           <Figure label="Sessions this week" value={scheduledCount} note="Not counting cancellations" />
-          <Figure label="Therapists available" value={availableTherapists.length} note="Free to take a booking" />
+          <Figure label="Staff available" value={availableStaffList.length} note="Free to take a booking" />
           <Figure label="On leave" value={onLeave.length} note="Away this week" />
           <Figure label="Conflicts" value={conflicts} note="Cancelled or marked urgent" warn={conflicts > 0} />
         </div>
@@ -198,8 +198,8 @@ export default function SchedulePage() {
             <SelectedDetail
               assignment={selectedAssignment}
               onClose={() => setSelectedId(null)}
-              availableTherapists={availableTherapists}
-              onReassign={(newClId) => reassignTherapist(selectedAssignment.id, newClId)}
+              availableStaffList={availableStaffList}
+              onReassign={(newClId) => reassignStaff(selectedAssignment.id, newClId)}
               onReschedule={(date, start, end) => rescheduleAssignment(selectedAssignment.id, date, start, end)}
             />
           ) : (
@@ -285,10 +285,10 @@ export default function SchedulePage() {
                         />
                       ))}
                       {dayAssignments.map((a) => {
-                        const therapist = clById(a.clId);
+                        const staffMember = clById(a.clId);
                         const client = clientById(a.clientId);
                         const pkg = packageById(a.packageId);
-                        if (!therapist || !client || !pkg) return null;
+                        if (!staffMember || !client || !pkg) return null;
                         const color = colorOf(categoryOf(a, isToday));
                         const top = ((toMinutes(a.startTime) - DAY_START_MIN) / 60) * HOUR_HEIGHT;
                         const height = Math.max(40, ((toMinutes(a.endTime) - toMinutes(a.startTime)) / 60) * HOUR_HEIGHT);
@@ -310,8 +310,8 @@ export default function SchedulePage() {
                                 {formatTime12(a.startTime)} to {formatTime12(a.endTime)}
                               </span>
                               <span className="mt-1 flex items-center gap-1.5">
-                                <Avatar name={therapist.name} color={therapist.avatarColor} size={16} />
-                                <span className="truncate text-brand-ink">{therapist.name}</span>
+                                <Avatar name={staffMember.name} color={staffMember.avatarColor} size={16} />
+                                <span className="truncate text-brand-ink">{staffMember.name}</span>
                               </span>
                             </span>
                           </button>
@@ -334,7 +334,7 @@ export default function SchedulePage() {
               <span className="rounded-full bg-orange-50 px-2.5 py-0.5 text-sm font-semibold text-orange-700">{unassigned.length}</span>
             </span>
           </SectionTitle>
-          <p className="-mt-2 mb-4 text-sm text-brand-muted">Clients still waiting for a therapist.</p>
+          <p className="-mt-2 mb-4 text-sm text-brand-muted">Customers still waiting for staff.</p>
           <div className="space-y-3">
             {unassigned.map((clientId) => {
               const client = clientById(clientId);
@@ -356,18 +356,18 @@ export default function SchedulePage() {
 
                   {pickerFor === clientId ? (
                     <div className="mt-3 space-y-1 rounded-xl bg-white p-2">
-                      <p className="px-2 pb-1 text-sm text-brand-muted">Choose a therapist</p>
-                      {availableTherapists.map((t) => (
+                      <p className="px-2 pb-1 text-sm text-brand-muted">Choose staff</p>
+                      {availableStaffList.map((t) => (
                         <button
                           key={t.id}
-                          onClick={() => assignTherapist(clientId, t.id)}
+                          onClick={() => assignStaff(clientId, t.id)}
                           className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-brand-ink transition-colors hover:bg-brand-cream"
                         >
                           <Avatar name={t.name} color={t.avatarColor} size={22} />
                           {t.name}
                         </button>
                       ))}
-                      {availableTherapists.length === 0 && <p className="px-2 text-sm text-brand-muted">No therapists available right now.</p>}
+                      {availableStaffList.length === 0 && <p className="px-2 text-sm text-brand-muted">No staff available right now.</p>}
                       <button onClick={() => setPickerFor(null)} className="px-2 pt-1 text-sm text-brand-muted hover:text-brand-ink">
                         Cancel
                       </button>
@@ -389,9 +389,9 @@ export default function SchedulePage() {
 
         <Card className="p-6">
           <SectionTitle>Available now</SectionTitle>
-          <p className="-mt-2 mb-4 text-sm text-brand-muted">Therapists with no clashes this week.</p>
+          <p className="-mt-2 mb-4 text-sm text-brand-muted">Staff with no clashes this week.</p>
           <div className="space-y-2">
-            {availableTherapists.map((t) => (
+            {availableStaffList.map((t) => (
               <div key={t.id} className="flex items-center gap-3 rounded-xl bg-brand-cream p-3">
                 <Avatar name={t.name} color={t.avatarColor} size={34} />
                 <div className="min-w-0 flex-1">
@@ -401,7 +401,7 @@ export default function SchedulePage() {
                 <Badge status="available">Available</Badge>
               </div>
             ))}
-            {availableTherapists.length === 0 && <p className="text-sm text-brand-muted">No therapists available right now.</p>}
+            {availableStaffList.length === 0 && <p className="text-sm text-brand-muted">No staff available right now.</p>}
           </div>
         </Card>
       </div>
@@ -424,13 +424,13 @@ function Figure({ label, value, note, warn = false }: { label: string; value: nu
 function SelectedDetail({
   assignment,
   onClose,
-  availableTherapists,
+  availableStaffList,
   onReassign,
   onReschedule,
 }: {
   assignment: Assignment;
   onClose: () => void;
-  availableTherapists: Therapist[];
+  availableStaffList: Staff[];
   onReassign: (newClId: string) => void;
   onReschedule: (date: string, startTime: string, endTime: string) => void;
 }) {
@@ -442,10 +442,10 @@ function SelectedDetail({
   const [startDraft, setStartDraft] = useState(assignment.startTime);
   const [endDraft, setEndDraft] = useState(assignment.endTime);
 
-  const therapist = clById(assignment.clId);
+  const staffMember = clById(assignment.clId);
   const client = clientById(assignment.clientId);
   const pkg = packageById(assignment.packageId);
-  if (!therapist || !client || !pkg) return null;
+  if (!staffMember || !client || !pkg) return null;
 
   const fieldClass = 'w-full rounded-lg bg-white px-3 py-2 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink';
 
@@ -471,8 +471,8 @@ function SelectedDetail({
       </div>
       <div className="mt-4 space-y-2 text-sm text-brand-ink">
         <div className="flex items-center gap-2">
-          <Avatar name={therapist.name} color={therapist.avatarColor} size={24} />
-          {therapist.name}
+          <Avatar name={staffMember.name} color={staffMember.avatarColor} size={24} />
+          {staffMember.name}
         </div>
         <p>
           {new Date(`${assignment.date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -502,9 +502,9 @@ function SelectedDetail({
 
       {mode === 'reassign' && (
         <div className="mt-4 space-y-1 rounded-xl bg-brand-cream p-2">
-          <p className="px-2 pb-1 text-sm text-brand-muted">Choose another therapist</p>
-          {availableTherapists
-            .filter((c) => c.id !== therapist.id)
+          <p className="px-2 pb-1 text-sm text-brand-muted">Choose other staff</p>
+          {availableStaffList
+            .filter((c) => c.id !== staffMember.id)
             .map((c) => (
               <button
                 key={c.id}

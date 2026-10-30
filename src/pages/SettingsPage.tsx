@@ -8,6 +8,7 @@ import { useCLStore } from '../store/CLStore';
 import { useClientStore } from '../store/ClientStore';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useActivityLog } from '../store/ActivityLogContext';
+import { useFinanceStore } from '../store/FinanceStore';
 
 type Section = 'company' | 'team';
 
@@ -21,9 +22,9 @@ const inputClass =
 const labelClass = 'mb-1.5 block text-sm font-medium text-brand-ink';
 
 const roleDescriptions: Record<string, string> = {
-  Admin: 'Full access: bookings, therapists, treatments and settings.',
-  Operations: 'Bookings, schedule and therapist assignment. No financial data.',
-  Finance: 'Revenue, payments and payouts only. No booking or therapist controls.',
+  Admin: 'Full access: bookings, staff, treatments and settings.',
+  Operations: 'Bookings, schedule and staff assignment. No financial data.',
+  Finance: 'Revenue, payments and payouts only. No booking or staff controls.',
 };
 
 export default function SettingsPage() {
@@ -33,6 +34,7 @@ export default function SettingsPage() {
   const { resetToDefaults: resetCLs } = useCLStore();
   const { resetToDefaults: resetClients } = useClientStore();
   const { resetToDefaults: resetAssignments } = useAssignmentStore();
+  const { resetToDefaults: resetFinance } = useFinanceStore();
   const { clear: clearActivityLog } = useActivityLog();
 
   function resetEverything() {
@@ -40,6 +42,7 @@ export default function SettingsPage() {
     resetCLs();
     resetClients();
     resetAssignments();
+    resetFinance();
     clearActivityLog();
     setResetDone(true);
   }
@@ -206,7 +209,7 @@ function CompanySettings() {
       </Card>
 
       <div className="h-fit xl:sticky xl:top-0">
-        <p className="mb-3 text-sm text-brand-muted">How clients see it</p>
+        <p className="mb-3 text-sm text-brand-muted">How customers see it</p>
         <div className="rounded-2xl bg-brand-pink p-6 text-white">
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">

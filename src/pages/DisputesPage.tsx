@@ -30,7 +30,7 @@ export default function DisputesPage() {
   return (
     <PageShell
       title="Complaints"
-      subtitle="Client complaints and missed session steps, reviewed before payroll is released."
+      subtitle="Customer complaints and missed session steps, reviewed before payroll is released."
       icon={AlertTriangle}
     >
       <Card className="grid grid-cols-1 gap-6 !p-6 sm:grid-cols-3">
@@ -69,8 +69,8 @@ export default function DisputesPage() {
               <tr className="text-left text-sm text-brand-muted">
                 <th className="px-6 py-4 font-medium">Ref</th>
                 <th className="px-6 py-4 font-medium">Date</th>
-                <th className="px-6 py-4 font-medium">Therapist</th>
-                <th className="px-6 py-4 font-medium">Client</th>
+                <th className="px-6 py-4 font-medium">Staff</th>
+                <th className="px-6 py-4 font-medium">Customer</th>
                 <th className="px-6 py-4 font-medium">Complaint</th>
                 <th className="px-6 py-4 font-medium">Severity</th>
                 <th className="px-6 py-4 font-medium">

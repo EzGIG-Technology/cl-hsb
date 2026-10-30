@@ -14,7 +14,7 @@ export interface Package {
   theme: 'pink' | 'purple' | 'teal' | 'red' | 'brown' | 'blue' | 'green';
   durationEstimate: string;
   summary: string;
-  /** What the therapist does in a session, in order. Doubles as the in-app session checklist. */
+  /** What the staff member does in a session, in order. Doubles as the in-app session checklist. */
   treatmentSteps: string[];
   extras: string[];
   notes: string[];
@@ -59,9 +59,23 @@ export interface FlagHistoryEntry {
   note?: string;
 }
 
-export interface Therapist {
+/** CLs go out to customers' homes (home service, prenatal & postnatal urut); spa staff work in the spa at Bangi Sentral. */
+export type StaffType = 'cl' | 'spa';
+
+export const staffTypeLabels: Record<StaffType, { one: string; many: string; directory: string; path: string }> = {
+  cl: { one: 'CL', many: 'CLs', directory: 'CL directory', path: '/cls' },
+  spa: { one: 'Spa staff', many: 'spa staff', directory: 'Spa directory', path: '/spa' },
+};
+
+/** Profile URL for a staff member, under the directory they belong to. */
+export function staffPath(s: { id: string; staffType: StaffType }) {
+  return `${staffTypeLabels[s.staffType].path}/${s.id}`;
+}
+
+export interface Staff {
   id: string;
   name: string;
+  staffType: StaffType;
   avatarColor: string;
   phone: string;
   email: string;
@@ -114,7 +128,7 @@ export interface Client {
   packageIds: string[];
   /** Selected session length (minutes) per package id (e.g. { traditional: 90 }). Absent = the package's first tier. */
   packageMinutes?: Record<string, number>;
-  /** The date the client asked to be seen (yyyy-mm-dd); drives the "needs a therapist" urgency on Bookings/Schedule. */
+  /** The date the customer asked to be seen (yyyy-mm-dd); drives the "needs a staff member" urgency on Bookings/Schedule. */
   preferredDate: string;
   status: 'active' | 'upcoming' | 'completed';
   notes?: string;
@@ -179,4 +193,34 @@ export interface MessageThread {
   lastMessageAt: string;
   unread: number;
   messages: { id: string; from: 'admin' | 'them'; text: string; time: string }[];
+}
+
+export type ExpenseCategory =
+  | 'Rent & Utilities'
+  | 'Herbs & Supplies'
+  | 'Transport & Fuel'
+  | 'Marketing'
+  | 'Admin & Software'
+  | 'Insurance & Licences'
+  | 'Equipment & Maintenance';
+
+export interface Expense {
+  id: string;
+  date: string; // yyyy-mm-dd
+  category: ExpenseCategory;
+  description: string;
+  vendor: string;
+  amount: number;
+  status: 'paid' | 'unpaid';
+}
+
+export type CustomerPaymentKind = 'deposit' | 'balance' | 'full';
+
+export interface CustomerPayment {
+  id: string;
+  clientId: string;
+  date: string; // yyyy-mm-dd
+  amount: number;
+  kind: CustomerPaymentKind;
+  method: PaymentMethod;
 }

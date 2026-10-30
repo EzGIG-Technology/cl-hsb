@@ -28,7 +28,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <PageShell title="Messages" subtitle="Chats with your therapists and clients.">
+    <PageShell title="Messages" subtitle="Chats with your staff and customers.">
       <div className="grid h-[calc(100dvh-240px)] min-h-[520px] grid-cols-1 gap-5 lg:grid-cols-[320px_1fr]">
         <Card className="!p-0 flex min-h-0 flex-col overflow-hidden">
           <div className="space-y-3 px-4 pb-2 pt-4">
@@ -46,8 +46,8 @@ export default function MessagesPage() {
               {(
                 [
                   ['all', 'All'],
-                  ['cl', 'Therapists'],
-                  ['client', 'Clients'],
+                  ['cl', 'Staff'],
+                  ['client', 'Customers'],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -101,7 +101,7 @@ export default function MessagesPage() {
                 <p className="text-lg font-semibold leading-tight text-brand-ink">{active.participantName}</p>
                 <div className="mt-1">
                   <Badge status={active.participantType === 'cl' ? 'on-duty' : 'active'}>
-                    {active.participantType === 'cl' ? 'Therapist' : 'Client'}
+                    {active.participantType === 'cl' ? 'Staff' : 'Customer'}
                   </Badge>
                 </div>
               </div>

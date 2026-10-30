@@ -1,8 +1,8 @@
 import type { Client } from '../types';
 
-// Honey Spa Bangi clients. Most live in Bandar Baru Bangi and come in to the Bangi Sentral outlet;
+// Honey Spa Bangi customers. Most live in Bandar Baru Bangi and come in to the Bangi Sentral outlet;
 // the rest are spread across the catchment and some book home service. `preferredDate` is the day the
-// client asked to be seen: for the five clients still waiting for a therapist it is today or this week.
+// customer asked to be seen: for the five customers still waiting for a staff member it is today or this week.
 export const clients: Client[] = [
   {
     id: 'cli-01',
@@ -171,7 +171,7 @@ export const clients: Client[] = [
     packageIds: ['foot'],
     preferredDate: '2026-08-19',
     status: 'upcoming',
-    notes: 'Booked through Instagram. Foot reflexology, happy with any therapist.',
+    notes: 'Booked through Instagram. Foot reflexology, happy with any staff.',
   },
   {
     id: 'cli-15',

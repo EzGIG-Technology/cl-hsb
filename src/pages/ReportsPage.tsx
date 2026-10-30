@@ -73,7 +73,7 @@ export default function ReportsPage() {
   return (
     <PageShell
       title="Reports"
-      subtitle="Revenue, sessions and therapist performance at a glance."
+      subtitle="Revenue, sessions and staff performance at a glance."
       headerAction={
         <div className="relative">
           <select
@@ -106,7 +106,7 @@ export default function ReportsPage() {
           className="p-6"
         />
         <StatCard
-          label="Average therapist rating"
+          label="Average staff rating"
           value={averageRating}
           icon={<Star size={16} className="fill-brand-amber text-brand-amber" />}
           hint={<span className="text-sm text-brand-muted">of 5</span>}
@@ -122,12 +122,12 @@ export default function ReportsPage() {
 
       <Card className="mt-8 p-6">
         <SectionTitle action={<span className="text-sm text-brand-muted">{monthLabel}</span>}>Revenue vs payroll</SectionTitle>
-        <p className="-mt-2 mb-6 text-sm text-brand-muted">What clients pay in, what therapists are paid out, and what the spa keeps.</p>
+        <p className="-mt-2 mb-6 text-sm text-brand-muted">What customers pay in, what staff are paid out, and what the spa keeps.</p>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <div>
             <p className="flex items-center gap-2 text-sm text-brand-muted">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: C.honey }} aria-hidden /> Paid to therapists
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: C.honey }} aria-hidden /> Paid to staff
             </p>
             <p className="mt-1 text-4xl font-semibold tracking-tight text-brand-ink">{formatRM(selectedMonthPayroll)}</p>
             <p className="mt-1 text-sm text-brand-muted">YTD {formatRM(ytdPayroll)}</p>
@@ -159,7 +159,7 @@ export default function ReportsPage() {
                   <Cell key={m.month} fill={C.magenta} fillOpacity={m.month === selectedMonth ? 1 : 0.55} />
                 ))}
               </Bar>
-              <Bar dataKey="payroll" name="Paid to therapists" fill={C.honey} radius={[6, 6, 0, 0]}>
+              <Bar dataKey="payroll" name="Paid to staff" fill={C.honey} radius={[6, 6, 0, 0]}>
                 {financeChartData.map((m) => (
                   <Cell key={m.month} fill={C.honey} fillOpacity={m.month === selectedMonth ? 1 : 0.55} />
                 ))}
@@ -253,13 +253,13 @@ export default function ReportsPage() {
 
       <Card className="mt-8 overflow-hidden !p-0">
         <div className="px-6 pt-6">
-          <SectionTitle>Therapist leaderboard</SectionTitle>
+          <SectionTitle>Staff leaderboard</SectionTitle>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-sm text-brand-muted">
-                <th className="px-6 py-3 font-medium">Therapist</th>
+                <th className="px-6 py-3 font-medium">Staff</th>
                 <th className="px-6 py-3 font-medium">Rating</th>
                 <th className="px-6 py-3 font-medium">Reviews</th>
                 <th className="px-6 py-3 font-medium">Completed sessions</th>

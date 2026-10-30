@@ -27,9 +27,9 @@ function slotMinutes(a: Pick<Assignment, 'startTime' | 'endTime'>) {
 }
 
 /**
- * Price of one session: the price of the tier the client booked. The tier is matched on the
+ * Price of one session: the price of the tier the customer booked. The tier is matched on the
  * session's own length first (a 90-min slot = the 90-min price), then on the length saved on the
- * client (`packageMinutes`), and falls back to the treatment's first tier.
+ * customer (`packageMinutes`), and falls back to the treatment's first tier.
  */
 export function sessionPrice(a: Assignment, client: Client, pkg: Package | undefined) {
   if (!pkg || pkg.tiers.length === 0) return 0;
@@ -41,9 +41,9 @@ export function sessionPrice(a: Assignment, client: Client, pkg: Package | undef
 }
 
 /**
- * Monthly spend and session-count breakdown for a client. Aug 2026 uses the real seeded sessions,
+ * Monthly spend and session-count breakdown for a customer. Aug 2026 uses the real seeded sessions,
  * each priced at its booked tier. Earlier months are deterministic mock history (the dataset only
- * spans a few real days), seeded by client id so the numbers stay stable across renders: a regular
+ * spans a few real days), seeded by customer id so the numbers stay stable across renders: a regular
  * comes in one to four times a month and spends RM 50 to RM 160 a visit.
  */
 export function monthlySpendForClient(

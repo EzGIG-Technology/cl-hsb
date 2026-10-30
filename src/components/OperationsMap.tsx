@@ -86,7 +86,7 @@ export function OperationsMap({ compact = false }: OperationsMapProps) {
           locationTotals.map((loc) => (
             <Marker key={loc.name} position={[loc.lat, loc.lng]} icon={markerIcon(loc.count)}>
               <Popup>
-                <span className="font-semibold">{loc.name}</span> · {loc.count} clients
+                <span className="font-semibold">{loc.name}</span> · {loc.count} customers
               </Popup>
             </Marker>
           ))}

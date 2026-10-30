@@ -10,7 +10,7 @@ import type { Package, PackageCategory } from '../types';
 /** Menu sections in the order they appear on Honey Spa's price card. */
 const CATEGORY_SECTIONS: { id: PackageCategory; label: string; note: string }[] = [
   { id: 'massage', label: 'Massage', note: 'Malay urut and focused massages, in the spa or at home.' },
-  { id: 'prenatal', label: 'Prenatal', note: 'Gentle, side-lying massage for expecting clients.' },
+  { id: 'prenatal', label: 'Prenatal', note: 'Gentle, side-lying massage for expecting customers.' },
   { id: 'treatment', label: 'Treatments', note: 'Traditional baths and face treatments.' },
   { id: 'promo', label: 'Promotions', note: 'Bundles and limited-time offers. Check they are still running.' },
 ];
@@ -77,7 +77,7 @@ export default function PackagesPage() {
   return (
     <PageShell
       title="Treatments & prices"
-      subtitle="Honey Spa's menu as clients see it, with every session length and price. Open a treatment to edit its pricing, steps and availability by area."
+      subtitle="Honey Spa's menu as customers see it, with every session length and price. Open a treatment to edit its pricing, steps and availability by area."
       headerAction={
         <button
           onClick={() => {
@@ -94,7 +94,7 @@ export default function PackagesPage() {
         <div className="mb-8 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-amber-light px-5 py-4 text-sm text-brand-ink">
           <PriceToConfirmTag />
           <span>
-            {estimatedCount} treatment{estimatedCount === 1 ? ' has' : 's have'} no published price yet. Confirm with the spa manager before quoting a client.
+            {estimatedCount} treatment{estimatedCount === 1 ? ' has' : 's have'} no published price yet. Confirm with the spa manager before quoting a customer.
           </span>
         </div>
       )}

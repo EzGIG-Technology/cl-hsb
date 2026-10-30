@@ -56,7 +56,7 @@ export default function PayrollPage() {
 
   function exportCSV(kind: 'CSV' | 'Excel') {
     downloadCSV(`honeyspa-payroll-aug-2026.csv`, [
-      ['Therapist', 'Sessions', 'Hours', 'Pay (RM)', 'Status'],
+      ['Staff', 'Sessions', 'Hours', 'Pay (RM)', 'Status'],
       ...rows.map((r) => [r.cl!.name, r.sessions, r.hours, r.pay, r.status]),
     ]);
     logAction('Front Desk', `Exported payroll ${kind}`, 'Aug 2026');
@@ -68,7 +68,7 @@ export default function PayrollPage() {
   return (
     <PageShell
       title="Payroll"
-      subtitle={`August 2026. Session hours and pay for each therapist, at ${formatRM(HOURLY_RATE)} an hour.`}
+      subtitle={`August 2026. Session hours and pay for each staff member, at ${formatRM(HOURLY_RATE)} an hour.`}
       icon={Clock}
       headerAction={
         <div className="flex flex-wrap gap-2">
@@ -95,16 +95,16 @@ export default function PayrollPage() {
         </div>
         <Figure label="Paid hours" value={`${approvedHours}h`} tone="text-brand-lavender" />
         <Figure label="Hours awaiting review or month-end" value={`${disputedHours}h`} tone="text-brand-amber" />
-        <Figure label="Therapists with sessions" value={rows.length} tone="text-brand-ink" />
+        <Figure label="Staff with sessions" value={rows.length} tone="text-brand-ink" />
       </Card>
 
-      <h2 className="mb-4 mt-8 text-lg font-semibold text-brand-ink">By therapist</h2>
+      <h2 className="mb-4 mt-8 text-lg font-semibold text-brand-ink">By staff member</h2>
       <Card className="!p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-sm text-brand-muted">
-                <th className="px-6 py-4 font-medium">Therapist</th>
+                <th className="px-6 py-4 font-medium">Staff</th>
                 <th className="px-6 py-4 text-right font-medium">Sessions</th>
                 <th className="px-6 py-4 text-right font-medium">Hours</th>
                 <th className="px-6 py-4 text-right font-medium">Pay</th>

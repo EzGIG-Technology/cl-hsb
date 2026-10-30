@@ -11,7 +11,7 @@ import { useActivityLog } from '../store/ActivityLogContext';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { formatDateLabel, formatTime12 } from '../lib/date';
 import { monthlySpendForClient } from '../lib/clientMetrics';
-import type { Client } from '../types';
+import { staffPath, type Client } from '../types';
 
 const paymentStatusBadge: Record<string, 'completed' | 'pending' | 'confirmed'> = {
   released: 'completed',
@@ -35,7 +35,7 @@ function sessionMinutes(start: string, end: string) {
   return mins > 0 ? mins : null;
 }
 
-export default function ClientProfilePage() {
+export default function CustomerProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { clients, updateAddress, addPackageToClient, removePackageFromClient, updatePackageMinutes } = useClientStore();
@@ -53,15 +53,15 @@ export default function ClientProfilePage() {
 
   if (!client) {
     return (
-      <PageShell title="Client not found">
-        <Link to="/clients" className="text-brand-pink underline">
-          Back to clients
+      <PageShell title="Customer not found">
+        <Link to="/customers" className="text-brand-pink underline">
+          Back to customers
         </Link>
       </PageShell>
     );
   }
 
-  /** Price of the session length this client picked for a treatment (falls back to the shortest). */
+  /** Price of the session length this customer picked for a treatment (falls back to the shortest). */
   function priceFor(pid: string) {
     const pkg = packageById(pid);
     if (!pkg) return 0;
@@ -82,7 +82,7 @@ export default function ClientProfilePage() {
 
   function saveAddress() {
     updateAddress(client!.id, addressDraft.trim(), locationDraft.trim());
-    logAction('Front Desk', 'Updated client address', `${client!.name} → ${locationDraft.trim()}`);
+    logAction('Front Desk', 'Updated customer address', `${client!.name} → ${locationDraft.trim()}`);
     setEditingAddress(false);
   }
 
@@ -95,15 +95,15 @@ export default function ClientProfilePage() {
 
   return (
     <PageShell title={client.name} subtitle={client.location}>
-      <button onClick={() => navigate('/clients')} className="mb-6 flex items-center gap-2 text-sm text-brand-muted transition-colors hover:text-brand-ink">
-        <ArrowLeft size={15} /> Back to clients
+      <button onClick={() => navigate('/customers')} className="mb-6 flex items-center gap-2 text-sm text-brand-muted transition-colors hover:text-brand-ink">
+        <ArrowLeft size={15} /> Back to customers
       </button>
 
       {(needsAssignment || pendingConfirmation.length > 0) && (
         <div className="mb-6 space-y-2">
           {needsAssignment && (
             <Link to="/bookings" className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 transition-colors hover:bg-red-100">
-              <UserX size={16} className="shrink-0" /> This client has a booking with no therapist yet. Assign one in Bookings.
+              <UserX size={16} className="shrink-0" /> This customer has a booking with no staff assigned yet. Assign one in Bookings.
             </Link>
           )}
           {pendingConfirmation.length > 0 && (
@@ -124,7 +124,7 @@ export default function ClientProfilePage() {
                 <div>
                   <p className="text-lg font-semibold text-brand-ink">{client.name}</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
-                    <Badge status={returning ? 'completed' : 'upcoming'}>{returning ? 'Returning client' : 'New client'}</Badge>
+                    <Badge status={returning ? 'completed' : 'upcoming'}>{returning ? 'Returning customer' : 'New customer'}</Badge>
                     <Badge status={client.status}>{capitalise(client.status)}</Badge>
                   </div>
                 </div>
@@ -267,12 +267,12 @@ export default function ClientProfilePage() {
                         {cl ? (
                           <>
                             {' · '}
-                            <Link to={`/cls/${cl.id}`} className="text-brand-ink hover:underline">
+                            <Link to={staffPath(cl)} className="text-brand-ink hover:underline">
                               {cl.name}
                             </Link>
                           </>
                         ) : (
-                          ' · No therapist yet'
+                          ' · No staff assigned yet'
                         )}
                       </p>
                     </div>
@@ -348,7 +348,7 @@ export default function ClientProfilePage() {
                   <button
                     onClick={() => {
                       removePackageFromClient(client.id, pid);
-                      logAction('Front Desk', 'Removed treatment from client', `${pkg.shortName} from ${client.name}`);
+                      logAction('Front Desk', 'Removed treatment from customer', `${pkg.shortName} from ${client.name}`);
                     }}
                     aria-label={`Remove ${pkg.shortName}`}
                     className="shrink-0 rounded-full p-1 text-brand-muted transition-colors hover:bg-white hover:text-red-600"
@@ -376,7 +376,7 @@ export default function ClientProfilePage() {
                     key={p.id}
                     onClick={() => {
                       addPackageToClient(client.id, p.id, p.tiers[0]?.minutes);
-                      logAction('Front Desk', 'Added treatment to client', `${p.shortName} for ${client.name}`);
+                      logAction('Front Desk', 'Added treatment to customer', `${p.shortName} for ${client.name}`);
                       setShowPicker(false);
                     }}
                     className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm text-brand-ink transition-colors hover:bg-white"
@@ -397,13 +397,13 @@ export default function ClientProfilePage() {
           )}
         </Card>
       </div>
-      {editingProfile && <EditClientModal client={client} onClose={() => setEditingProfile(false)} />}
+      {editingProfile && <EditCustomerModal client={client} onClose={() => setEditingProfile(false)} />}
       <div className="h-6" />
     </PageShell>
   );
 }
 
-function EditClientModal({ client, onClose }: { client: Client; onClose: () => void }) {
+function EditCustomerModal({ client, onClose }: { client: Client; onClose: () => void }) {
   const { updateDetails } = useClientStore();
   const { logAction } = useActivityLog();
   const [phone, setPhone] = useState(client.phone);
@@ -414,7 +414,7 @@ function EditClientModal({ client, onClose }: { client: Client; onClose: () => v
 
   function save() {
     updateDetails(client.id, { phone: phone.trim(), email: email.trim(), preferredDate, notes: notes.trim() || undefined, status });
-    logAction('Front Desk', 'Edited client profile', client.name);
+    logAction('Front Desk', 'Edited customer profile', client.name);
     onClose();
   }
 

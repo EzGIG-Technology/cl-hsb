@@ -1,6 +1,6 @@
 import type { MessageThread } from '../types';
 
-// Seed WhatsApp-style threads between the front desk and therapists or clients. Written the way the
+// Seed WhatsApp-style threads between the front desk and staff or customers. Written the way the
 // team actually chats: a mix of Malay and English.
 export const messageThreads: MessageThread[] = [
   {
@@ -12,7 +12,7 @@ export const messageThreads: MessageThread[] = [
     lastMessageAt: '10:14',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Morning Mariam, client pertama pagi ni Puan Nadia pukul 10.30, traditional 60 min di Bilik 2. Dia alah minyak lavender, guna base oil ye.', time: '09:05' },
+      { id: 'm1', from: 'admin', text: 'Morning Mariam, customer pertama pagi ni Puan Nadia pukul 10.30, traditional 60 min di Bilik 2. Dia alah minyak lavender, guna base oil ye.', time: '09:05' },
       { id: 'm2', from: 'them', text: 'Ok noted admin, on the way.', time: '09:40' },
       { id: 'm3', from: 'them', text: 'Dah clock in. Bilik 2 dah siap, tunggu Puan Nadia.', time: '10:14' },
     ],
@@ -52,7 +52,7 @@ export const messageThreads: MessageThread[] = [
     lastMessageAt: 'Mon',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Puan Elina, Mix & Match (foot, back, totok wajah) untuk Jumaat 14 Ogos dah kami terima. Nama therapist kami update esok.', time: 'Mon 16:10' },
+      { id: 'm1', from: 'admin', text: 'Puan Elina, Mix & Match (foot, back, totok wajah) untuk Jumaat 14 Ogos dah kami terima. Nama staff kami update esok.', time: 'Mon 16:10' },
       { id: 'm2', from: 'them', text: 'Terima kasih! Tak sabar nak cuba totok wajah.', time: 'Mon 16:14' },
     ],
   },
@@ -65,7 +65,7 @@ export const messageThreads: MessageThread[] = [
     lastMessageAt: '10:52',
     unread: 0,
     messages: [
-      { id: 'm1', from: 'admin', text: 'Kak Mariam, home service Kajang pukul 11. Bawa tuala extra, client ada anak kecil.', time: '09:30' },
+      { id: 'm1', from: 'admin', text: 'Kak Mariam, home service Kajang pukul 11. Bawa tuala extra, customer ada anak kecil.', time: '09:30' },
       { id: 'm2', from: 'them', text: 'Dah sampai rumah Puan Amirah di Kajang, tengah set up katil lipat.', time: '10:52' },
     ],
   },

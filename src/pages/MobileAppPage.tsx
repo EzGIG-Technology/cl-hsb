@@ -43,18 +43,18 @@ import { useClientStore } from '../store/ClientStore';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatTime12, formatDateLabel, formatWeekdayDate, TODAY, TODAY_STR } from '../lib/date';
 import { HOURLY_RATE } from '../lib/clMetrics';
-import { tierForCL, type Assignment, type Therapist, type Package, type Client } from '../types';
+import { tierForCL, type Assignment, type Staff, type Package, type Client } from '../types';
 
 const FEATURED_CLIENT_ID = 'cli-01'; // matches the seeded assignments
 const REVIEWED_ASSIGNMENT_ID = 'asg-06'; // that client's most recent completed session
 const PERSONA_IDS = ['cl-01', 'cl-04', 'cl-05', 'cl-06'];
 const THIS_MONTH = TODAY_STR.slice(0, 7);
 
-type AppMode = 'therapist' | 'client-review' | 'client-app';
-type TherapistTab = 'home' | 'jobs' | 'messages' | 'earnings' | 'profile';
+type AppMode = 'staff' | 'customer-review' | 'customer-app';
+type StaffTab = 'home' | 'jobs' | 'messages' | 'earnings' | 'profile';
 type ClientTab = 'home' | 'bookings' | 'reviews' | 'payments' | 'profile';
 
-const therapistTabs: { id: TherapistTab; label: string; icon: typeof Home }[] = [
+const staffMemberTabs: { id: StaffTab; label: string; icon: typeof Home }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'jobs', label: 'Jobs', icon: Briefcase },
   { id: 'messages', label: 'Messages', icon: MessageCircle },
@@ -70,10 +70,10 @@ const clientTabs: { id: ClientTab; label: string; icon: typeof Home }[] = [
   { id: 'profile', label: 'Profile', icon: User },
 ];
 
-const therapistFeatures = ['GPS and selfie check-in', 'Treatment checklist with a photo per step', 'Photo of the signed session form', 'Earnings and payslips'];
+const staffMemberFeatures = ['GPS and selfie check-in', 'Treatment checklist with a photo per step', 'Photo of the signed session form', 'Earnings and payslips'];
 const reviewFeatures = ['Four quick star ratings', 'Optional comments', 'Tap to sign', 'Call us instead'];
 
-/** Staff number shown on the therapist's own app screens. */
+/** Staff number shown on the staff member's own app screens. */
 function staffId(clId: string) {
   const n = parseInt(clId.replace('cl-', ''), 10);
   return `HS-${n + 118}`;
@@ -90,7 +90,7 @@ function sessionMinutes(a: Assignment) {
   return eh * 60 + em - (sh * 60 + sm);
 }
 
-/** The tier a client booked for a treatment, falling back to its first (shortest) tier. */
+/** The tier a customer booked for a treatment, falling back to its first (shortest) tier. */
 function bookedTier(pkg: Package, minutes?: number) {
   return pkg.tiers.find((t) => t.minutes === minutes) ?? pkg.tiers[0];
 }
@@ -101,7 +101,7 @@ function priceLabel(pkg: Package, price?: number) {
 }
 
 export default function MobileAppPage() {
-  const [appMode, setAppMode] = useState<AppMode>('therapist');
+  const [appMode, setAppMode] = useState<AppMode>('staff');
   const [clientTab, setClientTab] = useState<ClientTab>('home');
   const [purchasingPackageId, setPurchasingPackageId] = useState<string | null>(null);
   const { clById } = useCLStore();
@@ -110,23 +110,23 @@ export default function MobileAppPage() {
   const client = clientById(FEATURED_CLIENT_ID);
 
   const reviewedAssignment = assignments.find((a) => a.id === REVIEWED_ASSIGNMENT_ID);
-  const [reviewTherapist] = useState(() => clById(reviewedAssignment?.clId ?? 'cl-01'));
+  const [reviewStaff] = useState(() => clById(reviewedAssignment?.clId ?? 'cl-01'));
 
-  if (!client || !reviewTherapist) return null;
+  if (!client || !reviewStaff) return null;
   const clientPkg = packageById(client.packageIds[0]);
   const reviewedPkg = reviewedAssignment ? packageById(reviewedAssignment.packageId) : clientPkg;
 
   const headings: Record<AppMode, { title: string; subtitle: string }> = {
-    therapist: {
-      title: 'Therapist app',
-      subtitle: 'What a therapist uses on the day: her sessions, the treatment checklist with photo proof, messages and earnings.',
+    staff: {
+      title: 'Staff app',
+      subtitle: 'What a CL or spa staff member uses on the day: her sessions, the treatment checklist with photo proof, messages and earnings.',
     },
-    'client-review': {
-      title: 'Client review form',
-      subtitle: 'Phase 1. A short link sent to the client after each session, and the only client-facing piece built for launch.',
+    'customer-review': {
+      title: 'Customer review form',
+      subtitle: 'Phase 1. A short link sent to the customer after each session, and the only customer-facing piece built for launch.',
     },
-    'client-app': {
-      title: 'Client app',
+    'customer-app': {
+      title: 'Customer app',
       subtitle: 'Phase 2 preview. Not part of the current build: shown so the team can plan bookings, add-on treatments, reviews and payments.',
     },
   };
@@ -147,9 +147,9 @@ export default function MobileAppPage() {
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="App preview">
         {(
           [
-            { id: 'therapist', label: 'Therapist app' },
-            { id: 'client-review', label: 'Client review form' },
-            { id: 'client-app', label: 'Client app (Phase 2)' },
+            { id: 'staff', label: 'Staff app' },
+            { id: 'customer-review', label: 'Customer review form' },
+            { id: 'customer-app', label: 'Customer app (Phase 2)' },
           ] as { id: AppMode; label: string }[]
         ).map((m) => (
           <button
@@ -166,7 +166,7 @@ export default function MobileAppPage() {
         ))}
       </div>
 
-      {appMode === 'client-review' ? (
+      {appMode === 'customer-review' ? (
         <div className="mt-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr]">
             <div>
@@ -176,7 +176,7 @@ export default function MobileAppPage() {
               <h2 className="mt-4 text-2xl font-semibold tracking-tight text-brand-ink">A review link, not an app</h2>
               <p className="mt-3 text-sm leading-relaxed text-brand-ink">
                 Sent by WhatsApp or SMS after each completed session. It opens in the browser, with no login and nothing
-                to install. Ratings and comments go to the spa manager only. They are never shown to the therapist.
+                to install. Ratings and comments go to the spa manager only. They are never shown to the staff member.
               </p>
               <ul className="mt-6 space-y-3 rounded-2xl bg-white p-5">
                 {reviewFeatures.map((f) => (
@@ -191,7 +191,7 @@ export default function MobileAppPage() {
             <div className="rounded-3xl bg-white p-6">
               <BrowserFrame url="review.honeyspabangi.my/r/8f2a91">
                 <ClientReviewWebScreen
-                  therapist={reviewTherapist}
+                  staffMember={reviewStaff}
                   client={client}
                   assignment={reviewedAssignment}
                   pkg={reviewedPkg}
@@ -203,18 +203,18 @@ export default function MobileAppPage() {
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div>
-            {appMode === 'therapist' && (
+            {appMode === 'staff' && (
               <>
                 <span className="inline-block rounded-full bg-brand-pink-light px-3 py-1 text-sm font-medium text-brand-pink">
                   iOS and Android
                 </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-brand-ink">Built for therapists between sessions</h2>
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-brand-ink">Built for CLs and spa staff between sessions</h2>
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-brand-ink">
                   Tap "Open session" on Home or Jobs to walk through check-in, the treatment checklist with a photo per
-                  step, and the signed session form. Switch therapist under Profile, then Demo persona.
+                  step, and the signed session form. Switch staff member under Profile, then Demo persona.
                 </p>
                 <ul className="mt-6 max-w-md space-y-3 rounded-2xl bg-white p-5">
-                  {therapistFeatures.map((f) => (
+                  {staffMemberFeatures.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-brand-ink">
                       <CheckCircle2 size={16} className="shrink-0 text-brand-lavender" />
                       {f}
@@ -224,14 +224,14 @@ export default function MobileAppPage() {
               </>
             )}
 
-            {appMode === 'client-app' && (
+            {appMode === 'customer-app' && (
               <>
                 <span className="inline-block rounded-full bg-brand-amber-light px-3 py-1 text-sm font-medium text-brand-amber">
                   Phase 2 · planning preview
                 </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-brand-ink">A companion app for clients</h2>
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-brand-ink">A companion app for customers</h2>
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-brand-ink">
-                  Only the review form is scoped for launch. This is a preview of where the client experience could go
+                  Only the review form is scoped for launch. This is a preview of where the customer experience could go
                   next: her profile, bookings, add-on treatments, reviews, payments and reschedule requests.
                 </p>
                 <p className="mb-3 mt-8 text-sm font-semibold text-brand-ink">Preview tabs</p>
@@ -257,9 +257,9 @@ export default function MobileAppPage() {
           </div>
 
           <div className="flex justify-center rounded-3xl bg-white p-8">
-            {appMode === 'therapist' && <TherapistAppSection />}
+            {appMode === 'staff' && <StaffAppSection />}
 
-            {appMode === 'client-app' && (
+            {appMode === 'customer-app' && (
               <PhoneFrame
                 tabBar={
                   purchasingPackageId ? undefined : (
@@ -281,7 +281,7 @@ export default function MobileAppPage() {
                       </span>
                     </div>
                     {clientTab === 'home' && (
-                      <ClientHomeScreen client={client} pkg={clientPkg} therapist={reviewTherapist} onGoTo={setClientTab} />
+                      <ClientHomeScreen client={client} pkg={clientPkg} staffMember={reviewStaff} onGoTo={setClientTab} />
                     )}
                     {clientTab === 'bookings' && <ClientBookingsScreen client={client} onAddTreatment={setPurchasingPackageId} />}
                     {clientTab === 'reviews' && <ClientReviewsScreen client={client} />}
@@ -381,41 +381,41 @@ function FlowHeader({ current, total, label, onBack }: { current: number; total:
   );
 }
 
-// ---------- Therapist app ----------
+// ---------- Staff app ----------
 
-function TherapistAppSection() {
+function StaffAppSection() {
   const { clById } = useCLStore();
   const [personaId, setPersonaId] = useState('cl-01');
-  const [tab, setTab] = useState<TherapistTab>('home');
+  const [tab, setTab] = useState<StaffTab>('home');
   const [openAssignmentId, setOpenAssignmentId] = useState<string | null>(null);
 
-  const therapist = clById(personaId);
+  const staffMember = clById(personaId);
   const myAssignments = assignments.filter((a) => a.clId === personaId);
   const openAssignment = openAssignmentId ? myAssignments.find((a) => a.id === openAssignmentId) : null;
 
-  if (!therapist) return null;
+  if (!staffMember) return null;
 
   return (
-    <PhoneFrame tabBar={openAssignment ? undefined : <TabBar tabs={therapistTabs} active={tab} onSelect={setTab} />}>
+    <PhoneFrame tabBar={openAssignment ? undefined : <TabBar tabs={staffMemberTabs} active={tab} onSelect={setTab} />}>
       {openAssignment ? (
         <SessionFlow
           key={openAssignment.id}
           assignment={openAssignment}
-          therapist={therapist}
+          staffMember={staffMember}
           myAssignments={myAssignments}
           onClose={() => setOpenAssignmentId(null)}
         />
       ) : (
         <>
           {tab === 'home' && (
-            <TherapistHomeScreen therapist={therapist} assignments={myAssignments} onOpenJob={setOpenAssignmentId} onGoTo={setTab} />
+            <StaffHomeScreen staffMember={staffMember} assignments={myAssignments} onOpenJob={setOpenAssignmentId} onGoTo={setTab} />
           )}
-          {tab === 'jobs' && <TherapistJobsScreen therapist={therapist} assignments={myAssignments} onOpenJob={setOpenAssignmentId} />}
-          {tab === 'messages' && <TherapistMessagesScreen />}
-          {tab === 'earnings' && <TherapistEarningsScreen therapist={therapist} assignments={myAssignments} />}
+          {tab === 'jobs' && <StaffJobsScreen staffMember={staffMember} assignments={myAssignments} onOpenJob={setOpenAssignmentId} />}
+          {tab === 'messages' && <StaffMessagesScreen />}
+          {tab === 'earnings' && <StaffEarningsScreen staffMember={staffMember} assignments={myAssignments} />}
           {tab === 'profile' && (
-            <TherapistProfileScreen
-              therapist={therapist}
+            <StaffProfileScreen
+              staffMember={staffMember}
               personaId={personaId}
               onPersonaChange={(id) => {
                 setPersonaId(id);
@@ -429,16 +429,16 @@ function TherapistAppSection() {
   );
 }
 
-function TherapistHomeScreen({
-  therapist,
+function StaffHomeScreen({
+  staffMember,
   assignments: myAssignments,
   onOpenJob,
   onGoTo,
 }: {
-  therapist: Therapist;
+  staffMember: Staff;
   assignments: Assignment[];
   onOpenJob: (id: string) => void;
-  onGoTo: (tab: TherapistTab) => void;
+  onGoTo: (tab: StaffTab) => void;
 }) {
   const { packageById, company } = useSettings();
   const { clientById } = useClientStore();
@@ -464,15 +464,15 @@ function TherapistHomeScreen({
       </div>
 
       <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-4">
-        <ProfileAvatar avatarKey={therapist.id} name={therapist.name} color={therapist.avatarColor} size={44} editable={false} />
+        <ProfileAvatar avatarKey={staffMember.id} name={staffMember.name} color={staffMember.avatarColor} size={44} editable={false} />
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-brand-ink">Hi, {therapist.name.split(' ')[0]}</p>
+          <p className="truncate text-base font-semibold text-brand-ink">Hi, {staffMember.name.split(' ')[0]}</p>
           <p className="truncate text-xs text-brand-muted">
-            {staffId(therapist.id)} · {therapist.location.split(',')[0]}
+            {staffId(staffMember.id)} · {staffMember.location.split(',')[0]}
           </p>
         </div>
         <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-medium text-brand-ink">
-          <Star size={13} className="fill-brand-amber text-brand-amber" /> {therapist.rating}
+          <Star size={13} className="fill-brand-amber text-brand-amber" /> {staffMember.rating}
         </span>
       </div>
       <p className="mt-2 text-xs text-brand-muted">Synced · {formatWeekdayDate(TODAY)}</p>
@@ -569,12 +569,12 @@ function TherapistHomeScreen({
   );
 }
 
-function TherapistJobsScreen({
-  therapist,
+function StaffJobsScreen({
+  staffMember,
   assignments: myAssignments,
   onOpenJob,
 }: {
-  therapist: Therapist;
+  staffMember: Staff;
   assignments: Assignment[];
   onOpenJob: (id: string) => void;
 }) {
@@ -590,7 +590,7 @@ function TherapistJobsScreen({
   return (
     <div className="flex-1">
       <h3 className="text-lg font-semibold text-brand-ink">My jobs</h3>
-      <p className="text-xs text-brand-muted">{therapist.name}</p>
+      <p className="text-xs text-brand-muted">{staffMember.name}</p>
       <div className="mt-3 flex gap-1 rounded-full bg-white p-1">
         {(['active', 'upcoming', 'past'] as const).map((t) => (
           <button
@@ -639,7 +639,7 @@ function TherapistJobsScreen({
   );
 }
 
-function TherapistMessagesScreen() {
+function StaffMessagesScreen() {
   const [messages, setMessages] = useState([
     { id: 'm1', from: 'spa', text: "Morning! Today's first booking is confirmed. Please be at Bangi Sentral by 10.15am.", time: '08:15' },
     { id: 'm2', from: 'me', text: 'Noted, on my way now.', time: '08:42' },
@@ -698,7 +698,7 @@ const PAST_PAYSLIPS = [
 
 const CURRENT_MONTH_LABEL = 'Aug 2026 (current)';
 
-function TherapistEarningsScreen({ therapist, assignments: myAssignments }: { therapist: Therapist; assignments: Assignment[] }) {
+function StaffEarningsScreen({ staffMember, assignments: myAssignments }: { staffMember: Staff; assignments: Assignment[] }) {
   const [month, setMonth] = useState(CURRENT_MONTH_LABEL);
   const monthAssignments = myAssignments.filter((a) => a.date.startsWith(THIS_MONTH) && a.status === 'completed');
   const hours = monthAssignments.reduce((sum, a) => sum + sessionMinutes(a) / 60, 0);
@@ -707,7 +707,7 @@ function TherapistEarningsScreen({ therapist, assignments: myAssignments }: { th
   return (
     <div className="flex-1">
       <h3 className="text-lg font-semibold text-brand-ink">My earnings</h3>
-      <p className="text-xs text-brand-muted">{therapist.name}</p>
+      <p className="text-xs text-brand-muted">{staffMember.name}</p>
 
       <div className="relative mt-3">
         <select
@@ -771,12 +771,12 @@ function TherapistEarningsScreen({ therapist, assignments: myAssignments }: { th
   );
 }
 
-function TherapistProfileScreen({
-  therapist,
+function StaffProfileScreen({
+  staffMember,
   personaId,
   onPersonaChange,
 }: {
-  therapist: Therapist;
+  staffMember: Staff;
   personaId: string;
   onPersonaChange: (id: string) => void;
 }) {
@@ -788,18 +788,18 @@ function TherapistProfileScreen({
     <div className="flex-1">
       <div className="text-center">
         <div className="mx-auto flex justify-center">
-          <ProfileAvatar avatarKey={therapist.id} name={therapist.name} color={therapist.avatarColor} size={72} />
+          <ProfileAvatar avatarKey={staffMember.id} name={staffMember.name} color={staffMember.avatarColor} size={72} />
         </div>
-        <h3 className="mt-2 text-lg font-semibold text-brand-ink">{therapist.name}</h3>
+        <h3 className="mt-2 text-lg font-semibold text-brand-ink">{staffMember.name}</h3>
         <p className="text-xs text-brand-muted">
-          {staffId(therapist.id)} · {therapist.phone}
+          {staffId(staffMember.id)} · {staffMember.phone}
         </p>
         <div className="mt-2 flex items-center justify-center gap-2">
           <span className="rounded-full bg-brand-lavender-light px-2.5 py-0.5 text-xs font-medium text-brand-lavender">
-            {tierForCL(therapist.completedAssignments)} tier
+            {tierForCL(staffMember.completedAssignments)} tier
           </span>
           <span className="flex items-center gap-1 text-sm text-brand-ink">
-            <Star size={13} className="fill-brand-amber text-brand-amber" /> {therapist.rating}
+            <Star size={13} className="fill-brand-amber text-brand-amber" /> {staffMember.rating}
           </span>
         </div>
       </div>
@@ -819,19 +819,19 @@ function TherapistProfileScreen({
           <dl className="space-y-1.5 rounded-2xl bg-white px-4 py-3 text-sm text-brand-ink">
             <div>
               <dt className="text-xs text-brand-muted">IC</dt>
-              <dd>{therapist.icNumber}</dd>
+              <dd>{staffMember.icNumber}</dd>
             </div>
             <div>
               <dt className="text-xs text-brand-muted">Address</dt>
-              <dd>{therapist.address}</dd>
+              <dd>{staffMember.address}</dd>
             </div>
             <div>
               <dt className="text-xs text-brand-muted">Languages</dt>
-              <dd>{therapist.languages.join(', ')}</dd>
+              <dd>{staffMember.languages.join(', ')}</dd>
             </div>
             <div>
               <dt className="text-xs text-brand-muted">Experience</dt>
-              <dd>{therapist.yearsExperience} years</dd>
+              <dd>{staffMember.yearsExperience} years</dd>
             </div>
           </dl>
         )}
@@ -907,12 +907,12 @@ function ElapsedClock({ seconds }: { seconds: number }) {
 
 function SessionFlow({
   assignment,
-  therapist,
+  staffMember,
   myAssignments,
   onClose,
 }: {
   assignment: Assignment;
-  therapist: Therapist;
+  staffMember: Staff;
   myAssignments: Assignment[];
   onClose: () => void;
 }) {
@@ -1103,7 +1103,7 @@ function SessionFlow({
         <FlowHeader current={3} total={3} label="Signed session form" onBack={() => setStage('checklist')} />
         <ElapsedClock seconds={elapsed} />
         <p className="mt-3 text-sm text-brand-ink">
-          Ask {client?.name.split(' ')[0] ?? 'the client'} to sign the session form, then take a photo of it to close the session.
+          Ask {client?.name.split(' ')[0] ?? 'the customer'} to sign the session form, then take a photo of it to close the session.
         </p>
         <div className="mt-4 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl bg-white p-6">
           {formPhotoUrl ? (
@@ -1178,7 +1178,7 @@ function SessionFlow({
       </p>
       {otherSessionsToday.length === 0 ? (
         <p className="rounded-2xl bg-white p-3 text-center text-sm text-brand-muted">
-          Nothing else today. Enjoy the rest of your day, {therapist.name.split(' ')[0]}.
+          Nothing else today. Enjoy the rest of your day, {staffMember.name.split(' ')[0]}.
         </p>
       ) : (
         <div className="space-y-2">
@@ -1214,19 +1214,19 @@ function SessionFlow({
 // ---------- Client review form (Phase 1) ----------
 
 const reviewCategories = [
-  { key: 'skill', label: 'Therapist skill', sub: 'Technique, and how well she listened to what you needed' },
+  { key: 'skill', label: 'Staff skill', sub: 'Technique, and how well she listened to what you needed' },
   { key: 'pressure', label: 'Pressure and comfort', sub: 'The pressure felt right and you were at ease' },
   { key: 'cleanliness', label: 'Cleanliness of room', sub: 'Room, towels and linen were fresh and tidy' },
   { key: 'value', label: 'Punctuality and value', sub: 'Started on time and was worth the price' },
 ] as const;
 
 function ClientReviewWebScreen({
-  therapist,
+  staffMember,
   client,
   assignment,
   pkg,
 }: {
-  therapist: Therapist;
+  staffMember: Staff;
   client: Client;
   assignment?: Assignment;
   pkg?: Package;
@@ -1245,8 +1245,8 @@ function ClientReviewWebScreen({
 
   function submitReview() {
     if (!canSubmit || !avgRating) return;
-    // Stored against the therapist for the admin side only; the therapist app never shows ratings.
-    addReview(therapist.id, {
+    // Stored against the staff member for the admin side only; the staff member app never shows ratings.
+    addReview(staffMember.id, {
       rating: Number(avgRating),
       text: feedback.trim() || undefined,
       date: TODAY_STR,
@@ -1274,13 +1274,13 @@ function ClientReviewWebScreen({
         <h2 className="mt-8 text-2xl font-semibold leading-tight tracking-tight text-brand-ink">How was your session, {firstName}?</h2>
         <p className="mt-3 text-sm leading-relaxed text-brand-ink">
           A quick, honest review helps us keep every treatment at its best. Your ratings go to the spa manager only,
-          never to your therapist.
+          never to the CL or spa staff who looked after you.
         </p>
 
         <div className="mt-8 flex items-center gap-3 rounded-2xl bg-white p-4">
-          <Avatar name={therapist.name} color={therapist.avatarColor} size={44} />
+          <Avatar name={staffMember.name} color={staffMember.avatarColor} size={44} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-brand-ink">{therapist.name}</p>
+            <p className="truncate font-semibold text-brand-ink">{staffMember.name}</p>
             <p className="truncate text-xs text-brand-ink">
               {pkg?.name ?? 'Treatment'}
               {assignment ? ` · ${sessionMinutes(assignment)} min` : ''}
@@ -1384,12 +1384,12 @@ function ClientReviewWebScreen({
 function ClientHomeScreen({
   client,
   pkg,
-  therapist,
+  staffMember,
   onGoTo,
 }: {
   client: Client;
   pkg?: Package;
-  therapist: Therapist;
+  staffMember: Staff;
   onGoTo: (tab: ClientTab) => void;
 }) {
   const { company } = useSettings();
@@ -1424,7 +1424,7 @@ function ClientHomeScreen({
             <div className="min-w-0">
               <p className="truncate text-base font-semibold">{pkg.name}</p>
               <p className="text-xs text-white/85">
-                {tier ? `${tier.minutes} min · ` : ''}with {therapist.name.split(' ')[0]}
+                {tier ? `${tier.minutes} min · ` : ''}with {staffMember.name.split(' ')[0]}
               </p>
             </div>
           </div>
@@ -1545,7 +1545,7 @@ const paymentMethods = [
  * Real add-on treatment purchase flow for the Client App. Unlike the rest of this tab (a Phase 2
  * preview), this writes through to the live ClientStore via addPackageToClient, the same action the
  * admin-side add-on picker on ClientProfilePage uses, so a purchase here shows up on both the
- * client's "My bookings" list and the admin side.
+ * customer's "My bookings" list and the admin side.
  */
 function AddOnPurchaseFlow({ client, packageId, onClose }: { client: Client; packageId: string; onClose: () => void }) {
   const { packageById } = useSettings();
@@ -1575,7 +1575,7 @@ function AddOnPurchaseFlow({ client, packageId, onClose }: { client: Client; pac
       logAction(
         client.name,
         isRequest ? 'Requested add-on treatment' : 'Booked add-on treatment',
-        `${pkg!.name}${selectedTier ? ` · ${selectedTier.minutes} min` : ''} via client app`,
+        `${pkg!.name}${selectedTier ? ` · ${selectedTier.minutes} min` : ''} via customer app`,
       );
       setProcessing(false);
       setStep('success');
@@ -1748,16 +1748,16 @@ function ClientReviewsScreen({ client }: { client: Client }) {
       <p className="text-xs text-brand-muted">Rate your sessions. Only the spa manager sees your ratings.</p>
       <div className="mt-3 space-y-2">
         {sessions.map((a) => {
-          const therapist = clById(a.clId);
+          const staffMember = clById(a.clId);
           const reviewed = a.status === 'completed';
           return (
             <div key={a.id} className="flex items-center justify-between gap-2 rounded-2xl bg-white p-3">
               <div className="flex min-w-0 items-center gap-2">
-                {therapist && <Avatar name={therapist.name} color={therapist.avatarColor} size={30} />}
+                {staffMember && <Avatar name={staffMember.name} color={staffMember.avatarColor} size={30} />}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-brand-ink">{packageById(a.packageId)?.shortName ?? 'Session'}</p>
                   <p className="text-xs text-brand-muted">
-                    {formatDateLabel(a.date)} · {therapist?.name.split(' ')[0]}
+                    {formatDateLabel(a.date)} · {staffMember?.name.split(' ')[0]}
                   </p>
                 </div>
               </div>

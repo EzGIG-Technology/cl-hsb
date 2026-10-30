@@ -38,7 +38,7 @@ import { useClientStore } from '../store/ClientStore';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { computeCLMetrics, monthlyFinancialsForCL, HOURLY_RATE, HOURS_PER_SESSION } from '../lib/clMetrics';
 import { formatTime12, formatDateLabel, TODAY_STR, expiryUrgency, expiryUrgencyStyles, expiryUrgencyLabels } from '../lib/date';
-import { tierForCL, type CLFlag, type CLStatus, type Therapist, type PaymentMethod } from '../types';
+import { tierForCL, staffTypeLabels, type CLFlag, type CLStatus, type Staff, type PaymentMethod } from '../types';
 
 const shiftLabels: Record<string, string> = {
   morning: 'Morning only',
@@ -92,14 +92,15 @@ export default function CLProfilePage() {
 
   if (!cl) {
     return (
-      <PageShell title="Therapist not found">
+      <PageShell title="Staff member not found">
         <Link to="/cls" className="text-brand-pink underline">
-          Back to therapists
+          Back to CL directory
         </Link>
       </PageShell>
     );
   }
 
+  const role = staffTypeLabels[cl.staffType];
   const history = assignments.filter((a) => a.clId === cl.id).sort((a, b) => b.date.localeCompare(a.date));
   const tier = tierForCL(cl.completedAssignments);
   const metrics = computeCLMetrics(cl, assignments.filter((a) => a.clId === cl.id));
@@ -114,13 +115,13 @@ export default function CLProfilePage() {
   function saveFlag() {
     if (!cl) return;
     updateFlag(cl.id, flagDraft, noteDraft);
-    logAction('Front Desk', 'Updated therapist flag', `${cl.name} → ${flagDraft === 'none' ? 'no issues' : flagDraft}`);
+    logAction('Front Desk', `Updated ${role.one === 'CL' ? 'CL' : 'spa staff'} flag`, `${cl.name} → ${flagDraft === 'none' ? 'no issues' : flagDraft}`);
   }
 
   function handleStatusChange(status: CLStatus) {
     if (!cl) return;
     updateStatus(cl.id, status);
-    logAction('Front Desk', 'Updated therapist status', `${cl.name} → ${status.replace('-', ' ')}`);
+    logAction('Front Desk', `Updated ${role.one === 'CL' ? 'CL' : 'spa staff'} status`, `${cl.name} → ${status.replace('-', ' ')}`);
   }
 
   function markInactive() {
@@ -131,20 +132,20 @@ export default function CLProfilePage() {
     if (!cl) return;
     // Force the Internal tab synchronously first: the buttons are reachable from either tab,
     // but the hidden printable card below only mounts under view === 'internal', so without this
-    // a click while on the Client tab would print that tab's own (differently-scoped) card instead.
+    // a click while on the Customer tab would print that tab's own (differently-scoped) card instead.
     flushSync(() => {
       setView('internal');
       setPrintTarget(mode);
     });
     window.print();
-    logAction('Front Desk', mode === 'company' ? 'Generated company report' : 'Generated client report', cl.name);
+    logAction('Front Desk', mode === 'company' ? 'Generated company report' : 'Generated customer report', cl.name);
     setPrintTarget(null);
   }
 
   return (
     <PageShell title={cl.name} subtitle={cl.location}>
-      <button onClick={() => navigate('/cls')} className="mb-4 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-ink">
-        <ArrowLeft size={15} /> Back to directory
+      <button onClick={() => navigate(role.path)} className="mb-4 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-ink">
+        <ArrowLeft size={15} /> Back to {role.directory}
       </button>
 
       <Card className="p-6">
@@ -158,7 +159,7 @@ export default function CLProfilePage() {
                 {cl.flag === 'complained' && <Badge status="complained">Complaint on file</Badge>}
                 {cl.flag === 'banned' && <Badge status="banned">Banned</Badge>}
               </div>
-              <p className="text-sm text-brand-muted">Therapist · {cl.location}</p>
+              <p className="text-sm text-brand-muted">{role.one} · {cl.location}</p>
               <div className="mt-2 flex items-center gap-3 text-sm">
                 <span className="flex items-center gap-1 text-brand-ink">
                   <Star size={14} className="fill-brand-amber text-brand-amber" /> {cl.rating}
@@ -195,7 +196,7 @@ export default function CLProfilePage() {
               <FileText size={14} /> Company report
             </button>
             <button onClick={() => printAs('customer')} className={pillSecondary}>
-              <FileText size={14} /> Client report
+              <FileText size={14} /> Customer report
             </button>
             <button onClick={markInactive} className={`${pillBase} bg-red-50 text-red-600 hover:bg-red-100`}>
               <UserX size={14} /> Mark inactive
@@ -234,7 +235,7 @@ export default function CLProfilePage() {
           onClick={() => setView('customer')}
           className={`rounded-full px-4 py-1.5 font-medium transition-colors ${view === 'customer' ? 'bg-brand-pink text-white' : 'text-brand-ink hover:bg-brand-cream'}`}
         >
-          Client profile
+          Customer profile
         </button>
       </div>
 
@@ -351,7 +352,7 @@ export default function CLProfilePage() {
 
               <div className="mt-8">
                 <SectionTitle>Sample treatment photo</SectionTitle>
-                <p className="-mt-2 mb-3 text-sm text-brand-muted">Company use only. Verifies this therapist's technique for onboarding records.</p>
+                <p className="-mt-2 mb-3 text-sm text-brand-muted">Company use only. Verifies this staff member's technique for onboarding records.</p>
                 <TreatmentPhotoUpload cl={cl} />
               </div>
 
@@ -394,7 +395,7 @@ export default function CLProfilePage() {
           <div className="space-y-6">
             <Card className="h-fit">
               <SectionTitle>Profile flag</SectionTitle>
-              <p className="-mt-2 mb-4 text-sm text-brand-muted">Tag this therapist if a client complaint was filed, or suspend them from new bookings.</p>
+              <p className="-mt-2 mb-4 text-sm text-brand-muted">Tag this {role.one === 'CL' ? 'CL' : 'staff member'} if a customer complaint was filed, or suspend them from new bookings.</p>
 
               <div className="mb-3 flex items-center gap-2">
                 {cl.flag === 'none' && <ShieldCheck size={16} className="text-brand-lavender" />}
@@ -504,7 +505,7 @@ function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value
   );
 }
 
-function PassportRow({ cl }: { cl: import('../types').Therapist }) {
+function PassportRow({ cl }: { cl: import('../types').Staff }) {
   const { updatePassport } = useCLStore();
   const { logAction } = useActivityLog();
   const [editing, setEditing] = useState(false);
@@ -526,7 +527,7 @@ function PassportRow({ cl }: { cl: import('../types').Therapist }) {
           <button
             onClick={() => {
               updatePassport(cl.id, draft);
-              logAction('Front Desk', 'Updated therapist passport number', cl.name);
+              logAction('Front Desk', 'Updated staff passport number', cl.name);
               setEditing(false);
             }}
             className="rounded-full bg-brand-pink px-4 text-sm font-medium text-white hover:bg-brand-pink-dark"
@@ -548,7 +549,7 @@ function PassportRow({ cl }: { cl: import('../types').Therapist }) {
   );
 }
 
-function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
+function TreatmentPhotoUpload({ cl }: { cl: import('../types').Staff }) {
   const { updateTreatmentPhoto } = useCLStore();
   const { logAction } = useActivityLog();
 
@@ -558,7 +559,7 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
     const reader = new FileReader();
     reader.onload = () => {
       updateTreatmentPhoto(cl.id, reader.result as string);
-      logAction('Front Desk', 'Uploaded therapist treatment photo', cl.name);
+      logAction('Front Desk', 'Uploaded staff treatment photo', cl.name);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -583,7 +584,7 @@ function TreatmentPhotoUpload({ cl }: { cl: import('../types').Therapist }) {
   );
 }
 
-function CustomerProfileView({ cl }: { cl: Therapist }) {
+function CustomerProfileView({ cl }: { cl: Staff }) {
   return (
     <div className="mt-6">
       <div className="mb-4 flex justify-end">
@@ -591,7 +592,7 @@ function CustomerProfileView({ cl }: { cl: Therapist }) {
           onClick={() => window.print()}
           className="flex items-center gap-2 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark"
         >
-          <Printer size={16} /> Generate client PDF
+          <Printer size={16} /> Generate customer PDF
         </button>
       </div>
 
@@ -599,14 +600,14 @@ function CustomerProfileView({ cl }: { cl: Therapist }) {
         <PrintableCLCard cl={cl} mode="customer" />
       </div>
       <p className="mt-3 text-center text-sm text-brand-muted">
-        This view hides phone, IC, address and internal flag notes, so it is safe to share with clients.
+        This view hides phone, IC, address and internal flag notes, so it is safe to share with customers.
       </p>
     </div>
   );
 }
 
-/** Shared print/PDF card, used by the Client tab's "Generate client PDF" and, in `mode="company"`, the Internal tab's report buttons. */
-function PrintableCLCard({ cl, mode }: { cl: Therapist; mode: 'customer' | 'company' }) {
+/** Shared print/PDF card, used by the Customer tab's "Generate customer PDF" and, in `mode="company"`, the Internal tab's report buttons. */
+function PrintableCLCard({ cl, mode }: { cl: Staff; mode: 'customer' | 'company' }) {
   const tier = tierForCL(cl.completedAssignments);
   return (
     <Card className="p-6 text-center">
@@ -614,7 +615,7 @@ function PrintableCLCard({ cl, mode }: { cl: Therapist; mode: 'customer' | 'comp
         <Avatar name={cl.name} color={cl.avatarColor} size={88} />
       </div>
       <h2 className="text-lg font-semibold text-brand-ink">{cl.name}</h2>
-      <p className="text-sm text-brand-muted">Therapist at Honey Spa Bangi</p>
+      <p className="text-sm text-brand-muted">{staffTypeLabels[cl.staffType].one} at Honey Spa Bangi</p>
       <span className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${tierStyles[tier]}`}>{tier} tier</span>
       <div className="mt-2 flex items-center justify-center gap-1">
         <Star size={16} className="fill-brand-amber text-brand-amber" />
@@ -708,7 +709,7 @@ function ExpiryInfoRow({ icon, label, date }: { icon: ReactNode; label: string; 
   );
 }
 
-function CertificationList({ cl }: { cl: Therapist }) {
+function CertificationList({ cl }: { cl: Staff }) {
   const { addCertification, removeCertification } = useCLStore();
   const { logAction } = useActivityLog();
   const [adding, setAdding] = useState(false);
@@ -719,7 +720,7 @@ function CertificationList({ cl }: { cl: Therapist }) {
   function submit() {
     if (!name.trim() || !issuer.trim() || !expiryDate) return;
     addCertification(cl.id, { name: name.trim(), issuer: issuer.trim(), expiryDate });
-    logAction('Front Desk', 'Added therapist certification', `${cl.name} · ${name.trim()}`);
+    logAction('Front Desk', 'Added staff certification', `${cl.name} · ${name.trim()}`);
     setName('');
     setIssuer('');
     setExpiryDate('');
@@ -743,7 +744,7 @@ function CertificationList({ cl }: { cl: Therapist }) {
                 <button
                   onClick={() => {
                     removeCertification(cl.id, c.id);
-                    logAction('Front Desk', 'Removed therapist certification', `${cl.name} · ${c.name}`);
+                    logAction('Front Desk', 'Removed staff certification', `${cl.name} · ${c.name}`);
                   }}
                   aria-label={`Remove ${c.name}`}
                   className="text-brand-muted hover:text-red-600"
@@ -797,7 +798,7 @@ function CertificationList({ cl }: { cl: Therapist }) {
   );
 }
 
-function LeaveList({ cl }: { cl: Therapist }) {
+function LeaveList({ cl }: { cl: Staff }) {
   const { addLeavePeriod, removeLeavePeriod } = useCLStore();
   const { logAction } = useActivityLog();
   const [adding, setAdding] = useState(false);
@@ -808,7 +809,7 @@ function LeaveList({ cl }: { cl: Therapist }) {
   function submit() {
     if (!start || !end) return;
     addLeavePeriod(cl.id, { start, end, reason: reason.trim() || undefined });
-    logAction('Front Desk', 'Added therapist leave period', `${cl.name} · ${start} to ${end}`);
+    logAction('Front Desk', 'Added staff leave period', `${cl.name} · ${start} to ${end}`);
     setStart('');
     setEnd('');
     setReason('');
@@ -837,7 +838,7 @@ function LeaveList({ cl }: { cl: Therapist }) {
               <button
                 onClick={() => {
                   removeLeavePeriod(cl.id, i);
-                  logAction('Front Desk', 'Removed therapist leave period', `${cl.name} · ${p.start} to ${p.end}`);
+                  logAction('Front Desk', 'Removed staff leave period', `${cl.name} · ${p.start} to ${p.end}`);
                 }}
                 aria-label="Remove leave period"
                 className="text-brand-muted hover:text-red-600"
@@ -879,7 +880,7 @@ function LeaveList({ cl }: { cl: Therapist }) {
   );
 }
 
-function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
+function EditCLModal({ cl, onClose }: { cl: Staff; onClose: () => void }) {
   const { updateDetails } = useCLStore();
   const { logAction } = useActivityLog();
   const [phone, setPhone] = useState(cl.phone);
@@ -914,7 +915,7 @@ function EditCLModal({ cl, onClose }: { cl: Therapist; onClose: () => void }) {
       bankAccountMasked: bankAccountMasked.trim() || undefined,
       paymentMethod: paymentMethod || undefined,
     });
-    logAction('Front Desk', 'Edited therapist profile', cl.name);
+    logAction('Front Desk', 'Edited staff profile', cl.name);
     onClose();
   }
 

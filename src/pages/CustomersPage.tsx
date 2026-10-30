@@ -9,10 +9,11 @@ import { useCLStore } from '../store/CLStore';
 import { useAssignmentStore } from '../store/AssignmentStore';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatDateLabel, formatTime12, TODAY_STR } from '../lib/date';
+import { staffPath } from '../types';
 
 type DirectoryTab = 'active' | 'upcoming';
 
-export default function ClientsPage() {
+export default function CustomersPage() {
   const { packageById } = useSettings();
   const { clients, addClient } = useClientStore();
   const { clById } = useCLStore();
@@ -46,23 +47,23 @@ export default function ClientsPage() {
 
   function handleAdd(input: NewClientInput) {
     const client = addClient(input);
-    logAction('Front Desk', 'Added new client', client.name);
+    logAction('Front Desk', 'Added new customer', client.name);
     setShowAdd(false);
-    navigate(`/clients/${client.id}`);
+    navigate(`/customers/${client.id}`);
   }
 
   return (
     <PageShell
-      title="Clients"
-      subtitle={`${clients.length} clients on file · ${activeCustomers.length} with a treatment booked`}
-      searchPlaceholder="Search clients by name or area"
+      title="Customer directory"
+      subtitle={`${clients.length} customers on file · ${activeCustomers.length} with a treatment booked`}
+      searchPlaceholder="Search customers by name or area"
       onSearch={setQuery}
       headerAction={
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 rounded-full bg-brand-pink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-pink-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2"
         >
-          <UserPlus size={16} /> Add client
+          <UserPlus size={16} /> Add customer
         </button>
       }
     >
@@ -93,7 +94,7 @@ export default function ClientsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Client</th>
+                  <th className="px-5 py-3 font-medium">Customer</th>
                   <th className="px-5 py-3 font-medium">Phone</th>
                   <th className="px-5 py-3 font-medium">Area</th>
                   <th className="px-5 py-3 font-medium">Treatments</th>
@@ -110,7 +111,7 @@ export default function ClientsPage() {
                   return (
                     <tr key={c.id} /* taste-skill-ignore: table row */ className="border-t border-black/5 transition-colors hover:bg-brand-cream/60">
                       <td className="px-5 py-3">
-                        <button onClick={() => navigate(`/clients/${c.id}`)} className="flex items-center gap-2 hover:underline">
+                        <button onClick={() => navigate(`/customers/${c.id}`)} className="flex items-center gap-2 hover:underline">
                           <Avatar name={c.name} size={28} />
                           <span className="text-brand-ink">{c.name}</span>
                         </button>
@@ -137,7 +138,7 @@ export default function ClientsPage() {
                         <Badge status={returning ? 'completed' : 'upcoming'}>{returning ? 'Returning' : 'New'}</Badge>
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <button onClick={() => navigate(`/clients/${c.id}`)} className="text-sm font-medium text-brand-pink hover:underline">
+                        <button onClick={() => navigate(`/customers/${c.id}`)} className="text-sm font-medium text-brand-pink hover:underline">
                           View
                         </button>
                       </td>
@@ -147,7 +148,7 @@ export default function ClientsPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-5 py-8 text-center text-sm text-brand-muted">
-                      No clients match your search.
+                      No customers match your search.
                     </td>
                   </tr>
                 )}
@@ -162,8 +163,8 @@ export default function ClientsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-brand-muted">
-                  <th className="px-5 py-3 font-medium">Client</th>
-                  <th className="px-5 py-3 font-medium">Therapist</th>
+                  <th className="px-5 py-3 font-medium">Customer</th>
+                  <th className="px-5 py-3 font-medium">Staff</th>
                   <th className="px-5 py-3 font-medium">Treatment</th>
                   <th className="px-5 py-3 font-medium">Area</th>
                   <th className="px-5 py-3 font-medium">Date &amp; time</th>
@@ -179,7 +180,7 @@ export default function ClientsPage() {
                     <tr key={a.id} /* taste-skill-ignore: table row */ className="border-t border-black/5 transition-colors hover:bg-brand-cream/60">
                       <td className="px-5 py-3">
                         {client && (
-                          <button onClick={() => navigate(`/clients/${client.id}`)} className="flex items-center gap-2 hover:underline">
+                          <button onClick={() => navigate(`/customers/${client.id}`)} className="flex items-center gap-2 hover:underline">
                             <Avatar name={client.name} size={26} />
                             <span className="text-brand-ink">{client.name}</span>
                           </button>
@@ -187,7 +188,7 @@ export default function ClientsPage() {
                       </td>
                       <td className="px-5 py-3">
                         {cl && (
-                          <button onClick={() => navigate(`/cls/${cl.id}`)} className="flex items-center gap-2 text-brand-ink hover:underline">
+                          <button onClick={() => navigate(staffPath(cl))} className="flex items-center gap-2 text-brand-ink hover:underline">
                             <Avatar name={cl.name} color={cl.avatarColor} size={22} /> {cl.name}
                           </button>
                         )}
@@ -247,7 +248,7 @@ function AddCustomerModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">{/* taste-skill-ignore: overlay */}
         <div className="flex items-center justify-between px-6 pt-6">
           <p id="add-client-title" className="text-lg font-semibold text-brand-ink">
-            Add a client
+            Add a customer
           </p>
           <button onClick={onClose} aria-label="Close" className="rounded-full p-1 text-brand-muted transition-colors hover:bg-brand-cream hover:text-brand-ink">
             <X size={18} />
@@ -278,7 +279,7 @@ function AddCustomerModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
             </label>
             <input id="new-client-date" type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} className={modalInput} />
           </div>
-          <p className="text-sm text-brand-muted">Email, address, notes and treatments can be added on the client's profile next.</p>
+          <p className="text-sm text-brand-muted">Email, address, notes and treatments can be added on the customer's profile next.</p>
         </div>
         <div className="flex items-center justify-end gap-2 px-6 pb-6">
           <button onClick={onClose} className="rounded-full bg-brand-cream px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-pink-light">

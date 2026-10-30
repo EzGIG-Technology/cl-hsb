@@ -116,7 +116,7 @@ export function Avatar({
 
 /**
  * Avatar wired to the demo-persistent avatar store, with a camera-badge affordance to
- * upload/replace a profile picture. Used for the admin header and therapist/client profile screens.
+ * upload/replace a profile picture. Used for the admin header and staff member/customer profile screens.
  */
 export function ProfileAvatar({
   avatarKey,
@@ -190,7 +190,7 @@ function specialtyIcon(label: string) {
   return specialtyIconRules.find((r) => r.keywords.some((k) => lower.includes(k)))?.icon ?? Sparkles;
 }
 
-/** Icon-tagged pill for a therapist specialty/skill — keyword-matched so no per-specialty authoring is needed as new ones are added. */
+/** Icon-tagged pill for a staff member specialty/skill — keyword-matched so no per-specialty authoring is needed as new ones are added. */
 export function SpecialtyChip({ label }: { label: string }) {
   const Icon = specialtyIcon(label);
   return (

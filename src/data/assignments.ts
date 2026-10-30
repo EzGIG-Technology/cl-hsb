@@ -33,5 +33,5 @@ export const assignments: Assignment[] = [
   { id: 'asg-20', clientId: 'cli-05', clId: 'cl-16', packageId: 'back', date: '2026-08-14', startTime: '18:00', endTime: '18:30', location: 'Bandar Baru Bangi', status: 'cancelled', urgent: true },
 ];
 
-/** Clients who have asked for a session but have no therapist booked yet (Bookings "needs a therapist"). */
+/** Customers who have asked for a session but have no staff member booked yet (Bookings "needs a staff member"). */
 export const unassignedClientIds = ['cli-02', 'cli-03', 'cli-04', 'cli-12', 'cli-14'];

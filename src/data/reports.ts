@@ -31,7 +31,7 @@ export const monthlyRevenue = [
   { month: 'Dec', revenue: 52800 },
 ];
 
-/** Therapist payroll (commission on treatment time), hand-tuned to about 45-47% of that month's revenue. */
+/** Staff payroll (commission on treatment time), hand-tuned to about 45-47% of that month's revenue. */
 export const monthlyPayroll = [
   { month: 'Jan', payroll: 18200 },
   { month: 'Feb', payroll: 19300 },
@@ -75,7 +75,7 @@ export const packagePopularity = [
 ];
 
 // Real-world coordinates (WGS84) for Honey Spa's catchment around Bangi Sentral, Selangor.
-// `count` = clients on the books who live in each area.
+// `count` = customers on the books who live in each area.
 export const locationTotals = [
   { name: 'Bandar Baru Bangi', lat: 2.9637, lng: 101.7686, count: 58 },
   { name: 'Kajang', lat: 2.993, lng: 101.788, count: 34 },

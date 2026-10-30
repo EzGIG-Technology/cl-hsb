@@ -21,14 +21,14 @@ const seedEntries: ActivityLogEntry[] = [
     id: 'log-seed-1',
     time: new Date(2026, 7, 13, 9, 12).toISOString(),
     adminName: 'Front Desk',
-    action: 'Reassigned therapist',
+    action: 'Reassigned staff',
     details: 'Moved Nadia Ismail’s Friday Mix & Match to Mariam Adawiyah',
   },
   {
     id: 'log-seed-2',
     time: new Date(2026, 7, 13, 8, 40).toISOString(),
     adminName: 'Spa Manager',
-    action: 'Updated client address',
+    action: 'Updated customer address',
     details: 'Izzah Hamid moved to Presint 16, Putrajaya (home service)',
   },
   {

@@ -25,7 +25,7 @@ export const packages: Package[] = [
       'Head & scalp massage',
       'Warm drink & rest',
     ],
-    extras: ['Private room', 'Muslimah, women-only therapists'],
+    extras: ['Private room', 'Muslimah, women-only staff'],
     notes: ['Prices from the published price list.'],
     tiers: [
       { minutes: 60, price: 80 },
@@ -51,7 +51,7 @@ export const packages: Package[] = [
       'Legs & feet (light pressure)',
       'Rest & water',
     ],
-    extras: ['Pregnancy support pillows', 'Muslimah, women-only therapists'],
+    extras: ['Pregnancy support pillows', 'Muslimah, women-only staff'],
     notes: ['Prices from the published price list.', 'Ask for the trimester when booking.'],
     tiers: [
       { minutes: 60, price: 90 },

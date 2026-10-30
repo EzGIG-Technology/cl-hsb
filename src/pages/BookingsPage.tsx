@@ -10,7 +10,7 @@ import { useCLStore } from '../store/CLStore';
 import { useSettings } from '../store/SettingsContext';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { formatDateLabel, formatTime12, TODAY, toDateStr } from '../lib/date';
-import type { AssignmentStatus, Client, Package, Therapist } from '../types';
+import { staffPath, type AssignmentStatus, type Client, type Package, type Staff } from '../types';
 
 type Tab = 'unassigned' | 'active' | 'completed' | 'cancelled';
 
@@ -69,7 +69,7 @@ export default function BookingsPage() {
   return (
     <PageShell
       title="Bookings"
-      subtitle="Every booking from the client's request to a matched therapist, a finished session and payroll."
+      subtitle="Every booking from the customer's request to matched staff, a finished session and payroll."
       icon={ClipboardList}
       headerAction={
         <button
@@ -127,7 +127,7 @@ export default function BookingsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-sm text-brand-muted">
-                  <th className="px-6 py-4 font-medium">Client</th>
+                  <th className="px-6 py-4 font-medium">Customer</th>
                   <th className="px-6 py-4 font-medium">Treatment</th>
                   <th className="px-6 py-4 font-medium">Area</th>
                   <th className="px-6 py-4 font-medium">Preferred date</th>
@@ -140,7 +140,7 @@ export default function BookingsPage() {
                 {filteredUnassigned.map((c) => (
                   <tr key={c.id} className="border-t border-brand-cream">{/* taste-skill-ignore: table row */}
                     <td className="px-6 py-3.5">
-                      <Link to={`/clients/${c.id}`} className="flex items-center gap-3 hover:underline">
+                      <Link to={`/customers/${c.id}`} className="flex items-center gap-3 hover:underline">
                         <Avatar name={c.name} size={30} />
                         <span className="font-medium text-brand-ink">{c.name}</span>
                       </Link>
@@ -153,7 +153,7 @@ export default function BookingsPage() {
                         onClick={() => openWizard(c.id)}
                         className="rounded-full bg-brand-pink-light px-4 py-1.5 text-sm font-medium text-brand-pink transition-colors hover:bg-brand-pink hover:text-white"
                       >
-                        Assign therapist
+                        Assign staff
                       </button>
                     </td>
                   </tr>
@@ -161,7 +161,7 @@ export default function BookingsPage() {
                 {filteredUnassigned.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-10 text-center text-sm text-brand-muted">
-                      Every booking in this area has a therapist.
+                      Every booking in this area has staff assigned.
                     </td>
                   </tr>
                 )}
@@ -179,8 +179,8 @@ export default function BookingsPage() {
               <thead>
                 <tr className="text-left text-sm text-brand-muted">
                   <th className="px-6 py-4 font-medium">Booking</th>
-                  <th className="px-6 py-4 font-medium">Client</th>
-                  <th className="px-6 py-4 font-medium">Therapist</th>
+                  <th className="px-6 py-4 font-medium">Customer</th>
+                  <th className="px-6 py-4 font-medium">Staff</th>
                   <th className="px-6 py-4 font-medium">Treatment</th>
                   <th className="px-6 py-4 font-medium">Date</th>
                   <th className="px-6 py-4 font-medium">Status</th>
@@ -196,14 +196,14 @@ export default function BookingsPage() {
                       <td className="px-6 py-3.5 tabular-nums text-brand-muted">#{a.id.toUpperCase()}</td>
                       <td className="px-6 py-3.5">
                         {client && (
-                          <Link to={`/clients/${client.id}`} className="font-medium text-brand-ink hover:underline">
+                          <Link to={`/customers/${client.id}`} className="font-medium text-brand-ink hover:underline">
                             {client.name}
                           </Link>
                         )}
                       </td>
                       <td className="px-6 py-3.5">
                         {cl && (
-                          <Link to={`/cls/${cl.id}`} className="flex items-center gap-2.5 hover:underline">
+                          <Link to={staffPath(cl)} className="flex items-center gap-2.5 hover:underline">
                             <Avatar name={cl.name} color={cl.avatarColor} size={28} />
                             <span className="text-brand-ink">{cl.name}</span>
                           </Link>
@@ -239,7 +239,7 @@ export default function BookingsPage() {
   );
 }
 
-function specialtyMatches(cl: Therapist, pkg: Package | null): boolean {
+function specialtyMatches(cl: Staff, pkg: Package | null): boolean {
   if (!pkg) return false;
   const pkgText = `${pkg.name} ${pkg.summary} ${pkg.category}`.toLowerCase();
   return cl.specialties.some((s) =>
@@ -251,7 +251,7 @@ function specialtyMatches(cl: Therapist, pkg: Package | null): boolean {
   );
 }
 
-const WIZARD_STEPS = ['Client', 'Treatment', 'Therapist', 'Confirm'] as const;
+const WIZARD_STEPS = ['Customer', 'Treatment', 'Staff', 'Confirm'] as const;
 
 function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; initialClientId: string | null }) {
   const { clients, addClient } = useClientStore();
@@ -383,7 +383,7 @@ function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; i
             <>
               {step === 1 && (
                 <div>
-                  <p className="mb-3 text-sm text-brand-muted">Pick a client, or add someone new.</p>
+                  <p className="mb-3 text-sm text-brand-muted">Pick a customer, or add someone new.</p>
                   <div className="max-h-56 space-y-1 overflow-y-auto">
                     {clients.map((c) => (
                       <button
@@ -401,7 +401,7 @@ function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; i
                     ))}
                   </div>
                   <div className="mt-5 rounded-2xl bg-brand-cream p-4">
-                    <p className="mb-3 text-sm font-medium text-brand-ink">New client</p>
+                    <p className="mb-3 text-sm font-medium text-brand-ink">New customer</p>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <input
                         value={newCustomerName}
@@ -482,7 +482,7 @@ function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; i
 
               {step === 3 && (
                 <div>
-                  <p className="mb-3 text-sm text-brand-muted">Therapists ranked by specialty fit, area, rating and availability.</p>
+                  <p className="mb-3 text-sm text-brand-muted">Staff ranked by specialty fit, area, rating and availability.</p>
                   <div className="space-y-2">
                     {rankedCLs.slice(0, 5).map(({ cl: c, sameArea, specialtyFit }, i) => {
                       const tier = c.completedAssignments >= 250 ? 'Platinum' : c.completedAssignments >= 150 ? 'Gold' : c.completedAssignments >= 50 ? 'Silver' : 'Bronze';
@@ -517,7 +517,7 @@ function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; i
                       );
                     })}
                     {rankedCLs.length === 0 && (
-                      <p className="rounded-2xl bg-brand-cream p-4 text-sm text-brand-muted">No therapist is free today. Try another date from the Schedule page.</p>
+                      <p className="rounded-2xl bg-brand-cream p-4 text-sm text-brand-muted">No staff member is free today. Try another date from the Schedule page.</p>
                     )}
                   </div>
                 </div>
@@ -527,9 +527,9 @@ function NewBookingWizard({ onClose, initialClientId }: { onClose: () => void; i
                 <div>
                   <p className="mb-3 text-sm text-brand-muted">Check the details, then confirm.</p>
                   <dl className="space-y-3 rounded-2xl bg-brand-cream p-5 text-sm">
-                    <SummaryRow label="Client" value={customer?.name ?? newCustomerName} />
+                    <SummaryRow label="Customer" value={customer?.name ?? newCustomerName} />
                     <SummaryRow label="Treatment" value={`${selectedPackage?.shortName ?? ''} · ${tierMinutes} min`} />
-                    <SummaryRow label="Therapist" value={selectedCL?.name ?? ''} />
+                    <SummaryRow label="Staff" value={selectedCL?.name ?? ''} />
                     <SummaryRow label="When" value={`${formatDateLabel(bookingDate)}, ${formatTime12(startTime)} to ${formatTime12(endTime)}`} />
                     <SummaryRow label="Where" value={customerLocation} />
                   </dl>
@@ -592,7 +592,7 @@ function EstimatedNote() {
   return (
     <p className="mt-3 flex items-start gap-2 rounded-xl bg-brand-amber-light px-3 py-2.5 text-sm text-brand-ink">
       <Info size={15} className="mt-0.5 shrink-0 text-brand-amber" />
-      Est. price. This treatment is not on the published price list yet, so confirm the price with the client before the session.
+      Est. price. This treatment is not on the published price list yet, so confirm the price with the customer before the session.
     </p>
   );
 }

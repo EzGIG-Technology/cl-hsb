@@ -6,7 +6,7 @@ interface TopBarProps {
   onSearch?: (value: string) => void;
 }
 
-export function TopBar({ searchPlaceholder = 'Search therapist, booking ID or client…', onSearch }: TopBarProps) {
+export function TopBar({ searchPlaceholder = 'Search staff, booking ID or customer…', onSearch }: TopBarProps) {
   return (
     <div className="flex items-center justify-between gap-4 bg-white px-8 py-3">
       <div className="relative max-w-md flex-1">

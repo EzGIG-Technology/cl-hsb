@@ -1,7 +1,7 @@
-import type { Therapist, Assignment } from '../types';
+import type { Staff, Assignment } from '../types';
 
 /**
- * Therapist pay is a commission on treatment time: RM 40 for every hour on the bed. That is half of a
+ * Staff pay is a commission on treatment time: RM 40 for every hour on the bed. That is half of a
  * 60-minute traditional massage (RM 80) and 40% of a 30-minute back or foot session (RM 50 for half an
  * hour), which lands monthly payroll at roughly 45% of revenue.
  */
@@ -39,13 +39,13 @@ export interface CLMonthSummary {
 }
 
 /**
- * Monthly approved-vs-disapproved session breakdown and pay for a therapist. Aug 2026 (the demo's
+ * Monthly approved-vs-disapproved session breakdown and pay for a staff member. Aug 2026 (the demo's
  * "now") is computed from the real seeded/store sessions and their approval status, paid on actual
  * treatment time. Earlier months are seeded mock history (the dataset only spans a few days),
- * deterministic per therapist id so the numbers don't jitter. A full-time therapist does roughly
+ * deterministic per staff member id so the numbers don't jitter. A full-time staff member does roughly
  * 20 to 35 sessions a month.
  */
-export function monthlyFinancialsForCL(cl: Therapist, assignmentsForCL: Assignment[]): CLMonthSummary[] {
+export function monthlyFinancialsForCL(cl: Staff, assignmentsForCL: Assignment[]): CLMonthSummary[] {
   const rand = seededRandom(cl.id);
   return MONTH_LABELS.map((label) => {
     const isCurrent = label === 'Aug';
@@ -82,7 +82,7 @@ export function monthlyFinancialsForCL(cl: Therapist, assignmentsForCL: Assignme
  * `reviewCount` predates the `reviews[]` array, so any count beyond what's in `reviews[]` is
  * assumed to follow the original 91% positive baseline; real reviews always count exactly.
  */
-function reviewSplit(cl: Therapist) {
+function reviewSplit(cl: Staff) {
   const detailedGood = cl.reviews.filter((r) => r.rating >= 4).length;
   const detailedPoor = cl.reviews.length - detailedGood;
   const legacyCount = Math.max(0, cl.reviewCount - cl.reviews.length);
@@ -90,7 +90,7 @@ function reviewSplit(cl: Therapist) {
   return { goodReviews: detailedGood + legacyGood, poorReviews: detailedPoor + (legacyCount - legacyGood) };
 }
 
-export function computeCLMetrics(cl: Therapist, assignmentsForCL: Assignment[]) {
+export function computeCLMetrics(cl: Staff, assignmentsForCL: Assignment[]) {
   const leaderboardPoints = cl.completedAssignments * 12 + Math.round(cl.rating * 40);
   const verifiedHours = cl.completedAssignments * HOURS_PER_SESSION;
   const lifetimeEarnings = verifiedHours * HOURLY_RATE;
@@ -106,6 +106,6 @@ export function computeCLMetrics(cl: Therapist, assignmentsForCL: Assignment[]) 
   };
 }
 
-export function leaderboardRank(cls: Therapist[]) {
+export function leaderboardRank(cls: Staff[]) {
   return [...cls].sort((a, b) => b.completedAssignments * 12 + b.rating * 40 - (a.completedAssignments * 12 + a.rating * 40));
 }

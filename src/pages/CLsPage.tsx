@@ -6,7 +6,7 @@ import { Card, Badge, Avatar } from '../components/ui';
 import { useCLStore } from '../store/CLStore';
 import { useActivityLog } from '../store/ActivityLogContext';
 import { leaderboardRank } from '../lib/clMetrics';
-import { tierForCL, type CLStatus, type Therapist } from '../types';
+import { tierForCL, staffPath, staffTypeLabels, type CLStatus, type Staff, type StaffType } from '../types';
 
 const statusFilters: { label: string; value: CLStatus | 'all' | 'flagged' }[] = [
   { label: 'All', value: 'all' },
@@ -26,25 +26,44 @@ const tierStyles: Record<string, string> = {
 
 const placeLabels = ['1st place', '2nd place', '3rd place'];
 
-function pointsFor(cl: Therapist) {
+function pointsFor(cl: Staff) {
   return cl.completedAssignments * 12 + Math.round(cl.rating * 40);
 }
 
 const inputCls = 'w-full rounded-lg bg-brand-cream px-3 py-2 text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-pink';
 
-export default function CLsPage() {
+const directoryCopy: Record<StaffType, { subtitle: string; addLabel: string; modalTitle: string; areaHint: string }> = {
+  cl: {
+    subtitle: 'Home service and prenatal & postnatal care at customers’ homes',
+    addLabel: 'Add CL',
+    modalTitle: 'Add new CL',
+    areaHint: 'Where she lives. Used to match her to nearby home-service bookings.',
+  },
+  spa: {
+    subtitle: 'Working in the spa at Bangi Sentral',
+    addLabel: 'Add spa staff',
+    modalTitle: 'Add new spa staff',
+    areaHint: 'Where she lives.',
+  },
+};
+
+/** One directory per staff type: the CL directory (/cls) and the Spa directory (/spa). */
+export default function CLsPage({ staffType }: { staffType: StaffType }) {
   const navigate = useNavigate();
-  const { cls, addCL } = useCLStore();
+  const { cls: allStaff, addCL } = useCLStore();
+  const cls = useMemo(() => allStaff.filter((c) => c.staffType === staffType), [allStaff, staffType]);
+  const labels = staffTypeLabels[staffType];
+  const copy = directoryCopy[staffType];
   const { logAction } = useActivityLog();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<CLStatus | 'all' | 'flagged'>('all');
   const [showAdd, setShowAdd] = useState(false);
 
   function handleAdd(input: { name: string; phone: string; location: string; icNumber: string; email?: string }) {
-    const cl = addCL(input);
-    logAction('Front Desk', 'Added new therapist', cl.name);
+    const cl = addCL({ ...input, staffType });
+    logAction('Front Desk', `Added new ${labels.one === 'CL' ? 'CL' : 'spa staff'}`, cl.name);
     setShowAdd(false);
-    navigate(`/cls/${cl.id}`);
+    navigate(staffPath(cl));
   }
 
   const counts = useMemo(() => {
@@ -67,16 +86,16 @@ export default function CLsPage() {
 
   return (
     <PageShell
-      title="Therapists"
-      subtitle={`${cls.length} therapists on the roster · ${counts.flagged} flagged for review`}
-      searchPlaceholder="Search therapists by name or area"
+      title={labels.directory}
+      subtitle={`${copy.subtitle}. ${cls.length} on the roster · ${counts.flagged} flagged for review.`}
+      searchPlaceholder={`Search ${labels.many} by name or area`}
       onSearch={setQuery}
       headerAction={
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 rounded-full bg-brand-pink px-4 py-2 text-sm font-medium text-white hover:bg-brand-pink-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink focus-visible:ring-offset-2"
         >
-          <UserPlus size={15} /> Add therapist
+          <UserPlus size={15} /> {copy.addLabel}
         </button>
       }
     >
@@ -93,7 +112,7 @@ export default function CLsPage() {
               return (
                 <button
                   key={cl.id}
-                  onClick={() => navigate(`/cls/${cl.id}`)}
+                  onClick={() => navigate(staffPath(cl))}
                   className={`flex items-center gap-4 rounded-2xl p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-pink ${
                     leader ? 'bg-brand-pink-light hover:bg-brand-pink-light/70' : 'bg-brand-cream hover:bg-brand-pink-light/50'
                   }`}
@@ -177,7 +196,7 @@ export default function CLsPage() {
                       <Badge status={cl.status}>{cl.status.replace('-', ' ')}</Badge>
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button onClick={() => navigate(`/cls/${cl.id}`)} className="text-sm font-medium text-brand-pink hover:underline">
+                      <button onClick={() => navigate(staffPath(cl))} className="text-sm font-medium text-brand-pink hover:underline">
                         View
                       </button>
                     </td>
@@ -187,7 +206,7 @@ export default function CLsPage() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-5 py-6 text-center text-sm text-brand-muted">
-                    No therapists match your search.
+                    No {labels.many} match your search.
                   </td>
                 </tr>
               )}
@@ -196,16 +215,20 @@ export default function CLsPage() {
         </div>
         <div className="h-2" />
       </Card>
-      {showAdd && <AddTherapistModal onClose={() => setShowAdd(false)} onSubmit={handleAdd} />}
+      {showAdd && <AddStaffModal title={copy.modalTitle} areaHint={copy.areaHint} onClose={() => setShowAdd(false)} onSubmit={handleAdd} />}
       <div className="h-6" />
     </PageShell>
   );
 }
 
-function AddTherapistModal({
+function AddStaffModal({
+  title,
+  areaHint,
   onClose,
   onSubmit,
 }: {
+  title: string;
+  areaHint: string;
   onClose: () => void;
   onSubmit: (input: { name: string; phone: string; location: string; icNumber: string; email?: string }) => void;
 }) {
@@ -221,7 +244,7 @@ function AddTherapistModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">{/* taste-skill-ignore: overlay */}
         <div className="flex items-center justify-between px-6 pt-6">
-          <h2 className="text-lg font-semibold text-brand-ink">Add new therapist</h2>
+          <h2 className="text-lg font-semibold text-brand-ink">{title}</h2>
           <button onClick={onClose} className="rounded-full p-1 text-brand-muted hover:bg-brand-cream hover:text-brand-ink" aria-label="Close">
             <X size={18} />
           </button>
@@ -248,6 +271,7 @@ function AddTherapistModal({
               <MapPin size={13} /> Base area *
             </label>
             <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Bandar Baru Bangi" className={inputCls} />
+            <p className="mt-1 text-xs text-brand-muted">{areaHint}</p>
           </div>
           <div>
             <label className="mb-1 flex items-center gap-1.5 text-sm text-brand-muted">
@@ -255,7 +279,7 @@ function AddTherapistModal({
             </label>
             <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@honeyspabangi.my" className={inputCls} />
           </div>
-          <p className="text-sm text-brand-muted">Address, languages, experience, bio and specialties can be filled in on the therapist's profile next.</p>
+          <p className="text-sm text-brand-muted">Address, languages, experience, bio and specialties can be filled in on her profile next.</p>
         </div>
         <div className="flex items-center justify-end gap-2 p-6">
           <button onClick={onClose} className="rounded-full bg-brand-cream px-4 py-2 text-sm text-brand-ink hover:bg-brand-pink-light">

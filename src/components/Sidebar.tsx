@@ -13,6 +13,8 @@ import {
   BarChart3,
   MessageCircle,
   CalendarDays,
+  Sparkles,
+  Landmark,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { useSettings } from '../store/SettingsContext';
@@ -44,8 +46,9 @@ const groups: NavGroup[] = [
   {
     label: 'People',
     items: [
-      { to: '/cls', label: 'Therapists', icon: Users },
-      { to: '/clients', label: 'Clients', icon: Contact },
+      { to: '/cls', label: 'CL directory', icon: Users },
+      { to: '/spa', label: 'Spa directory', icon: Sparkles },
+      { to: '/customers', label: 'Customer directory', icon: Contact },
       { to: '/messages', label: 'Messages', icon: MessageCircle },
     ],
   },
@@ -53,6 +56,7 @@ const groups: NavGroup[] = [
     label: 'Menu & money',
     items: [
       { to: '/packages', label: 'Treatments & prices', icon: Flower2 },
+      { to: '/finance', label: 'Financial management', icon: Landmark },
       { to: '/payroll', label: 'Payroll', icon: Clock },
       { to: '/disputes', label: 'Complaints', icon: AlertTriangle },
       { to: '/reports', label: 'Reports', icon: BarChart3 },

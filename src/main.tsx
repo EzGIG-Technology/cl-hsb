@@ -11,6 +11,7 @@ import { ActivityLogProvider } from './store/ActivityLogContext'
 import { AssignmentStoreProvider } from './store/AssignmentStore'
 import { DisputeStoreProvider } from './store/DisputeStore'
 import { MessageStoreProvider } from './store/MessageStore'
+import { FinanceStoreProvider } from './store/FinanceStore'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -22,7 +23,9 @@ createRoot(document.getElementById('root')!).render(
               <AssignmentStoreProvider>
                 <DisputeStoreProvider>
                   <MessageStoreProvider>
-                    <App />
+                    <FinanceStoreProvider>
+                      <App />
+                    </FinanceStoreProvider>
                   </MessageStoreProvider>
                 </DisputeStoreProvider>
               </AssignmentStoreProvider>
